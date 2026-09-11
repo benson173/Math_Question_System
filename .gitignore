@@ -1,0 +1,20 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Ingestion working files (keep the folders, not the contents)
+inbox/pdf/*
+processed/pdf/*
+failed/pdf/*
+data/extracted/*
+!**/.gitkeep
+
+# OS
+.DS_Store

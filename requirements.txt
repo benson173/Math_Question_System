@@ -1,0 +1,6 @@
+google-genai
+pydantic>=2
+python-dotenv
+pypdf
+tenacity
+supabase
