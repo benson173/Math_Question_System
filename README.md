@@ -53,8 +53,47 @@ python -m scripts.test_load_pdf              # 淨係讀 PDF（唔使 API key）
 python -m scripts.test_load_pdf other.pdf    # 或者指定 file
 python -m scripts.ingest_one_pdf             # 處理 inbox/pdf/sample.pdf
 python -m scripts.ingest_one_pdf paper.pdf   # 或者指定 file
-python -m scripts.ingest_pdfs                # 批量處理 inbox/pdf/ 所有 PDF
+python -m scripts.ingest_pdfs               # 批量 —— 不論幾多份
 ```
+
+### 批量
+
+`inbox/pdf/` 入面有幾多份都得，**連子資料夾一齊執**:
+
+```bash
+python3 -m scripts.ingest_pdfs              # 全部
+python3 -m scripts.ingest_pdfs --verbose    # 每條題目都印（同單份一樣）
+python3 -m scripts.ingest_pdfs --redo       # 連抽過嘅都重抽
+python3 -m scripts.ingest_pdfs --keep       # 唔好郁啲 PDF
+python3 -m scripts.ingest_pdfs some/folder  # 第二個 folder
+```
+
+```text
+Found 47 PDF(s) in inbox/pdf
+======================================================================
+[12/47] 2024/mock-paper-3.pdf
+  ok: 41 questions in 38s
+======================================================================
+[13/47] 2024/mock-paper-4.pdf
+  already ingested (mock-paper-4-a1b2c3d4e5f6.json), skipping - use --redo to force
+...
+SUMMARY   duplicate: 2   failed: 1   ok: 44
+          1,683 questions in 31m12s
+  FAILED    scanned-only.pdf  NO_QUESTIONS_FOUND
+Report:   data/extracted/batch-20260912T081500Z.md
+```
+
+| | |
+|---|---|
+| **唔會重複燒錢** | 抽過嘅（同 sha256）會跳過，唔會再叫 Gemini。改咗檔名都認得 |
+| **Batch 入面有重複** | 同內容嘅第二份標做 `duplicate`，唔會抽兩次 |
+| **`.PDF` 大寫** | 執得到（Linux 嘅 `*.pdf` glob 會漏） |
+| **子資料夾** | 遞歸執，搬去 `processed/` 嗰陣保留返 folder 結構 |
+| **一份炸咗** | 入 `failed/`，其餘照跑 |
+| **Ctrl-C** | 得體噉停，已完成嘅照出 report，未做嘅留喺 inbox，exit 130 |
+| **Terminal** | 批量模式每份卷一行；`--verbose` 先印全文 |
+
+跑完喺 `data/extracted/batch-<時間>.md` 留低一份總表。有任何 `failed` 就 exit 1。
 
 每次抽完會出三樣嘢:
 
