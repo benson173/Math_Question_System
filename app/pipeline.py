@@ -12,7 +12,9 @@ from pathlib import Path
 from app.config import load_settings
 from app.diagram_renderer import render_question_images
 from app.document_extractor import DocumentExtractor
-from app.extraction_repair import repair_control_characters, repair_shared_stems
+from app.extraction_repair import (repair_control_characters,
+                                   repair_shared_stems,
+                                   repair_undelimited_latex)
 from app.extraction_validator import blocking_issues, validate_extraction
 from app.json_exporter import (diagram_output_dir, export_extraction_json,
                                extraction_output_path, history_output_path)
@@ -40,6 +42,7 @@ class PdfIngestionPipeline:
         if getattr(self.settings, "repair_extraction", True):
             stem_repairs = repair_shared_stems(result.document)
             control_repairs = repair_control_characters(result.document)
+            latex_repairs = repair_undelimited_latex(result.document)
 
             for repair in stem_repairs:
                 print(f"Repaired {repair.parent}: removed {repair.removed!r} from the "
@@ -47,6 +50,9 @@ class PdfIngestionPipeline:
             for repair in control_repairs:
                 print(f"Repaired {repair.source_question_id}: restored {repair.count} "
                       f"missing backslash(es) before {repair.character!r}")
+            for repair in latex_repairs:
+                print(f"Repaired {repair.source_question_id}: delimited formula "
+                      f"{repair.line[:48]!r}")
 
             result.repairs = [
                 f"{r.parent}: removed {r.removed!r} from the shared stem "
@@ -54,6 +60,9 @@ class PdfIngestionPipeline:
             ] + [
                 f"{r.source_question_id}: restored {r.count} backslash(es) as "
                 f"{r.restored!r}" for r in control_repairs
+            ] + [
+                f"{r.source_question_id}: delimited formula {r.line[:48]!r}"
+                for r in latex_repairs
             ]
 
         print("Step 2: Validate extraction")

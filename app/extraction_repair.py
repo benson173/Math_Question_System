@@ -45,6 +45,12 @@ EATEN_BACKSLASH = {
 
 
 @dataclass
+class LatexRepair:
+    source_question_id: str
+    line: str
+
+
+@dataclass
 class ControlCharacterRepair:
     source_question_id: str
     character: str
@@ -181,6 +187,60 @@ def repair_control_characters(document: ExtractedDocument) -> list[ControlCharac
                 f"Repaired: restored {count} unescaped backslash(es) before "
                 f"{letter!r} - the JSON escape had eaten it."
             )
+
+    return repairs
+
+
+# A line that is nothing but maths: no CJK, not already delimited, and
+# carrying at least one LaTeX command or braced script. Such a line is a
+# displayed formula on its own, so wrapping the whole of it is unambiguous.
+# LaTeX sitting inline inside a sentence is reported instead - where the maths
+# ends inside prose is a guess, and a wrong guess reads worse than raw markup.
+_CJK = re.compile(r"[\u3000-\u9fff\uff00-\uffef]")
+_LATEX_COMMAND = re.compile(r"\\[a-zA-Z]{2,}")
+_LATEX_SCRIPT = re.compile(r"[\^_]\{[^}\n]{1,30}\}")
+
+
+def is_bare_formula_line(line: str) -> bool:
+    stripped = line.strip()
+    if not stripped or _CJK.search(stripped):
+        return False
+    if "\\(" in stripped or "\\)" in stripped or "$" in stripped:
+        return False
+    return bool(_LATEX_COMMAND.search(stripped) or _LATEX_SCRIPT.search(stripped))
+
+
+def wrap_bare_formulas(text: str) -> tuple[str, list[str]]:
+    """Put \\( \\) around any line that is a formula and nothing else."""
+    wrapped: list[str] = []
+    lines = text.split("\n")
+    for index, line in enumerate(lines):
+        if not is_bare_formula_line(line):
+            continue
+        stripped = line.strip()
+        indent = line[:len(line) - len(line.lstrip())]
+        lines[index] = indent + "\\( " + stripped + " \\)"
+        wrapped.append(stripped)
+    return "\n".join(lines), wrapped
+
+
+def repair_undelimited_latex(document: ExtractedDocument) -> list[LatexRepair]:
+    """Delimit displayed formulas so they render, in place."""
+    repairs: list[LatexRepair] = []
+
+    for question in document.questions:
+        repaired, wrapped = wrap_bare_formulas(question.question_text)
+        if not wrapped:
+            continue
+
+        question.question_text = repaired
+        for line in wrapped:
+            repairs.append(LatexRepair(source_question_id=question.source_question_id,
+                                       line=line))
+        question.extraction_notes.append(
+            f"Repaired: wrapped {len(wrapped)} displayed formula(s) in \\( \\) so they "
+            "render; the model left them bare."
+        )
 
     return repairs
 
