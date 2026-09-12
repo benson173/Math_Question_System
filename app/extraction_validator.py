@@ -60,42 +60,70 @@ def find_broken_powers(text: str) -> list[str]:
     return [match.group() for match in _BROKEN_POWER.finditer(masked)]
 
 
-def _pipe_blocks(text: str) -> list[list[str]]:
-    """Runs of consecutive lines that look like rows of one table.
+def _cell_count(line: str) -> int:
+    """Cells in a Markdown table row, ignoring the outer pipes."""
+    parts = line.split("|")
+    if parts and not parts[0].strip():
+        parts = parts[1:]
+    if parts and not parts[-1].strip():
+        parts = parts[:-1]
+    return len(parts)
 
-    Lines must agree on how many pipes they carry; that consistency is what
-    separates a table from prose that happens to contain a pipe.
-    """
+
+def _pipe_blocks(text: str) -> list[list[str]]:
+    """Runs of consecutive lines containing a pipe."""
     blocks: list[list[str]] = []
     current: list[str] = []
-    current_pipes = -1
 
     for line in text.splitlines():
-        pipes = line.count("|")
-        if pipes and (not current or pipes == current_pipes):
+        if "|" in line:
             current.append(line)
-            current_pipes = pipes
         else:
             if len(current) >= 2:
                 blocks.append(current)
-            current = [line] if pipes else []
-            current_pipes = pipes if pipes else -1
+            current = []
 
     if len(current) >= 2:
         blocks.append(current)
     return blocks
 
 
+def _has_separator(block: list[str]) -> bool:
+    return any(_TABLE_SEPARATOR.match(line) for line in block[:2])
+
+
+def _is_table_like(block: list[str]) -> bool:
+    """A separator row proves it; otherwise a steady pipe count is the signal
+    that separates a table from prose that happens to contain pipes."""
+    if _has_separator(block):
+        return True
+    return len({line.count("|") for line in block}) == 1
+
+
 def find_malformed_tables(text: str) -> int:
-    """Count table-like blocks missing their Markdown separator row.
+    """Table-like blocks with no Markdown separator row.
 
     Without it the block renders as one run-on paragraph rather than a table,
     and nothing downstream can read the columns.
     """
-    return sum(
-        1 for block in _pipe_blocks(text)
-        if not any(_TABLE_SEPARATOR.match(line) for line in block[:2])
-    )
+    return sum(1 for block in _pipe_blocks(text)
+               if _is_table_like(block) and not _has_separator(block))
+
+
+def find_ragged_tables(text: str) -> list[int]:
+    """Markdown tables whose rows disagree on how many cells they have.
+
+    Usually a printed table with merged cells or a two-level header, which
+    Markdown cannot express: the columns silently stop lining up.
+    """
+    ragged = []
+    for block in _pipe_blocks(text):
+        if not _has_separator(block):
+            continue
+        counts = {_cell_count(line) for line in block}
+        if len(counts) > 1:
+            ragged.append(max(counts) - min(counts))
+    return ragged
 
 
 def find_repeated_sentences(text: str) -> list[str]:
@@ -176,6 +204,14 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
             report("MALFORMED_TABLE", "medium",
                    f"Question {qid} has {malformed} table-like block(s) with no "
                    "Markdown separator row, so they will not render as tables.", qid)
+
+        ragged = find_ragged_tables(q.question_text)
+        if ragged:
+            report("RAGGED_TABLE", "medium",
+                   f"Question {qid} has {len(ragged)} table(s) whose rows disagree on "
+                   f"cell count (by up to {max(ragged)}). The printed table probably "
+                   "has merged cells or a two-level header; flatten it into one "
+                   "header row.", qid)
 
         repeated = find_repeated_sentences(q.question_text)
         if repeated:

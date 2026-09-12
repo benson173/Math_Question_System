@@ -4,6 +4,7 @@ from app.extraction_validator import (
     blocking_issues,
     find_broken_powers,
     find_malformed_tables,
+    find_ragged_tables,
     find_repeated_sentences,
     has_blocking_issues,
     validate_extraction,
@@ -202,6 +203,59 @@ def test_malformed_table_is_reported_against_the_question(make_document, make_qu
 def test_malformed_table_does_not_block(make_document, make_question):
     document = make_document([make_question(question_text=BAD_TABLE)])
     assert has_blocking_issues(validate_extraction(document)) is False
+
+
+# --- ragged tables ----------------------------------------------------------
+
+# A printed grid with a two-level header, as Gemini rendered it: the merged
+# header cannot be expressed, so the rows stop agreeing on cell count.
+RAGGED_TABLE = ("在下表列出所有可能結果。\n\n"
+                "| | | 第二枚勻稱骰子 | | | | |\n"
+                "| --- | --- | --- | --- | --- | --- | --- |\n"
+                "| | | 1 | 2 | 3 | 4 | 5 | 6 |\n"
+                "| 第一枚勻稱骰子 | 1 | (1, 1) | (1, 2) | | | | |\n")
+
+FLATTENED_TABLE = ("在下表列出所有可能結果。\n\n"
+                   "| 第一枚勻稱骰子 / 第二枚勻稱骰子 | 1 | 2 | 3 | 4 | 5 | 6 |\n"
+                   "| --- | --- | --- | --- | --- | --- | --- |\n"
+                   "| 1 | (1, 1) | (1, 2) | | | | |\n"
+                   "| 2 | | | | | | |\n")
+
+
+def test_a_ragged_table_is_found():
+    assert find_ragged_tables(RAGGED_TABLE) == [1]
+
+
+def test_a_ragged_table_is_not_also_called_malformed():
+    # It has a separator row; the fault is the cell counts, and the message
+    # needs to say so.
+    assert find_malformed_tables(RAGGED_TABLE) == 0
+
+
+def test_flattening_the_header_clears_it():
+    assert find_ragged_tables(FLATTENED_TABLE) == []
+    assert find_malformed_tables(FLATTENED_TABLE) == 0
+
+
+@pytest.mark.parametrize("text", [GOOD_TABLE, STEM_AND_LEAF, BAD_TABLE])
+def test_well_formed_and_separator_less_tables_are_not_ragged(text):
+    assert find_ragged_tables(text) == []
+
+
+def test_two_tables_separated_by_a_blank_line_are_independent():
+    text = ("| 重量 (g) | 頻數 |\n| --- | --- |\n| 201 – 210 | a |\n\n"
+            "| 重量少於 (g) | 累積頻數 |\n| --- | --- |\n| 210.5 | 5 |")
+    assert find_ragged_tables(text) == []
+    assert find_malformed_tables(text) == 0
+
+
+def test_ragged_table_is_reported_with_advice(make_document, make_question):
+    document = make_document([make_question(source_question_id="12(a)",
+                                            question_text=RAGGED_TABLE)])
+    issues = [i for i in validate_extraction(document) if i.issue_code == "RAGGED_TABLE"]
+    assert len(issues) == 1
+    assert issues[0].severity == "medium"
+    assert "merged cells" in issues[0].message
 
 
 # --- text repeated inside one question --------------------------------------

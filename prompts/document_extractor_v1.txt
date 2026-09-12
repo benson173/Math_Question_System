@@ -40,6 +40,16 @@ TABLES
       | 綠色 | $10 |
 
 - A table without that separator row is wrong. Always include it.
+- Every row must have the same number of cells, the separator row included.
+- Markdown cannot express merged cells or a two-level header. Flatten them into
+  a single header row, joining the two labels with a slash. A printed grid whose
+  rows are labelled by one variable and columns by another becomes:
+
+      | 第一枚勻稱骰子 / 第二枚勻稱骰子 | 1 | 2 | 3 | 4 | 5 | 6 |
+      | --- | --- | --- | --- | --- | --- | --- |
+      | 1 | (1, 1) | (1, 2) | | | | |
+      | 2 | | | | | | |
+
 - Keep empty cells empty; a table the student fills in must stay blank.
 - A stem-and-leaf diagram is a table. Use the same format.
 

@@ -239,6 +239,7 @@ render 失敗（library 冇裝、PDF 壞）**唔會累死成次抽題** — 只�
 | `SUSPICIOUSLY_FEW_QUESTIONS` | medium | 頁數多但題目少，可能抽漏 |
 | `DIAGRAM_REGION_UNUSABLE` | medium | 要圖但冇合理座標，會 render 成頁 |
 | `MALFORMED_TABLE` | medium | 表格冇 markdown separator row，render 唔到 |
+| `RAGGED_TABLE` | medium | 表格每行格數唔一致，通常係卷面有合併格／兩層表頭 |
 | `REPEATED_TEXT_IN_QUESTION` | medium | 同題內有句子重複，通常係小題題目撈咗入題幹 |
 | `MARKS_MISSING` | low | 成份卷有分數，但呢條冇 |
 
