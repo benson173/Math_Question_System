@@ -20,6 +20,7 @@ import sys
 from app.extraction_validator import blocking_issues
 from app.paths import FAILED_PDF_DIR, INBOX_PDF_DIR, PROCESSED_PDF_DIR
 from app.pipeline import PdfIngestionPipeline
+from app.repository import Repository
 
 
 DEFAULT_NAME = "sample.pdf"
@@ -86,7 +87,9 @@ def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     pdf_path = resolve_pdf(args)
 
-    pipeline = PdfIngestionPipeline()
+    repository = Repository()
+    print(repository.describe_target())
+    pipeline = PdfIngestionPipeline(repository=repository)
     result = pipeline.run_one_pdf(pdf_path)
 
     return 1 if blocking_issues(result.issues) else 0

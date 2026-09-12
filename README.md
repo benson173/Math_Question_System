@@ -230,6 +230,7 @@ pytest
 | `scripts/compare_extractions.py` | 🔴 Test | 比較兩次 run |
 | `scripts/analyse_extractions.py` | 🔴 Test | 按題型分析多份卷 |
 | `scripts/db_check.py` | 🔴 Test | 驗證 Supabase 連線同 schema |
+| `scripts/db_push.py` | 🔴 Test | 舊 JSON 推上 Supabase,唔使再叫 Gemini |
 
 ---
 
@@ -612,6 +613,31 @@ python3 -m scripts.ingest_pdfs --redo
   `created_at`）→ 補返缺嗰啲，你原本啲 row 照留
 - 兩條 foreign key column 會跟返你 `id` 嘅型別，所以 table editor 嗰個
   `bigint` id 同全新嘅 `uuid` id 都用得
+
+### 已經抽咗嘅卷,唔使再叫 Gemini
+
+第一次接通 Supabase（或者補完 schema）之後,`questions` 係空嘅 —— 因為只有 **抽題嗰一刻**
+才會寫 database,而你啲卷已經抽完、搬去 `processed/pdf/` 咗。
+
+唔使再燒 API,`data/extracted/*.json` 已經有齊成個結果:
+
+```bash
+python3 -m scripts.db_push          # 全部 JSON 推上 Supabase
+python3 -m scripts.db_push a.json   # 或者指定
+python3 -m scripts.db_push --force  # 連已經推過嘅 run 都再推
+```
+
+同一個 `run_id` 已經喺 database 就會跳過,所以行幾多次都得。舊 JSON（級別功能之前
+抽嘅）冇 `level`,`db_push` 會照檔名讀返 F1–F6 填落去。
+
+每次 ingest 一開始都會講明資料去邊:
+
+```text
+Storage: JSON files and Supabase at https://xxxx.supabase.co
+Storage: JSON files only - SUPABASE_URL / SUPABASE_SECRET_KEY are not set in .env
+```
+
+見到第二行就知係 `.env` 冇填,唔會抽完先發現 database 空空如也。
 
 ### `db_check` 講咩
 

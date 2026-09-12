@@ -53,6 +53,13 @@ class FakeQuery:
         self.op = "delete"
         return self
 
+    def select(self, *columns, count=None):
+        self.op, self.payload = "select", list(columns)
+        return self
+
+    def limit(self, _n):
+        return self
+
     def eq(self, column, value):
         self.filters.append(("eq", column, value))
         return self
@@ -85,6 +92,9 @@ class FakeClient:
             raise RuntimeError(f"simulated failure on {query.table_name}.{query.op}")
 
         store = self.rows[query.table_name]
+        if query.op == "select":
+            return FakeResponse([r for r in store
+                                 if all(self._match(r, f) for f in query.filters)])
         if query.op == "upsert":
             existing = next((r for r in store if r["sha256"] == query.payload["sha256"]), None)
             if existing:

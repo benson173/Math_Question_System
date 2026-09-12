@@ -56,8 +56,18 @@ def fake_pipeline(monkeypatch):
             return ExtractionResult(document=document,
                                     issues=validate_extraction(document))
 
+    class FakeRepository:
+        def __init__(self, verbose=True):
+            self.verbose = verbose
+
+        def describe_target(self):
+            return "Storage: JSON files only (test)"
+
+        def save_extraction_result(self, result):
+            return None
+
     monkeypatch.setattr(batch, "PdfIngestionPipeline", FakePipeline)
-    monkeypatch.setattr(batch, "Repository", lambda verbose=True: None)
+    monkeypatch.setattr(batch, "Repository", FakeRepository)
     return calls
 
 

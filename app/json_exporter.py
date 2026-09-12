@@ -42,12 +42,17 @@ def export_extraction_json(
     result: ExtractionResult,
     output_path: str | Path,
 ) -> Path:
+    # Every field of the result, so the JSON can be read back into an
+    # ExtractionResult and pushed to the database without re-calling Gemini.
+    # Leaving tables and repairs out made the archive quietly lossy.
     output = {
         "source": result.source.model_dump() if result.source else None,
         "run": result.run.model_dump() if result.run else None,
         "document": result.document.model_dump(),
         "issues": [issue.model_dump() for issue in result.issues],
         "diagrams": [asset.model_dump() for asset in result.diagrams],
+        "tables": [asset.model_dump() for asset in result.tables],
+        "repairs": list(result.repairs),
     }
 
     path = Path(output_path)

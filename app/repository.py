@@ -34,6 +34,17 @@ class Repository:
     def writes_to_database(self) -> bool:
         return self.store is not None
 
+    def describe_target(self) -> str:
+        """One line for the scripts to print before any work starts.
+
+        An extraction that only prints looks identical to one that was saved
+        until you query the database and find nothing, so say it up front.
+        """
+        if self.store is None:
+            return ("Storage: JSON files only - SUPABASE_URL / SUPABASE_SECRET_KEY "
+                    "are not set in .env")
+        return f"Storage: JSON files and Supabase at {self.settings.supabase_url}"
+
     def save_extraction_result(self, result: ExtractionResult) -> SaveOutcome | None:
         if self.verbose:
             self._print_in_full(result)

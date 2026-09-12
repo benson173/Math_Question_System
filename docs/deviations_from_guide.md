@@ -717,3 +717,57 @@ volatile，Postgres 會逐行計一次，所以舊 row 唔會攞到同一個 id�
 一次、再補一隻」。而家逐隻 column 試一次（三個 table 加埋四十個 request，一次過嘅
 嘢，唔緊要），一次過列晒。同時分開兩種情況：`select *` 都失敗 = table 唔存在；
 `select *` 得、逐隻 column 失敗 = column 對唔上 —— 兩種嘅下一步唔同。
+
+## 33. 補 schema 之後,database 仍然係空嘅
+
+`docs/supabase_schema.sql` 補完 column,`db_check` 過關,但 `select * from questions`
+仍然「Success. No rows returned」。
+
+原因唔係 bug:**只有抽題嗰一刻才會寫 database**。卷已經抽完、`processed/pdf/` 度,
+`ingest_pdfs` 搵唔到新 PDF,所以冇嘢寫。要有 data,要麼重抽（再燒一次 Gemini),
+要麼由已經有嘅 JSON 推上去。
+
+### `scripts/db_push.py`
+
+`data/extracted/<卷>-<hash>.json` 本身就係成個 `ExtractionResult`,所以推得上去:
+
+```bash
+python3 -m scripts.db_push
+```
+
+同一個 `run_id` 已經喺 `extraction_runs` 就跳過,行幾多次都安全。`--force` 可以夾硬
+再推一次（會多一個 run,舊嗰個變 `is_current=false`)。
+
+推之前順手做兩件事:
+
+1. **舊 JSON 冇級別** —— 級別功能（§31）之前抽嘅檔冇 `level`。`db_push` 會用同一條
+   規則照檔名讀返 F1–F6 補落去,唔使重抽先分得到級。
+2. **JSON 本身之前係漏嘅** —— `export_extraction_json` 只寫 `diagrams`,冇寫
+   `tables` 同 `repairs`。即係表格影嘅相同自動修正記錄,寫完 report 就冇咗。JSON
+   係唯一離線存檔,又係 `db_push` 嘅來源,漏就即係靜靜雞蝕資料。兩個 field 補返。
+
+### 資料去邊,一開始就講
+
+`Repository.describe_target()` 喺每次 ingest 第一行印出:
+
+```text
+Storage: JSON files and Supabase at https://xxxx.supabase.co
+Storage: JSON files only - SUPABASE_URL / SUPABASE_SECRET_KEY are not set in .env
+```
+
+之前「有寫 database」同「淨係 print」兩種情況,行落去見到嘅 output 一模一樣,要去
+query 完 database 見到零行才發現。呢一行就係要令呢個情況冇得發生。
+
+### 順手:成個 test suite 而家喺呢個環境行得到
+
+本來每個功能有一個 scratchpad harness（14 個,416 個 assertion),因為裝唔到 pytest。
+而家個 runner 支援 fixture、parametrize、monkeypatch、tmp_path、capsys,所以
+`tests/` 23 個 module 全部行得:**510 passed, 0 failed**。
+
+行嘅時候捉到兩個 test 自己嘅問題（唔係 code 嘅）:
+
+- `test_it_is_only_informational` 期望「3 different dash characters」,但份 fixture
+  嘅 U+2212 只出現兩次,`MIN_DASH_USES = 3` 當佢係雜訊。Fixture 加多一句就係真正
+  三種 dash 嘅卷。
+- `test_batch_ingest` 嗰個 fake Repository 係 `lambda verbose=True: None`,加咗
+  `describe_target()` 之後即刻 AttributeError。Test double 太薄,補返個 interface。

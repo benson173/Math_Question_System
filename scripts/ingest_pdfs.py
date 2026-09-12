@@ -187,7 +187,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # Built before anything moves, so a missing API key fails immediately
     # rather than after half the inbox has been filed away.
-    pipeline = PdfIngestionPipeline(repository=Repository(verbose=verbose))
+    repository = Repository(verbose=verbose)
+    print(repository.describe_target())
+    pipeline = PdfIngestionPipeline(repository=repository)
 
     outcomes: list[Outcome] = []
     seen: dict[str, str] = {}

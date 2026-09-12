@@ -68,6 +68,9 @@ MIXED_PAPER = [
     question("14", "已知 L₁ : 2x + 3y - 12 = 0 及 L₂ : 3x - 2y + 6 = 0。"),
     question("19", "已知 α 和 β 為方程 2x² + 8x − 3 = 0 的兩根。"),
     question("4(a)", "因式分解 9a² − 25"),
+    # A third U+2212: below MIN_DASH_USES a character is treated as a stray,
+    # so a paper that really mixes three needs three uses of each.
+    question("20", "求 5 − 2 的值。"),
 ]
 
 
