@@ -10,8 +10,8 @@ Severity = Literal["critical", "high", "medium", "low"]
 REGION_SCALE = 1000
 
 
-class DiagramRegion(BaseModel):
-    """Where a diagram sits, in Gemini's 0-1000 page coordinates."""
+class PageRegion(BaseModel):
+    """A box on one page, in Gemini's 0-1000 page coordinates."""
 
     page: int
     y_min: int
@@ -40,7 +40,12 @@ class ExtractedQuestion(BaseModel):
     answer: Optional[str] = None
     worked_solution: Optional[str] = None
     diagram_required: bool = False
-    diagram_region: Optional[DiagramRegion] = None
+    diagram_region: Optional[PageRegion] = None
+    # One box per printed table. The table is also transcribed into
+    # question_text: the text is what later stages compute with, the image is
+    # what a person checks it against, and what survives a layout Markdown
+    # cannot express.
+    table_regions: list[PageRegion] = Field(default_factory=list)
     extraction_notes: list[str] = Field(default_factory=list)
 
 
@@ -80,7 +85,7 @@ class ExtractionRun(BaseModel):
     model: str
 
 
-class DiagramAsset(BaseModel):
+class RenderedImage(BaseModel):
     """An image this system rendered from the PDF.
 
     Kept out of ExtractedQuestion on purpose: the Question Object stays the
@@ -89,6 +94,8 @@ class DiagramAsset(BaseModel):
     """
 
     source_question_id: str
+    kind: Literal["diagram", "table"]
+    index: int
     page: int
     image_path: str
     cropped: bool
@@ -108,5 +115,6 @@ class ExtractionResult(BaseModel):
     issues: list[ValidationIssue] = Field(default_factory=list)
     source: Optional[SourceDocument] = None
     run: Optional[ExtractionRun] = None
-    diagrams: list[DiagramAsset] = Field(default_factory=list)
+    diagrams: list[RenderedImage] = Field(default_factory=list)
+    tables: list[RenderedImage] = Field(default_factory=list)
     repairs: list[str] = Field(default_factory=list)

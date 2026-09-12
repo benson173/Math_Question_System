@@ -56,6 +56,16 @@ TABLES
   separate Markdown tables with a blank line between, never merged into one
   wide table: their rows describe different things and pairing them invents a
   relationship the paper does not state.
+- For every printed table, also add an entry to table_regions locating it on
+  the page, in the same 0-1000 coordinates as diagram_region:
+
+      page   the 1-based PDF page the table is printed on
+      y_min, x_min, y_max, x_max
+
+  List them in the order they are printed, one entry per table. Box the table
+  itself, including its headings, and nothing else. Leave table_regions empty
+  if the question has no printed table. The Markdown transcription is still
+  required: the picture does not replace it.
 
 MATHEMATICAL NOTATION
 - Write anything Unicode can express as Unicode, exactly as printed:

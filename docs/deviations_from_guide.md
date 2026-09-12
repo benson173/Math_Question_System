@@ -277,3 +277,46 @@ run 2 就正確噉分開兩張。合併咗即係話「201–210 對應 210.5」�
 兩張表只係印喺隔離，行與行之間冇定義關係。
 
 Prompt 加咗：並排嘅兩張表係兩張表，要分開出，中間留空行，唔可以併埋一張闊表。
+
+---
+
+## 17. 表格：文字同圖片兩樣都要
+
+三次 run 落嚟，表格係最唔穩定嗰樣 —— 冇 separator row、合併格砌唔正、並排兩張表
+被併埋。一個好自然嘅諗法係「不如所有表格都影相算數」。
+
+**但唔可以淨係影相。** Guide Part 16 列明下一步係 Analyzer、Solver、RPDICE、
+Student Model、Question Generator，全部都要表格入面嘅**數值**：
+
+```text
+Q17  計期望值      →  要 $22 / $10 / $0 同埋每種波嘅數量
+Q18  求 k          →  要 14, 14, 21, 37, 9, k
+Q15  計平均重量    →  要成張頻數表
+```
+
+一張相搵唔到、計唔到、比唔到，Question Generator 亦都出唔到變化題。淨係影相等於
+將 parsing problem 推去下一站，仲要再 OCR 一次。
+
+**所以兩樣都保留**：
+
+| | 角色 |
+|---|---|
+| Markdown 文字（`question_text`） | 機器讀，後面所有階段用 |
+| 圖片（`ExtractionResult.tables`） | 人對，卷面真正嘅樣 |
+
+Schema 改動：`DiagramRegion` 改名做 `PageRegion`（佢本來就係「頁面上一個框」，
+同圖冇必然關係），`DiagramAsset` 改名做 `RenderedImage` 加 `kind`（diagram/table）
+同 `index`。`ExtractedQuestion` 加 `table_regions: list[PageRegion]` —— 用 list
+因為一條題目可以有幾張表（Q15 就有兩張）。
+
+Prompt 要求每張印出嚟嘅表都畀一個 region，**同時仍然要 markdown 轉錄**，明寫
+「相唔會取代文字」。
+
+Validator 兩個配合改動：
+
+- 表格文字有問題但**已經影咗相** → severity 由 `medium` 降做 `low`，訊息會講明
+  有相可以對返。有 fallback 嘅問題冇咁緊要
+- 有表格文字但冇 region → `TABLE_NOT_CAPTURED`（low）
+
+Renderer 同一頁只 rasterise 一次再重用：一條題目有圖加兩張表，原本會將同一頁
+render 三次。

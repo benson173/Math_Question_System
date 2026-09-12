@@ -11,11 +11,11 @@ from app.diagram_geometry import (
     page_index_for,
     safe_asset_name,
 )
-from app.schemas import DiagramRegion, ExtractedQuestion, REGION_SCALE
+from app.schemas import PageRegion, ExtractedQuestion, REGION_SCALE
 
 
-def region(y_min=200, x_min=100, y_max=600, x_max=900, page=1) -> DiagramRegion:
-    return DiagramRegion(page=page, y_min=y_min, x_min=x_min, y_max=y_max, x_max=x_max)
+def region(y_min=200, x_min=100, y_max=600, x_max=900, page=1) -> PageRegion:
+    return PageRegion(page=page, y_min=y_min, x_min=x_min, y_max=y_max, x_max=x_max)
 
 
 def question(**overrides) -> ExtractedQuestion:

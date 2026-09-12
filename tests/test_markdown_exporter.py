@@ -11,7 +11,7 @@ from app.markdown_exporter import (
     markdown_output_path,
     render_markdown,
 )
-from app.schemas import DiagramAsset, ValidationIssue
+from app.schemas import RenderedImage, ValidationIssue
 
 
 @pytest.fixture
@@ -95,11 +95,11 @@ def test_single_and_multi_page_questions_read_correctly(
 def diagram_result(make_result, make_document, make_question, tmp_path, **asset_kwargs):
     document = make_document([make_question(source_question_id="16", diagram_required=True)])
     result = make_result(document=document)
-    defaults = dict(source_question_id="16", page=8,
+    defaults = dict(source_question_id="16", kind="diagram", index=0, page=8,
                     image_path=str(tmp_path / "diagrams" / "paper-abc123" / "16.png"),
                     cropped=True, width=842, height=617)
     defaults.update(asset_kwargs)
-    result.diagrams = [DiagramAsset(**defaults)]
+    result.diagrams = [RenderedImage(**defaults)]
     return result
 
 

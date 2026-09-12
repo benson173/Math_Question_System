@@ -208,13 +208,28 @@ Step 3  Validate
 
 ---
 
-## 圖片
+## 圖片同表格
 
-凡係 `diagram_required=true` 嘅題目，系統會由 PDF render 返張 PNG 出嚟：
+凡係 `diagram_required=true` 嘅題目，**同埋每張印出嚟嘅表格**，系統都會由 PDF
+render 返張 PNG 出嚟：
 
 ```text
-data/diagrams/<name>-<sha12>/17-a.png
+data/diagrams/<name>-<sha12>/16.png              # 圖
+data/diagrams/<name>-<sha12>/17-a-table-1.png    # 第一張表
+data/diagrams/<name>-<sha12>/15-a-table-2.png    # 第二張表
 ```
+
+### 點解表格文字同圖片兩樣都要？
+
+| | 用嚟做咩 |
+|---|---|
+| **Markdown 文字** | 機器用 — Analyzer 要 `14, 14, 21, 37, 9, k` 先計到中位數，Question Generator 要啲數值先出到變化題。相係搵唔到、計唔到、比唔到 |
+| **圖片** | 人用 — 卷面真正嘅樣，合併格／兩層表頭／並排兩張表全部原汁原味。文字抽錯嗰陣即刻對得返 |
+
+所以 validator 見到表格文字有問題但**已經影咗相**，會將 severity 由 `medium` 降去
+`low`，因為你有嘢對返。反過嚟，有表但冇影相會出 `TABLE_NOT_CAPTURED`。
+
+`RENDER_TABLES=false` 可以熄咗表格影相。
 
 Gemini 會連埋 `diagram_region` 一齊交返（0–1000 座標，`[y_min, x_min, y_max, x_max]`），
 系統就照住個框 crop。**框唔合理或者冇框，就 render 成頁**，唔會乜都冇 —
@@ -261,13 +276,16 @@ render 失敗（library 冇裝、PDF 壞）**唔會累死成次抽題** — 只�
 | `MARKS_INVALID` | medium | 負分數 |
 | `SUSPICIOUSLY_FEW_QUESTIONS` | medium | 頁數多但題目少，可能抽漏 |
 | `DIAGRAM_REGION_UNUSABLE` | medium | 要圖但冇合理座標，會 render 成頁 |
-| `MALFORMED_TABLE` | medium | 表格冇 markdown separator row，render 唔到 |
-| `RAGGED_TABLE` | medium | 表格每行格數唔一致，通常係卷面有合併格／兩層表頭 |
+| `MALFORMED_TABLE` | medium¹ | 表格冇 markdown separator row，render 唔到 |
+| `RAGGED_TABLE` | medium¹ | 表格每行格數唔一致，通常係卷面有合併格／兩層表頭 |
+| `TABLE_NOT_CAPTURED` | low | 有表格文字但冇影相 |
 | `STEM_CONTAMINATION` | high | 共用題幹尾多咗一句係其中一個小題嘅題目 |
 | `REPEATED_TEXT_IN_QUESTION` | medium | 同題內有句子重複，通常係小題題目撈咗入題幹 |
 | `MARKS_MISSING` | low | 成份卷有分數，但呢條冇 |
 
 粗體嘅兩個係 **blocking** — 會令 PDF 入 `failed/pdf/`。
+
+¹ 如果嗰條題目已經影咗表格相，會降做 `low`：文字抽錯都有得對返。
 
 ---
 

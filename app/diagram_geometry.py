@@ -1,4 +1,4 @@
-"""Pure geometry for diagram crops.
+"""Pure geometry for cropping a region of a page.
 
 Separate from the renderer so the arithmetic can be tested without any imaging
 library, and so the validator can reuse the region check without pulling in the
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 
-from app.schemas import DiagramRegion, REGION_SCALE
+from app.schemas import PageRegion, REGION_SCALE
 
 
 # A box smaller than this fraction of the page in either direction is treated as
@@ -29,7 +29,7 @@ def safe_asset_name(source_question_id: str) -> str:
     return cleaned or "question"
 
 
-def is_usable_region(region: DiagramRegion | None) -> bool:
+def is_usable_region(region: PageRegion | None) -> bool:
     """True if the box is inside the page and big enough to be a diagram."""
     if region is None:
         return False
@@ -46,7 +46,7 @@ def is_usable_region(region: DiagramRegion | None) -> bool:
 
 
 def crop_box(
-    region: DiagramRegion,
+    region: PageRegion,
     image_width: int,
     image_height: int,
     padding: float = DEFAULT_PADDING,
@@ -75,12 +75,15 @@ def crop_box(
     return left, top, right, bottom
 
 
-def page_index_for(question, page_count: int) -> int:
-    """0-based page to render for a question, clamped into the document.
+def page_index_for(question, page_count: int, region=None) -> int:
+    """0-based page to render, clamped into the document.
 
     Prefers the page the region names, falls back to where the question starts.
+    Passing `region` explicitly lets a table use its own box rather than the
+    question's diagram.
     """
-    region = question.diagram_region
+    if region is None:
+        region = question.diagram_region
     page = region.page if region is not None and region.page > 0 else question.page_start
     page = max(1, min(page, page_count))
     return page - 1

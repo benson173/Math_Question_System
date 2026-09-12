@@ -111,6 +111,10 @@ def find_malformed_tables(text: str) -> int:
                if _is_table_like(block) and not _has_separator(block))
 
 
+def _looks_like_a_table(text: str) -> bool:
+    return any(_is_table_like(block) for block in _pipe_blocks(text))
+
+
 def find_ragged_tables(text: str) -> list[int]:
     """Markdown tables whose rows disagree on how many cells they have.
 
@@ -200,19 +204,31 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
                    f"Question {qid} needs a diagram but gave no usable region; "
                    "the whole page will be rendered instead.", qid)
 
+        # A captured picture of the table makes a broken transcription
+        # recoverable by eye, so it is a warning rather than a defect.
+        has_picture = any(is_usable_region(r) for r in q.table_regions)
+        table_severity: Severity = "low" if has_picture else "medium"
+        fallback = " A picture of the table was captured." if has_picture else ""
+
         malformed = find_malformed_tables(q.question_text)
         if malformed:
-            report("MALFORMED_TABLE", "medium",
+            report("MALFORMED_TABLE", table_severity,
                    f"Question {qid} has {malformed} table-like block(s) with no "
-                   "Markdown separator row, so they will not render as tables.", qid)
+                   f"Markdown separator row, so they will not render as tables.{fallback}",
+                   qid)
 
         ragged = find_ragged_tables(q.question_text)
         if ragged:
-            report("RAGGED_TABLE", "medium",
+            report("RAGGED_TABLE", table_severity,
                    f"Question {qid} has {len(ragged)} table(s) whose rows disagree on "
                    f"cell count (by up to {max(ragged)}). The printed table probably "
                    "has merged cells or a two-level header; flatten it into one "
-                   "header row.", qid)
+                   f"header row.{fallback}", qid)
+
+        if _looks_like_a_table(q.question_text) and not q.table_regions:
+            report("TABLE_NOT_CAPTURED", "low",
+                   f"Question {qid} transcribes a table but gave no table_regions, "
+                   "so no picture of it was captured.", qid)
 
         repeated = find_repeated_sentences(q.question_text)
         if repeated:

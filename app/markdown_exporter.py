@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from app.schemas import DiagramAsset, ExtractedQuestion, ExtractionResult, ValidationIssue
+from app.schemas import ExtractedQuestion, ExtractionResult, RenderedImage, ValidationIssue
 
 
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -59,10 +59,11 @@ def _summary_table(result: ExtractionResult) -> list[str]:
         rows.append(("Versions", f"{run.extraction_version} / {run.question_object_version}"))
     if result.repairs:
         rows.append(("Repairs", str(len(result.repairs))))
-    if result.diagrams:
-        cropped = sum(1 for d in result.diagrams if d.cropped)
-        rows.append(("Diagrams", f"{len(result.diagrams)} "
-                                 f"({cropped} cropped, {len(result.diagrams) - cropped} full page)"))
+    for label, assets in (("Diagrams", result.diagrams), ("Tables captured", result.tables)):
+        if assets:
+            cropped = sum(1 for a in assets if a.cropped)
+            rows.append((label, f"{len(assets)} "
+                                f"({cropped} cropped, {len(assets) - cropped} full page)"))
 
     lines = ["| | |", "|---|---|"]
     lines += [f"| {label} | {value} |" for label, value in rows]
@@ -79,10 +80,22 @@ def _issue_summary(issues: list[ValidationIssue]) -> str:
     return f"**Issues:** {' · '.join(parts)}"
 
 
+def _image_lines(asset: RenderedImage, label: str, report_path: Path) -> list[str]:
+    link = _relative_link(asset.image_path, report_path)
+    kind = "cropped" if asset.cropped else "full page"
+    return [
+        f"![{label}]({link})",
+        "",
+        f"*{kind} · {asset.width}×{asset.height} · page {asset.page}*",
+        "",
+    ]
+
+
 def _question_section(
     question: ExtractedQuestion,
-    asset: DiagramAsset | None,
+    asset: RenderedImage | None,
     report_path: Path,
+    tables: list[RenderedImage] | None = None,
 ) -> list[str]:
     labels = []
     if question.marks is not None:
@@ -100,16 +113,14 @@ def _question_section(
     lines += [f"*{meta}*", "", question.question_text, ""]
 
     if asset:
-        link = _relative_link(asset.image_path, report_path)
-        kind = "cropped" if asset.cropped else "full page"
-        lines += [
-            f"![{question.source_question_id}]({link})",
-            "",
-            f"*{kind} · {asset.width}×{asset.height} · page {asset.page}*",
-            "",
-        ]
+        lines += _image_lines(asset, question.source_question_id, report_path)
     elif question.diagram_required:
         lines += ["> ⚠️ Needs a diagram, but no image was rendered.", ""]
+
+    for table in tables or []:
+        label = f"{question.source_question_id} table {table.index + 1}"
+        lines += [f"**Table {table.index + 1} as printed:**", ""]
+        lines += _image_lines(table, label, report_path)
 
     if question.answer:
         lines += [f"**Answer:** {question.answer}", ""]
@@ -124,13 +135,23 @@ def _question_section(
 def render_markdown(result: ExtractionResult, report_path: Path) -> str:
     document = result.document
     assets = {asset.source_question_id: asset for asset in result.diagrams}
+    tables: dict[str, list[RenderedImage]] = {}
+    for table in result.tables:
+        tables.setdefault(table.source_question_id, []).append(table)
+    for group in tables.values():
+        group.sort(key=lambda a: a.index)
 
     lines = [f"# {document.file_name}", ""]
     lines += _summary_table(result)
     lines += ["", _issue_summary(result.issues), "", "---", ""]
 
     for question in document.questions:
-        lines += _question_section(question, assets.get(question.source_question_id), report_path)
+        lines += _question_section(
+            question,
+            assets.get(question.source_question_id),
+            report_path,
+            tables.get(question.source_question_id),
+        )
         lines += ["---", ""]
 
     if result.repairs:

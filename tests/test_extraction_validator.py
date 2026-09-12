@@ -331,15 +331,15 @@ def test_diagram_without_a_region_is_reported(make_document, make_question):
 
 
 def test_diagram_with_a_malformed_region_is_reported(make_document, make_question):
-    from app.schemas import DiagramRegion
-    bad = DiagramRegion(page=1, y_min=600, x_min=900, y_max=200, x_max=100)
+    from app.schemas import PageRegion
+    bad = PageRegion(page=1, y_min=600, x_min=900, y_max=200, x_max=100)
     document = make_document([make_question(diagram_required=True, diagram_region=bad)])
     assert diagram_codes(document) == ["DIAGRAM_REGION_UNUSABLE"]
 
 
 def test_diagram_with_a_good_region_is_clean(make_document, make_question):
-    from app.schemas import DiagramRegion
-    good = DiagramRegion(page=1, y_min=200, x_min=100, y_max=600, x_max=900)
+    from app.schemas import PageRegion
+    good = PageRegion(page=1, y_min=200, x_min=100, y_max=600, x_max=900)
     document = make_document([make_question(diagram_required=True, diagram_region=good)])
     assert diagram_codes(document) == []
 

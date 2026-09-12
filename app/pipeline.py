@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from app.config import load_settings
-from app.diagram_renderer import render_diagrams
+from app.diagram_renderer import render_question_images
 from app.document_extractor import DocumentExtractor
 from app.extraction_repair import repair_shared_stems
 from app.extraction_validator import blocking_issues, validate_extraction
@@ -49,9 +49,17 @@ class PdfIngestionPipeline:
         print("Step 2: Validate extraction")
         result.issues = validate_extraction(result.document)
 
-        if self.settings.render_diagrams:
-            print("Step 3: Render diagrams")
-            result.diagrams = self._render_diagrams(pdf_path, result)
+        kinds = tuple(
+            kind for kind, wanted in (
+                ("diagram", self.settings.render_diagrams),
+                ("table", getattr(self.settings, "render_tables", True)),
+            ) if wanted
+        )
+        if kinds:
+            print("Step 3: Render images")
+            images = self._render_images(pdf_path, result, kinds)
+            result.diagrams = [i for i in images if i.kind == "diagram"]
+            result.tables = [i for i in images if i.kind == "table"]
 
         print("Step 4: Save result")
         self.repository.save_extraction_result(result)
@@ -64,9 +72,10 @@ class PdfIngestionPipeline:
         export_extraction_markdown(result, report_path)
         print("Report:  ", report_path)
 
-        for asset in result.diagrams:
-            kind = "cropped" if asset.cropped else "full page"
-            print(f"Diagram {asset.source_question_id}: {asset.image_path} ({kind})")
+        for asset in result.diagrams + result.tables:
+            how = "cropped" if asset.cropped else "full page"
+            print(f"{asset.kind.title()} {asset.source_question_id}: "
+                  f"{asset.image_path} ({how})")
 
         blocking = blocking_issues(result.issues)
         if blocking:
@@ -77,15 +86,16 @@ class PdfIngestionPipeline:
 
         return result
 
-    def _render_diagrams(self, pdf_path, result):
-        """Render diagrams, but never lose an extraction over a failed image."""
+    def _render_images(self, pdf_path, result, kinds):
+        """Render images, but never lose an extraction over a failed one."""
         try:
-            return render_diagrams(
+            return render_question_images(
                 pdf_path=pdf_path,
                 document=result.document,
                 output_dir=diagram_output_dir(result),
                 dpi=self.settings.diagram_dpi,
+                kinds=kinds,
             )
         except Exception as exc:
-            print(f"Warning: could not render diagrams ({type(exc).__name__}: {exc})")
+            print(f"Warning: could not render images ({type(exc).__name__}: {exc})")
             return []

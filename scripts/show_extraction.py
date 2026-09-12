@@ -80,11 +80,13 @@ def main(argv: list[str] | None = None) -> int:
         for note in q.get("extraction_notes", []):
             print(f"\nNOTE: {note}")
 
-    diagrams = {d["source_question_id"]: d for d in data.get("diagrams", [])}
-    if diagrams:
+    for label, key in (("DIAGRAMS", "diagrams"), ("TABLES", "tables")):
+        assets = data.get(key, [])
+        if not assets:
+            continue
         print("\n" + "=" * 70)
-        print(f"DIAGRAMS: {len(diagrams)}")
-        for asset in diagrams.values():
+        print(f"{label}: {len(assets)}")
+        for asset in assets:
             kind = "cropped" if asset["cropped"] else "full page"
             print(f"  {asset['source_question_id']:10} p{asset['page']}  "
                   f"{asset['width']}x{asset['height']}  {kind}")
