@@ -3,6 +3,8 @@ import pytest
 from app.extraction_validator import (
     blocking_issues,
     find_broken_powers,
+    find_malformed_tables,
+    find_repeated_sentences,
     has_blocking_issues,
     validate_extraction,
 )
@@ -151,6 +153,115 @@ def test_enough_questions_is_not_reported(make_document, make_question):
         for n in range(1, 11)
     ]
     assert "SUSPICIOUSLY_FEW_QUESTIONS" not in codes(make_document(questions, page_count=10))
+
+
+# --- tables -----------------------------------------------------------------
+
+GOOD_TABLE = ("在某次大抽獎中…\n\n"
+              "| 球 | 現金獎 |\n| --- | --- |\n| 黑色 | $22 |\n| 白色 | $0 |\n\n"
+              "求隨機抽取一次的期望現金獎。")
+
+# What Gemini actually produced when the prompt did not pin the format.
+BAD_TABLE = ("在某次大抽獎中…\n\n"
+             "球 | 現金獎\n黑色 | $22\n綠色 | $10\n白色 | $0\n\n"
+             "求隨機抽取一次的期望現金獎。")
+
+STEM_AND_LEAF = ("以下的幹葉圖顯示…\n\n"
+                 "幹（十位） | 葉（個位）\n0 | 5 5 6 8 9\n1 | 0 1 2 4\n\n求平均數。")
+
+
+def test_a_proper_markdown_table_is_accepted():
+    assert find_malformed_tables(GOOD_TABLE) == 0
+
+
+def test_a_table_without_a_separator_row_is_caught():
+    assert find_malformed_tables(BAD_TABLE) == 1
+
+
+def test_a_stem_and_leaf_block_is_caught():
+    assert find_malformed_tables(STEM_AND_LEAF) == 1
+
+
+@pytest.mark.parametrize("text", [
+    "圖中，O 是 △ABC 的外心。求 OA。",
+    "某筆盒內有 6 支藍色筆。\n抽出的筆是藍色或黑色。",
+    "求 |x - 3| 的值。",
+    r"化簡 \(\frac{a^2}{b^5}\)。",
+])
+def test_prose_is_not_mistaken_for_a_table(text):
+    assert find_malformed_tables(text) == 0
+
+
+def test_malformed_table_is_reported_against_the_question(make_document, make_question):
+    document = make_document([make_question(question_text=BAD_TABLE)])
+    issues = [i for i in validate_extraction(document) if i.issue_code == "MALFORMED_TABLE"]
+    assert len(issues) == 1
+    assert issues[0].severity == "medium"
+
+
+def test_malformed_table_does_not_block(make_document, make_question):
+    document = make_document([make_question(question_text=BAD_TABLE)])
+    assert has_blocking_issues(validate_extraction(document)) is False
+
+
+# --- text repeated inside one question --------------------------------------
+
+# 19(c) as extracted: the part's own question also sits in the shared stem.
+REPEATED = ("圖中，O 是原點。L 分別與 x 軸和 y 軸相交於點 A 和點 B。求 △OAB 的面積。\n"
+            "求 △OAB 的面積。")
+
+
+def test_repeated_sentence_is_found():
+    assert find_repeated_sentences(REPEATED) == ["求 △OAB 的面積"]
+
+
+def test_distinct_sentences_are_not_flagged():
+    text = "圖中，O 是原點。求 △OAB 的面積。\n求直線 L 的斜率。"
+    assert find_repeated_sentences(text) == []
+
+
+def test_table_rows_are_not_treated_as_sentences():
+    assert find_repeated_sentences(GOOD_TABLE) == []
+
+
+def test_short_fragments_are_ignored():
+    assert find_repeated_sentences("求 x。\n求 x。") == []
+
+
+def test_repeated_text_is_reported(make_document, make_question):
+    document = make_document([make_question(source_question_id="19(c)",
+                                            question_text=REPEATED)])
+    issues = [i for i in validate_extraction(document)
+              if i.issue_code == "REPEATED_TEXT_IN_QUESTION"]
+    assert len(issues) == 1 and issues[0].source_question_id == "19(c)"
+
+
+# --- marks ------------------------------------------------------------------
+
+def test_missing_marks_reported_when_the_paper_marks_others(make_document, make_question):
+    document = make_document([
+        make_question(source_question_id="1", marks=3),
+        make_question(source_question_id="2(a)"),
+    ])
+    issues = [i for i in validate_extraction(document) if i.issue_code == "MARKS_MISSING"]
+    assert [i.source_question_id for i in issues] == ["2(a)"]
+    assert issues[0].severity == "low"
+
+
+def test_group_marks_count_as_marks(make_document, make_question):
+    document = make_document([
+        make_question(source_question_id="1", marks=3),
+        make_question(source_question_id="2(a)", group_marks=4, group_marks_scope="2"),
+    ])
+    assert "MARKS_MISSING" not in codes(document)
+
+
+def test_a_paper_printing_no_marks_at_all_is_not_flagged(make_document, make_question):
+    document = make_document([
+        make_question(source_question_id="1"),
+        make_question(source_question_id="2"),
+    ])
+    assert "MARKS_MISSING" not in codes(document)
 
 
 # --- diagram regions --------------------------------------------------------

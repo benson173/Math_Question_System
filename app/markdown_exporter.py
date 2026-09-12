@@ -22,6 +22,11 @@ def markdown_output_path(json_path: str | Path) -> Path:
     return Path(json_path).with_suffix(".md")
 
 
+def _marks_label(marks: float) -> str:
+    value = int(marks) if float(marks).is_integer() else marks
+    return f"{value} mark" if value == 1 else f"{value} marks"
+
+
 def _pages(question: ExtractedQuestion) -> str:
     if question.page_start == question.page_end:
         return f"page {question.page_start}"
@@ -79,8 +84,10 @@ def _question_section(
 ) -> list[str]:
     labels = []
     if question.marks is not None:
-        marks = int(question.marks) if float(question.marks).is_integer() else question.marks
-        labels.append(f"{marks} mark" if marks == 1 else f"{marks} marks")
+        labels.append(_marks_label(question.marks))
+    elif question.group_marks is not None:
+        scope = question.group_marks_scope or "the group"
+        labels.append(f"{_marks_label(question.group_marks)} for {scope}")
     if question.diagram_required:
         labels.append("diagram")
 

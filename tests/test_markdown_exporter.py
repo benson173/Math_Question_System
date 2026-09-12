@@ -66,6 +66,20 @@ def test_marks_are_written_naturally(make_result, make_document, make_question,
     assert f"· {expected}" in render_markdown(make_result(document=document), report_path)
 
 
+def test_group_marks_are_shown_with_their_scope(
+    make_result, make_document, make_question, report_path
+):
+    document = make_document([make_question(group_marks=4, group_marks_scope="12(b)-(d)")])
+    text = render_markdown(make_result(document=document), report_path)
+    assert "· 4 marks for 12(b)-(d)" in text
+
+
+def test_own_marks_win_over_group_marks(make_result, make_document, make_question, report_path):
+    document = make_document([make_question(marks=2, group_marks=4, group_marks_scope="12")])
+    text = render_markdown(make_result(document=document), report_path)
+    assert "· 2 marks" in text and "for 12" not in text
+
+
 def test_single_and_multi_page_questions_read_correctly(
     make_result, make_document, make_question, report_path
 ):

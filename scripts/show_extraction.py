@@ -62,6 +62,9 @@ def main(argv: list[str] | None = None) -> int:
         labels = []
         if q.get("marks") is not None:
             labels.append(f"{q['marks']} marks")
+        elif q.get("group_marks") is not None:
+            labels.append(f"{q['group_marks']} marks for "
+                          f"{q.get('group_marks_scope') or 'the group'}")
         if q.get("diagram_required"):
             labels.append("diagram")
         suffix = f"  [{', '.join(labels)}]" if labels else ""

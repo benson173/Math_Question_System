@@ -139,3 +139,67 @@ Rule 2 講嗰張標準表格，我哋自己整出嚟嘅檔案放喺 `ExtractionR
 `../diagrams/.../16.png`，所以成個 `data/` folder 搬去邊都唔會斷。
 
 `scripts/export_markdown.py` 可以由已存嘅 JSON 重新整份 report，唔使再燒 API。
+
+---
+
+## 10. `group_marks` — 卷面只印一個總分嘅情況
+
+**問題**：好多卷 Q2 印一次「(4 分)」，但 (a)(b)(c) 每個部分喺呢度係獨立一筆。
+Gemini 唔亂拆總分係啱嘅，但佢會寫一句英文 note
+（`Total marks for Question 2 is 4 marks.`）— 資料困死喺 free text，後面用唔到。
+實測一份 39 條嘅卷，**17 條係噉**。
+
+**改法**：`ExtractedQuestion` 加兩個欄位：
+
+```text
+marks               呢個部分自己印嘅分（冇就 null）
+group_marks         成組共用嘅總分
+group_marks_scope   卷面點寫個範圍，例如 "2"、"12(b)-(d)"、"18(a)"
+```
+
+Prompt 明確禁止再將分數寫入 `extraction_notes`，亦禁止自己拆總分。
+
+Validator 加 `MARKS_MISSING`（low）— 但**只喺成份卷其他題有分數嘅時候先報**。
+成份卷都冇印分數係正常，唔應該嘈。
+
+---
+
+## 11. 表格格式要釘死
+
+**問題**：同一個 prompt 跑兩次，Gemini 出兩種表格格式 —
+一次係正常 markdown（`| 球 | 現金獎 |` + `| :---: | :---: |`），
+一次係冇 separator row 嘅
+（`球 | 現金獎`），後者 render 出嚟係一嚿爛文字，下游亦都 parse 唔到。
+Prompt 由頭到尾冇講過表格要咩格式。
+
+**改法**：Prompt 加 `TABLES` 一節，釘死 GitHub-flavoured markdown，明寫 separator
+row 唔可以少，空格要留空（畀學生填嘅表），幹葉圖都當表格處理。
+
+Validator 加 `MALFORMED_TABLE`（medium）：搵連續、pipe 數一致嘅行（呢個一致性
+就係「表」同「啱好有個 pipe 嘅句子」嘅分別），頭兩行冇 separator 就報。
+
+---
+
+## 12. 數學符號寫法要一致
+
+**問題**：同一份卷 Q1/Q4 嘅分數用 LaTeX `\(\frac{...}{...}\)`，Q9/Q15 又用純
+Unicode。Prompt 只講「保留原文符號」，冇講分數呢類結構點寫。
+
+**改法**：Prompt 加 `MATHEMATICAL NOTATION` — Unicode 寫得到嘅就用 Unicode
+（`− × ÷ ² ³ ½ π ° θ ∠ △ ≤ ≥ ≠ √`），淨係 Unicode 表達唔到嘅結構（直式分數、
+n 次方根、矩陣、求和）先用 LaTeX，而且成份卷要一致。
+
+---
+
+## 13. 同一題入面句子重複
+
+**問題**：實測 Q19 三個小題嘅共用題幹入面，多咗一句其實係 19(c) 嘅題目
+（`求 △OAB 的面積。`），所以 19(a)、19(b) 都含住 19(c) 條題，而 19(c) 自己同一
+句出現兩次。
+
+**改法**：Prompt 明寫「共用材料去到第一個部分開始為止，唔可以將一個部分嘅題目抄
+入另一個部分，同一句唔可以喺一個 question_text 入面出現兩次」。
+
+Validator 加 `REPEATED_TEXT_IN_QUESTION`（medium）：用 `。？！` 同換行斷句，
+一句 8 個字以上、唔含 pipe（唔數表格行）、喺同一題出現兩次就報。上面嗰個真實例子
+啱啱好就係噉觸發。

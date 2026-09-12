@@ -35,6 +35,14 @@ _BROKEN_POWER = re.compile(r"[a-zA-Z]\d+")
 _DIMENSION_TOKEN = re.compile(r"\b\d[xX]\d\b")   # "a 2x2 grid"
 _LABEL_TOKEN = re.compile(r"\b[A-Z]\d+\b")       # "Q1", "A2", "P6"
 
+# A GitHub-flavoured Markdown separator row: | --- | :---: | ---: |
+_TABLE_SEPARATOR = re.compile(r"^\s*\|?(\s*:?-{2,}:?\s*\|)+\s*:?-{2,}:?\s*\|?\s*$|"
+                              r"^\s*\|(\s*:?-{2,}:?\s*\|)+\s*$")
+
+# Sentence enders used to spot text duplicated inside one question.
+_SENTENCE_SPLIT = re.compile(r"[。？！\n]+")
+MIN_REPEATED_SENTENCE = 8
+
 
 def _mask(pattern: re.Pattern[str], text: str) -> str:
     """Blank out matches while keeping the string the same length."""
@@ -50,6 +58,58 @@ def find_broken_powers(text: str) -> list[str]:
     """
     masked = _mask(_LABEL_TOKEN, _mask(_DIMENSION_TOKEN, text))
     return [match.group() for match in _BROKEN_POWER.finditer(masked)]
+
+
+def _pipe_blocks(text: str) -> list[list[str]]:
+    """Runs of consecutive lines that look like rows of one table.
+
+    Lines must agree on how many pipes they carry; that consistency is what
+    separates a table from prose that happens to contain a pipe.
+    """
+    blocks: list[list[str]] = []
+    current: list[str] = []
+    current_pipes = -1
+
+    for line in text.splitlines():
+        pipes = line.count("|")
+        if pipes and (not current or pipes == current_pipes):
+            current.append(line)
+            current_pipes = pipes
+        else:
+            if len(current) >= 2:
+                blocks.append(current)
+            current = [line] if pipes else []
+            current_pipes = pipes if pipes else -1
+
+    if len(current) >= 2:
+        blocks.append(current)
+    return blocks
+
+
+def find_malformed_tables(text: str) -> int:
+    """Count table-like blocks missing their Markdown separator row.
+
+    Without it the block renders as one run-on paragraph rather than a table,
+    and nothing downstream can read the columns.
+    """
+    return sum(
+        1 for block in _pipe_blocks(text)
+        if not any(_TABLE_SEPARATOR.match(line) for line in block[:2])
+    )
+
+
+def find_repeated_sentences(text: str) -> list[str]:
+    """Sentences appearing more than once inside a single question.
+
+    A part's own question copied into the shared stem shows up exactly this
+    way, so the duplicate is the symptom worth reporting.
+    """
+    seen: dict[str, int] = {}
+    for raw in _SENTENCE_SPLIT.split(text):
+        sentence = " ".join(raw.split())
+        if len(sentence) >= MIN_REPEATED_SENTENCE and "|" not in sentence:
+            seen[sentence] = seen.get(sentence, 0) + 1
+    return sorted(s for s, count in seen.items() if count > 1)
 
 
 def blocking_issues(issues: list[ValidationIssue]) -> list[ValidationIssue]:
@@ -111,11 +171,36 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
                    f"Question {qid} needs a diagram but gave no usable region; "
                    "the whole page will be rendered instead.", qid)
 
+        malformed = find_malformed_tables(q.question_text)
+        if malformed:
+            report("MALFORMED_TABLE", "medium",
+                   f"Question {qid} has {malformed} table-like block(s) with no "
+                   "Markdown separator row, so they will not render as tables.", qid)
+
+        repeated = find_repeated_sentences(q.question_text)
+        if repeated:
+            report("REPEATED_TEXT_IN_QUESTION", "medium",
+                   f"Question {qid} repeats text verbatim, which usually means one "
+                   f"part's question was copied into the shared stem: "
+                   f"{repeated[0][:60]!r}", qid)
+
         broken = find_broken_powers(q.question_text)
         if broken:
             found = ", ".join(sorted(set(broken)))
             report("POSSIBLE_BROKEN_POWER", "medium",
                    f"Question {qid} may have broken power notation: {found}", qid)
+
+    # Only meaningful when the paper prints marks at all: a paper with none is
+    # fine, a paper that marks most questions and not others is not.
+    marked = [q for q in document.questions
+              if q.marks is not None or q.group_marks is not None]
+    if marked:
+        for q in document.questions:
+            if q.marks is None and q.group_marks is None:
+                report("MARKS_MISSING", "low",
+                       f"Question {q.source_question_id} has no marks, but "
+                       f"{len(marked)} of {len(document.questions)} questions do.",
+                       q.source_question_id)
 
     if document.questions and document.page_count >= MIN_PAGES_FOR_DENSITY_CHECK:
         expected = document.page_count * MIN_QUESTIONS_PER_PAGE

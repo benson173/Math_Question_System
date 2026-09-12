@@ -32,6 +32,11 @@ class ExtractedQuestion(BaseModel):
     page_end: int
     question_text: str
     marks: Optional[float] = None
+    # Papers often print one mark total for a whole question whose parts are
+    # separate entries here. Recording that as data beats a free-text note:
+    # group_marks=4, group_marks_scope="2" for "Question 2 ... (4 marks)".
+    group_marks: Optional[float] = None
+    group_marks_scope: Optional[str] = None
     answer: Optional[str] = None
     worked_solution: Optional[str] = None
     diagram_required: bool = False
