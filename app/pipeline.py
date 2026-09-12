@@ -5,6 +5,8 @@ happened. It does not split questions, call Gemini, write storage, or judge
 mathematics itself.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 from app.document_extractor import DocumentExtractor

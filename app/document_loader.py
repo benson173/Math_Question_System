@@ -5,6 +5,8 @@ reports the name, size, hash and page count. It does not split questions, call
 Gemini, OCR anything, or change the PDF text.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from io import BytesIO
 from pathlib import Path

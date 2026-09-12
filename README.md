@@ -18,11 +18,27 @@ PDF → 讀取 → 逐頁拆開 → 找出每條題目 → 保留數學符號 �
 
 ---
 
+## 需要
+
+**Python 3.9 或以上。**
+
+macOS 內置嘅 `python3` 通常係 3.9，啱啱夠用。如果 `python3 --version` 顯示 3.8 或
+更舊，就要裝新啲嘅:
+
+```bash
+python3 --version          # 睇吓係邊個版本
+python3.11 -m venv .venv   # 或者用你裝咗嘅新版本
+```
+
+3.9 已經過咗官方支援期，得閒可以升去 3.11+，但而家唔升都行。
+
+---
+
 ## 快速開始
 
 ```bash
 # 1. 安裝
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # 2. 設定
@@ -67,7 +83,7 @@ pip install pytest
 pytest
 ```
 
-95 個測試，全部唔使 API key、唔使上網。
+全部測試都唔使 API key、唔使上網。
 
 ---
 

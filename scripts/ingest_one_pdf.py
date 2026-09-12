@@ -7,6 +7,8 @@ Exits non-zero when the PDF produced no usable questions, so it can be used in
 a shell pipeline or a Makefile.
 """
 
+from __future__ import annotations
+
 import sys
 
 from app.extraction_validator import blocking_issues

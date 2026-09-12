@@ -4,6 +4,8 @@ Nothing here judges mathematics. It only asks "does this look like a faithful
 copy of the PDF?" - missing questions, broken symbols, impossible page numbers.
 """
 
+from __future__ import annotations
+
 import re
 
 from app.schemas import ExtractedDocument, Severity, ValidationIssue

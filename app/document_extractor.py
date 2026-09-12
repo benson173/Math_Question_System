@@ -5,6 +5,8 @@ file name, page count and hash are facts the loader already established, so the
 model is never given a chance to guess them wrong.
 """
 
+from __future__ import annotations
+
 from datetime import datetime, timezone
 from pathlib import Path
 import uuid

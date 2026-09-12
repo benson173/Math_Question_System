@@ -1,5 +1,7 @@
 """Check that a PDF can be read at all. Needs no API key."""
 
+from __future__ import annotations
+
 import sys
 
 from app.document_loader import load_pdf

@@ -5,6 +5,8 @@ edit the prompt, or judge difficulty. It only gets structured JSON back, and
 fails with a message that says what went wrong.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any
 

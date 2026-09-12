@@ -1,5 +1,7 @@
 """Write an extraction to disk as JSON, for eyeballing before Supabase exists."""
 
+from __future__ import annotations
+
 from pathlib import Path
 import json
 
