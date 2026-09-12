@@ -36,9 +36,27 @@ class Repository:
 
         print("=== QUESTIONS ===")
         for q in document.questions:
-            marks = "" if q.marks is None else f"  [{q.marks} marks]"
-            print(f"{q.source_question_id}  p{q.page_start}-{q.page_end}  "
-                  f"{q.question_text[:80]}{marks}")
+            # Printed in full, on its own lines. Truncating to a preview made
+            # sub-questions of the same parent look identical (they share a
+            # stem) and cut markdown tables mid-row, which read as extraction
+            # failures when the data was fine.
+            labels = []
+            if q.marks is not None:
+                labels.append(f"{q.marks} marks")
+            if q.diagram_required:
+                labels.append("diagram")
+            suffix = f"  [{', '.join(labels)}]" if labels else ""
+            print(f"--- {q.source_question_id}  p{q.page_start}-{q.page_end}{suffix}")
+
+            for line in q.question_text.splitlines():
+                print(f"    {line}")
+            if q.answer:
+                print(f"    ANSWER: {q.answer}")
+            if q.worked_solution:
+                print(f"    SOLUTION: {q.worked_solution}")
+            for note in q.extraction_notes:
+                print(f"    NOTE: {note}")
+            print()
 
         print("=== ISSUES ===")
         if not result.issues:
