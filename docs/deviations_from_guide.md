@@ -353,3 +353,24 @@ run 4     嘉欣得知 B 的底半徑為 B 為 18 cm。
 
 `agreement`（一致嘅題目比例）係最直接嘅信心指標。兩次一致嘅地方基本信得過；
 唔一致嗰幾條，先值得你揭返卷。
+
+---
+
+## 19. 批量真係跑 50 份卷
+
+Lesson 18 個批量 script 邏輯啱，但係為咗示範寫，真係掟幾十份卷落去會撞到幾樣嘢 ——
+其中最大鑊嗰個仲要係前面自己整返出嚟嘅。
+
+| 問題 | 點解 | 改法 |
+|---|---|---|
+| Terminal 爆炸 | 第 (§ 上面) 次修好「印全文」之後，一份卷 39 條題目就幾百行，50 份 = 過萬行，個 summary 完全搵唔到 | `Repository(verbose=False)`，批量模式每份卷印一行，詳情留返畀每份卷自己嘅 `.md` |
+| 重複燒錢 | `sha256` 由 Lesson 09 開始就計，但從來冇用嚟做 dedupe。重跑一個 batch = 全部重新叫一次 Gemini | 跑之前先 hash，`data/extracted/*-<sha12>.json` 已經有就跳過。改咗檔名都認得，因為認內容唔認名 |
+| `.PDF` 大寫執唔到 | `glob("*.pdf")` 喺 Linux 係 case-sensitive，靜靜雞漏咗 | 改用 `rglob("*")` 再比較 `suffix.lower()` |
+| 子資料夾執唔到 | `glob` 唔遞歸，`inbox/pdf/2024/x.pdf` 完全唔處理 | `rglob`，搬去 `processed/` 嗰陣保留返 folder 結構，空 folder 清埋 |
+| 睇唔到進度 | 50 份卷跑 30 分鐘，唔知做到邊 | `[12/47]` + 每份幾秒 + 總時間 |
+| Ctrl-C 拋 traceback | 中途想停，唔知做咗幾多 | 接住 `KeyboardInterrupt`，照出 report，exit 130 |
+| Batch 內有重複卷 | 同內容第二份會覆寫第一份個 JSON（同 hash 同名），冇人出聲 | 記住呢次 run 見過嘅 hash，標做 `duplicate` |
+| 冇留低嘅總結 | 得 terminal output | `data/extracted/batch-<時間>.md`，逐份卷列狀態／題數／用時 |
+
+Pipeline 喺**任何 file 搬動之前**就起好 —— 冇 API key 就即刻炸，唔會半個 inbox
+搬晒先發現。

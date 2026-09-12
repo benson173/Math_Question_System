@@ -10,10 +10,17 @@ from app.schemas import ExtractionResult
 
 
 class Repository:
-    def __init__(self):
+    def __init__(self, verbose: bool = True):
+        # Printing every question in full is what you want for one PDF and
+        # unreadable for fifty; a batch prints one line instead and leaves the
+        # detail to each paper's own report.
+        self.verbose = verbose
         self.settings = load_settings()
 
     def save_extraction_result(self, result: ExtractionResult) -> None:
+        if not self.verbose:
+            self._save_quietly(result)
+            return
         # Phase 1:
         # Supabase 由你自己做，所以這裏先 print。
         # 之後再改成 supabase.table(...).insert(...) 寫入
@@ -68,3 +75,14 @@ class Repository:
         if blocking:
             codes = ", ".join(sorted({issue.issue_code for issue in blocking}))
             print(f"=== BLOCKING: {codes} ===")
+
+    def _save_quietly(self, result: ExtractionResult) -> None:
+        document = result.document
+        parts = [f"{len(document.questions)} questions"]
+        if result.issues:
+            parts.append(f"{len(result.issues)} issues")
+        if result.diagrams:
+            parts.append(f"{len(result.diagrams)} diagrams")
+        if result.tables:
+            parts.append(f"{len(result.tables)} tables")
+        print(f"Saved {document.file_name}: {', '.join(parts)}")
