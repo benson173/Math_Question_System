@@ -1,16 +1,33 @@
+"""Write an extraction to disk as JSON, for eyeballing before Supabase exists."""
+
 from pathlib import Path
 import json
-from app.schemas import ExtractedDocument, ValidationIssue
+
+from app.paths import EXTRACTED_DIR
+from app.schemas import ExtractionResult
+
+
+def extraction_output_path(result: ExtractionResult) -> Path:
+    """Where this extraction's JSON belongs.
+
+    Named by content hash, not just file name: two different papers both called
+    "sample.pdf" no longer overwrite each other, while re-ingesting the same PDF
+    deliberately overwrites its own previous output.
+    """
+    stem = Path(result.document.file_name).stem or "document"
+    digest = result.source.sha256[:12] if result.source else "nohash"
+    return EXTRACTED_DIR / f"{stem}-{digest}.json"
 
 
 def export_extraction_json(
-    document: ExtractedDocument,
-    issues: list[ValidationIssue],
+    result: ExtractionResult,
     output_path: str | Path,
-) -> None:
+) -> Path:
     output = {
-        "document": document.model_dump(),
-        "issues": [issue.model_dump() for issue in issues],
+        "source": result.source.model_dump() if result.source else None,
+        "run": result.run.model_dump() if result.run else None,
+        "document": result.document.model_dump(),
+        "issues": [issue.model_dump() for issue in result.issues],
     }
 
     path = Path(output_path)
@@ -20,3 +37,4 @@ def export_extraction_json(
         json.dumps(output, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    return path

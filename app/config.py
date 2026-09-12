@@ -1,9 +1,17 @@
 from dataclasses import dataclass
 from dotenv import load_dotenv
+from functools import lru_cache
 import os
 
 
-@dataclass
+DEFAULT_TIMEOUT_SECONDS = 300.0
+# 0 means "do not send max_output_tokens at all" - let the model use its own
+# default. Setting a value the chosen model does not support is an API error,
+# so this stays opt-in.
+DEFAULT_MAX_OUTPUT_TOKENS = 0
+
+
+@dataclass(frozen=True)
 class Settings:
     gemini_api_key: str
     gemini_extractor_model: str
@@ -11,9 +19,28 @@ class Settings:
     supabase_secret_key: str
     extraction_version: str
     question_object_version: str
+    gemini_timeout_seconds: float
+    gemini_max_output_tokens: int
 
 
+def _env_number(name: str, default: float, cast):
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return cast(default)
+    try:
+        return cast(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a number, got {raw!r}") from exc
+
+
+@lru_cache(maxsize=1)
 def load_settings() -> Settings:
+    """Read .env once per process.
+
+    Cached because both GeminiClient and Repository need settings, and there is
+    no reason to re-parse .env for each. Call load_settings.cache_clear() if you
+    change the environment inside a test.
+    """
     load_dotenv()
 
     return Settings(
@@ -23,4 +50,8 @@ def load_settings() -> Settings:
         supabase_secret_key=os.getenv("SUPABASE_SECRET_KEY", ""),
         extraction_version=os.getenv("EXTRACTION_VERSION", "QEE_v1"),
         question_object_version=os.getenv("QUESTION_OBJECT_VERSION", "QOS_v1"),
+        gemini_timeout_seconds=_env_number(
+            "GEMINI_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS, float),
+        gemini_max_output_tokens=_env_number(
+            "GEMINI_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS, int),
     )

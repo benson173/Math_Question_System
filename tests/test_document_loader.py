@@ -1,32 +1,37 @@
 import hashlib
 import pytest
-from pypdf import PdfWriter
 
 from app.document_loader import calculate_sha256, load_pdf
 
 
-@pytest.fixture
-def sample_pdf(tmp_path):
-    path = tmp_path / "sample.pdf"
-    writer = PdfWriter()
-    writer.add_blank_page(width=595, height=842)
-    writer.add_blank_page(width=595, height=842)
-    with path.open("wb") as f:
-        writer.write(f)
-    return path
-
-
-def test_load_pdf_reads_name_and_page_count(sample_pdf):
-    doc = load_pdf(sample_pdf)
+def test_load_pdf_reads_name_and_page_count(write_pdf):
+    doc = load_pdf(write_pdf(pages=2))
     assert doc.file_name == "sample.pdf"
     assert doc.page_count == 2
 
 
-def test_load_pdf_computes_sha256(sample_pdf):
-    doc = load_pdf(sample_pdf)
-    expected = hashlib.sha256(sample_pdf.read_bytes()).hexdigest()
-    assert doc.sha256 == expected
-    assert calculate_sha256(sample_pdf) == expected
+def test_load_pdf_computes_sha256_and_size(write_pdf):
+    path = write_pdf()
+    doc = load_pdf(path)
+    raw = path.read_bytes()
+    assert doc.sha256 == hashlib.sha256(raw).hexdigest()
+    assert doc.byte_size == len(raw)
+
+
+def test_load_pdf_keeps_the_bytes_for_reuse(write_pdf):
+    path = write_pdf()
+    doc = load_pdf(path)
+    assert doc.data == path.read_bytes()
+
+
+def test_chunked_hash_matches_whole_file_hash(write_pdf):
+    path = write_pdf()
+    assert calculate_sha256(path) == hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_repr_does_not_dump_the_pdf_bytes(write_pdf):
+    doc = load_pdf(write_pdf())
+    assert "data=" not in repr(doc)
 
 
 def test_load_pdf_rejects_missing_file(tmp_path):
@@ -39,3 +44,10 @@ def test_load_pdf_rejects_non_pdf(tmp_path):
     other.write_text("not a pdf", encoding="utf-8")
     with pytest.raises(ValueError):
         load_pdf(other)
+
+
+def test_load_pdf_rejects_empty_file(tmp_path):
+    empty = tmp_path / "empty.pdf"
+    empty.write_bytes(b"")
+    with pytest.raises(ValueError):
+        load_pdf(empty)

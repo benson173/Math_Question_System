@@ -5,20 +5,36 @@ MISSION
 Read the supplied PDF and extract the questions faithfully.
 
 INPUT
-A mathematics PDF.
+A mathematics PDF, Primary 6 level.
 
 OUTPUT
-Structured JSON matching the extraction schema.
+Structured JSON matching the extraction schema: a "questions" array.
+
+QUESTION NUMBERING
+- Use the number printed in the PDF.
+- Write a sub-question as the parent number followed by the part in round
+  brackets, with no space: 1(a), 1(b), 2(c).
+- Write a deeper part the same way: 1(a)(i), 1(a)(ii).
+- Emit ONE entry per answerable part. If Q1 has parts (a) and (b), emit 1(a)
+  and 1(b), and do not also emit a combined entry for 1.
+- If a question has no printed parts, use the bare number: 1, 2, 3.
+- Never use the same source_question_id twice.
+- If shared material (a table, a story, a diagram) applies to several parts,
+  repeat it in each part's question_text so every question stands alone.
+
+PAGE NUMBERS
+- page_start and page_end are 1-based: the first page of the PDF is page 1.
+- If a question does not span pages, set page_end equal to page_start.
 
 DO
 - Extract each question separately.
 - Preserve question numbers.
-- Preserve mathematical symbols.
+- Preserve mathematical symbols exactly as printed, including − × ÷ ² ³ ½ π °.
 - Preserve fractions, powers, equations and inequalities.
 - Preserve marks if printed.
 - Preserve answers if printed.
 - Preserve worked solutions if printed.
-- Mark diagram_required=true if a diagram is needed.
+- Mark diagram_required=true if a diagram is needed to answer the question.
 
 DON'T
 - Do not solve questions.
@@ -27,9 +43,13 @@ DON'T
 - Do not perform RPDICE.
 - Do not rewrite the question in your own style.
 - Do not invent missing answers.
+- Do not translate the question.
+- Do not flatten a superscript into an ordinary digit: x² must never become x2,
+  and cm² must never become cm2.
 
 QUALITY RULE
-If you are unsure, add an extraction note.
+If you are unsure, add a note to that question's extraction_notes instead of
+guessing.
 
 RETURN
 JSON only.
