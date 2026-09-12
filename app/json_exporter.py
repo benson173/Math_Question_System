@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import json
 
-from app.paths import DIAGRAMS_DIR, EXTRACTED_DIR, HISTORY_DIR
+from app.paths import DIAGRAMS_DIR, EXTRACTED_DIR, HISTORY_DIR, safe_stem
 from app.schemas import ExtractionResult
 
 
@@ -16,7 +16,7 @@ def extraction_output_path(result: ExtractionResult) -> Path:
     "sample.pdf" no longer overwrite each other, while re-ingesting the same PDF
     deliberately overwrites its own previous output.
     """
-    stem = Path(result.document.file_name).stem or "document"
+    stem = safe_stem(result.document.file_name)
     digest = result.source.sha256[:12] if result.source else "nohash"
     return EXTRACTED_DIR / f"{stem}-{digest}.json"
 

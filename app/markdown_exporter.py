@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from urllib.parse import quote
 
 from app.schemas import ExtractedQuestion, ExtractionResult, RenderedImage, ValidationIssue
 
@@ -34,12 +35,17 @@ def _pages(question: ExtractedQuestion) -> str:
 
 
 def _relative_link(image_path: str, report_path: Path) -> str:
-    """Path from the report to the image, so the link survives a move."""
+    """Path from the report to the image, so the link survives a move.
+
+    Percent-encoded: a space or a bracket in the path would otherwise end the
+    Markdown link early and the image would not render.
+    """
     try:
-        return os.path.relpath(Path(image_path).resolve(), report_path.parent.resolve())
+        relative = os.path.relpath(Path(image_path).resolve(), report_path.parent.resolve())
     except ValueError:
         # Different drives on Windows - an absolute path is the best we can do.
-        return str(image_path)
+        relative = str(image_path)
+    return quote(relative.replace(os.sep, "/"), safe="/.-_~")
 
 
 def _summary_table(result: ExtractionResult) -> list[str]:

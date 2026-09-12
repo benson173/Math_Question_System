@@ -56,6 +56,46 @@ python -m scripts.ingest_one_pdf paper.pdf   # 或者指定 file
 python -m scripts.ingest_pdfs               # 批量 —— 不論幾多份
 ```
 
+### 檔名點改？
+
+**技術上冇要求** —— 副檔名係 `.pdf` 或者 `.PDF` 就得，其他隨你。抽題同去重都係認
+**內容 hash**，唔認檔名，所以改名唔會影響任何嘢。
+
+不過個檔名會變成輸出資料夾名，所以會自動清理:
+
+| 你個檔名 | 輸出 |
+|---|---|
+| `sample.pdf` | `sample-<sha12>` |
+| `2024_mock_paper1.pdf` | `2024_mock_paper1-<sha12>` |
+| `數學卷一.pdf` | `數學卷一-<sha12>`（中文照留） |
+| `Mock Paper 1.pdf` | `Mock-Paper-1-<sha12>`（空格變 `-`） |
+| `Paper (2).pdf` | `Paper-2-<sha12>`（括號剷走） |
+| `....pdf` | `document-<sha12>` |
+
+太長會截到 80 字。
+
+**建議噉改**（純粹方便你自己日後搵）:
+
+```text
+2024-DSE-M1-paper1.pdf
+2023-mock-stpaul-paper2.pdf
+P6-uniform-test-2024-03.pdf
+```
+
+即係「年份 - 來源 - 卷別」，全部細楷、用 `-` 分隔。噉樣排序自然、shell 唔使 quote、
+`analyse_extractions` 出嗰張表亦都對得齊易睇。
+
+想分類就用**子資料夾**，系統會遞歸執，搬去 `processed/` 嗰陣保留返結構:
+
+```text
+inbox/pdf/
+├── 2024/
+│   ├── dse-paper1.pdf
+│   └── dse-paper2.pdf
+└── mock/
+    └── stpaul-paper1.pdf
+```
+
 ### 批量
 
 `inbox/pdf/` 入面有幾多份都得，**連子資料夾一齊執**:

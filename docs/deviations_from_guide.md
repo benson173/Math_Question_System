@@ -396,3 +396,31 @@ Pipeline 喺**任何 file 搬動之前**就起好 —— 冇 API key 就即刻�
 
 Document 層面嘅 issue（例如 `SUSPICIOUSLY_FEW_QUESTIONS`，冇
 `source_question_id`）會計入總數，但**唔會賴落任何題型**，否則會冤枉咗啲題目。
+
+---
+
+## 21. PDF 檔名會流入輸出路徑
+
+`extraction_output_path` 用 `Path(file_name).stem` 砌輸出名，而 `diagram_output_dir`
+又用嗰個 stem 做資料夾名，最後 `.md` report 又用嗰個資料夾名砌圖片連結。即係話
+**PDF 個檔名會直接變成 markdown 連結嘅一部分**。
+
+實測：
+
+```text
+Mock Paper 1.pdf  ->  ![16](../diagrams/Mock Paper 1-abc123/16.png)   ← 空格，連結斷
+Paper (2).pdf     ->  ![16](../diagrams/Paper (2)-abc123/16.png)      ← 括號提早收掣
+```
+
+兩個都令張圖 render 唔到。
+
+**兩重修法**:
+
+1. `paths.safe_stem()` —— 空格變 `-`，剷走會搞亂路徑或連結嘅符號
+   （`/ \ : * ? " < > | ( ) [ ] { } # % & ...`），保留任何文字系統嘅字母數字
+   （所以中文檔名照樣睇得明），收窄連續 `-`，截到 80 字，全部剷淨就用 `document`
+2. Markdown 連結 percent-encode —— 就算路徑真係有特殊字元都唔會斷。中文資料夾
+   喺磁碟上保持中文，淨係連結入面先編碼
+
+去重一路以嚟都係認 sha256 唔認檔名，所以改名、複製都唔會令同一份卷抽兩次 ——
+呢點冇變。
