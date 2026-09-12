@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 
+from app.diagram_geometry import is_usable_region
 from app.schemas import ExtractedDocument, Severity, ValidationIssue
 
 
@@ -104,6 +105,11 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
         if q.marks is not None and q.marks < 0:
             report("MARKS_INVALID", "medium",
                    f"Question {qid} has negative marks ({q.marks}).", qid)
+
+        if q.diagram_required and not is_usable_region(q.diagram_region):
+            report("DIAGRAM_REGION_UNUSABLE", "medium",
+                   f"Question {qid} needs a diagram but gave no usable region; "
+                   "the whole page will be rendered instead.", qid)
 
         broken = find_broken_powers(q.question_text)
         if broken:

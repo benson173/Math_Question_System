@@ -21,6 +21,12 @@ class FakeExtractor:
         return self.result
 
 
+class FakeSettings:
+    """Diagram rendering is exercised in test_diagram_geometry, not here."""
+    render_diagrams = False
+    diagram_dpi = 200
+
+
 class RecordingRepository:
     def __init__(self):
         self.saved = []
@@ -39,6 +45,7 @@ def run_pipeline(tmp_path, monkeypatch):
         pipeline = PdfIngestionPipeline(
             extractor=FakeExtractor(result),
             repository=repository,
+            settings=FakeSettings(),
         )
         return pipeline.run_one_pdf("inbox/pdf/sample.pdf"), repository
     return _run

@@ -77,6 +77,16 @@ def main(argv: list[str] | None = None) -> int:
         for note in q.get("extraction_notes", []):
             print(f"\nNOTE: {note}")
 
+    diagrams = {d["source_question_id"]: d for d in data.get("diagrams", [])}
+    if diagrams:
+        print("\n" + "=" * 70)
+        print(f"DIAGRAMS: {len(diagrams)}")
+        for asset in diagrams.values():
+            kind = "cropped" if asset["cropped"] else "full page"
+            print(f"  {asset['source_question_id']:10} p{asset['page']}  "
+                  f"{asset['width']}x{asset['height']}  {kind}")
+            print(f"             {asset['image_path']}")
+
     issues = data.get("issues", [])
     print("\n" + "=" * 70)
     print(f"ISSUES: {len(issues)}")

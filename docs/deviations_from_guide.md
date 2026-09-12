@@ -99,3 +99,30 @@ Lesson 13 自己再覆寫 `file_name` 同 `page_count`。
 | `PdfIngestionPipeline(extractor=, repository=)` 可注入 | 令 orchestration 可以唔使 API key 測試 |
 | script 收 path argument、return exit code | 唔再 hardcode `sample.pdf`；失敗 exit 1，可以放入 shell pipeline |
 | 批量 script 有 summary + 唔覆寫同名 file | 原本 `shutil.move` 撞名會靜靜覆寫 |
+
+---
+
+## 8. 圖片抽取（guide v1 完全冇做）
+
+**Guide**：Lesson 20 明寫系統唔做圖，只係喺 `diagram_required` 打個旗。
+
+**改法**：`diagram_required=true` 嘅題目會由 PDF render 返 PNG。
+
+- Gemini 連 `diagram_region` 一齊交（0–1000 頁面座標，
+  `[y_min, x_min, y_max, x_max]`，即係 Gemini 自己個 bounding box 慣例）
+- `pypdfium2` render 該頁（Apache/BSD licence，pip 直接裝，唔使 brew）
+- `Pillow` 照個框 crop，四邊各留 2% padding
+- 存去 `data/diagrams/<name>-<sha12>/<題號>.png`，JSON 嘅 `diagrams` 記低路徑、
+  頁數、尺寸、同埋 `cropped` 係真定假
+
+**Fallback 係核心**：框唔合理（倒轉、超出頁面、細過頁面 2%）或者根本冇框，就
+render 成頁。有張成頁圖總好過乜都冇。呢種情況會出 `DIAGRAM_REGION_UNUSABLE`
+（medium，唔算失敗）。
+
+Render 失敗（library 冇裝、PDF 壞）唔會累死成次抽題 — 印個警告，題目照存。
+
+純幾何部分（`app/diagram_geometry.py`）同 render 部分（`app/diagram_renderer.py`）
+分開，所以座標數學可以完全唔使 imaging library 就測到。
+
+`DiagramAsset` 刻意唔放入 `ExtractedQuestion` — Question Object 要保持係
+Rule 2 講嗰張標準表格，我哋自己整出嚟嘅檔案放喺 `ExtractionResult.diagrams`。

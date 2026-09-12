@@ -103,11 +103,14 @@ pytest
 | `app/extraction_validator.py` | 🔵 Python | 檢查抽題結果 |
 | `app/repository.py` | 🔵 Python | 保存資料 |
 | `app/pipeline.py` | 🔵 Python | 串流程 |
+| `app/diagram_geometry.py` | 🔵 Python | Crop 座標數學（純函數） |
+| `app/diagram_renderer.py` | 🔵 Python | PDF → 圖片 PNG |
 | `app/json_exporter.py` | 🔵 Python | 輸出 JSON |
 | `prompts/document_extractor_v1.txt` | 🟢 Prompt | Gemini 抽題指令 |
 | `scripts/test_load_pdf.py` | 🔴 Test | 測 PDF loader |
 | `scripts/ingest_one_pdf.py` | 🔴 Test | 處理一個 PDF |
 | `scripts/ingest_pdfs.py` | 🔴 Test | 批量處理 PDF |
+| `scripts/show_extraction.py` | 🔴 Test | 查返存低咗嘅結果 |
 
 ---
 
@@ -157,6 +160,33 @@ pytest
 
 ---
 
+## 圖片
+
+凡係 `diagram_required=true` 嘅題目，系統會由 PDF render 返張 PNG 出嚟：
+
+```text
+data/diagrams/<name>-<sha12>/17-a.png
+```
+
+Gemini 會連埋 `diagram_region` 一齊交返（0–1000 座標，`[y_min, x_min, y_max, x_max]`），
+系統就照住個框 crop。**框唔合理或者冇框，就 render 成頁**，唔會乜都冇 —
+會出 `DIAGRAM_REGION_UNUSABLE` 警告（唔算失敗）。
+
+JSON 入面:
+
+```json
+"diagrams": [
+  { "source_question_id": "16", "page": 8, "image_path": "data/diagrams/.../16.png",
+    "cropped": true, "width": 840, "height": 610 }
+]
+```
+
+唔想 render 就喺 `.env` 設 `RENDER_DIAGRAMS=false`。解像度用 `DIAGRAM_DPI`（預設 200）。
+
+render 失敗（library 冇裝、PDF 壞）**唔會累死成次抽題** — 只會印個警告，題目照樣存低。
+
+---
+
 ## 五條規則
 
 1. **Extractor 只抄題** — 唔好解題。
@@ -182,6 +212,7 @@ pytest
 | `POSSIBLE_BROKEN_POWER` | medium | 疑似 `x²` 被壓成 `x2` |
 | `MARKS_INVALID` | medium | 負分數 |
 | `SUSPICIOUSLY_FEW_QUESTIONS` | medium | 頁數多但題目少，可能抽漏 |
+| `DIAGRAM_REGION_UNUSABLE` | medium | 要圖但冇合理座標，會 render 成頁 |
 
 粗體嘅兩個係 **blocking** — 會令 PDF 入 `failed/pdf/`。
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import json
 
-from app.paths import EXTRACTED_DIR
+from app.paths import DIAGRAMS_DIR, EXTRACTED_DIR
 from app.schemas import ExtractionResult
 
 
@@ -21,6 +21,11 @@ def extraction_output_path(result: ExtractionResult) -> Path:
     return EXTRACTED_DIR / f"{stem}-{digest}.json"
 
 
+def diagram_output_dir(result: ExtractionResult) -> Path:
+    """One folder per extraction, named like its JSON so the two line up."""
+    return DIAGRAMS_DIR / extraction_output_path(result).stem
+
+
 def export_extraction_json(
     result: ExtractionResult,
     output_path: str | Path,
@@ -30,6 +35,7 @@ def export_extraction_json(
         "run": result.run.model_dump() if result.run else None,
         "document": result.document.model_dump(),
         "issues": [issue.model_dump() for issue in result.issues],
+        "diagrams": [asset.model_dump() for asset in result.diagrams],
     }
 
     path = Path(output_path)

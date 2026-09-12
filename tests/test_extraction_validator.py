@@ -153,6 +153,42 @@ def test_enough_questions_is_not_reported(make_document, make_question):
     assert "SUSPICIOUSLY_FEW_QUESTIONS" not in codes(make_document(questions, page_count=10))
 
 
+# --- diagram regions --------------------------------------------------------
+
+def diagram_codes(document) -> list[str]:
+    return sorted({i.issue_code for i in validate_extraction(document)
+                   if "DIAGRAM" in i.issue_code})
+
+
+def test_diagram_without_a_region_is_reported(make_document, make_question):
+    document = make_document([make_question(diagram_required=True)])
+    assert diagram_codes(document) == ["DIAGRAM_REGION_UNUSABLE"]
+
+
+def test_diagram_with_a_malformed_region_is_reported(make_document, make_question):
+    from app.schemas import DiagramRegion
+    bad = DiagramRegion(page=1, y_min=600, x_min=900, y_max=200, x_max=100)
+    document = make_document([make_question(diagram_required=True, diagram_region=bad)])
+    assert diagram_codes(document) == ["DIAGRAM_REGION_UNUSABLE"]
+
+
+def test_diagram_with_a_good_region_is_clean(make_document, make_question):
+    from app.schemas import DiagramRegion
+    good = DiagramRegion(page=1, y_min=200, x_min=100, y_max=600, x_max=900)
+    document = make_document([make_question(diagram_required=True, diagram_region=good)])
+    assert diagram_codes(document) == []
+
+
+def test_questions_without_diagrams_are_not_checked(make_document, make_question):
+    assert diagram_codes(make_document([make_question(diagram_required=False)])) == []
+
+
+def test_diagram_issue_is_not_blocking(make_document, make_question):
+    # A missing box falls back to a full-page render; that is not a failure.
+    document = make_document([make_question(diagram_required=True)])
+    assert has_blocking_issues(validate_extraction(document)) is False
+
+
 # --- blocking helpers -------------------------------------------------------
 
 def issue(severity):

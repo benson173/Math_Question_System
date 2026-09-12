@@ -4,3 +4,7 @@ python-dotenv
 pypdf
 tenacity
 supabase
+
+# Diagram rendering (bounding-box crops from the PDF)
+pypdfium2
+pillow

@@ -26,6 +26,19 @@ PAGE NUMBERS
 - page_start and page_end are 1-based: the first page of the PDF is page 1.
 - If a question does not span pages, set page_end equal to page_start.
 
+DIAGRAMS
+- Set diagram_required=true if a diagram is needed to answer the question.
+- When it is true, also fill diagram_region with the location of that diagram:
+    page   the 1-based PDF page the diagram is printed on
+    y_min, x_min, y_max, x_max
+           the box around the diagram, each 0-1000 relative to that page,
+           where 0,0 is the top-left corner and 1000,1000 the bottom-right
+- Box the drawing itself plus its labels. Do not include the question text,
+  and do not box the whole page.
+- Leave diagram_region null if you cannot locate the diagram confidently. A
+  null is handled; a wrong box is not.
+- A printed table is not a diagram. Reproduce tables as text in question_text.
+
 DO
 - Extract each question separately.
 - Preserve question numbers.
@@ -34,7 +47,6 @@ DO
 - Preserve marks if printed.
 - Preserve answers if printed.
 - Preserve worked solutions if printed.
-- Mark diagram_required=true if a diagram is needed to answer the question.
 
 DON'T
 - Do not solve questions.

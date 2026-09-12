@@ -10,6 +10,10 @@ DEFAULT_TIMEOUT_SECONDS = 300.0
 # so this stays opt-in.
 DEFAULT_MAX_OUTPUT_TOKENS = 0
 
+# Diagram rendering
+DEFAULT_DIAGRAM_DPI = 200
+DEFAULT_RENDER_DIAGRAMS = True
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -21,6 +25,19 @@ class Settings:
     question_object_version: str
     gemini_timeout_seconds: float
     gemini_max_output_tokens: int
+    render_diagrams: bool
+    diagram_dpi: int
+
+
+def _env_flag(name: str, default: bool) -> bool:
+    raw = os.getenv(name, "").strip().lower()
+    if not raw:
+        return default
+    if raw in {"1", "true", "yes", "on"}:
+        return True
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"{name} must be true or false, got {raw!r}")
 
 
 def _env_number(name: str, default: float, cast):
@@ -54,4 +71,6 @@ def load_settings() -> Settings:
             "GEMINI_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS, float),
         gemini_max_output_tokens=_env_number(
             "GEMINI_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS, int),
+        render_diagrams=_env_flag("RENDER_DIAGRAMS", DEFAULT_RENDER_DIAGRAMS),
+        diagram_dpi=_env_number("DIAGRAM_DPI", DEFAULT_DIAGRAM_DPI, int),
     )
