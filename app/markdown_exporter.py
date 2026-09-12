@@ -57,6 +57,8 @@ def _summary_table(result: ExtractionResult) -> list[str]:
         rows.append(("Model", run.model))
         rows.append(("Run", f"`{run.run_id}`"))
         rows.append(("Versions", f"{run.extraction_version} / {run.question_object_version}"))
+    if result.repairs:
+        rows.append(("Repairs", str(len(result.repairs))))
     if result.diagrams:
         cropped = sum(1 for d in result.diagrams if d.cropped)
         rows.append(("Diagrams", f"{len(result.diagrams)} "
@@ -130,6 +132,11 @@ def render_markdown(result: ExtractionResult, report_path: Path) -> str:
     for question in document.questions:
         lines += _question_section(question, assets.get(question.source_question_id), report_path)
         lines += ["---", ""]
+
+    if result.repairs:
+        lines += ["## Repairs applied", ""]
+        lines += [f"- {repair}" for repair in result.repairs]
+        lines += [""]
 
     lines += ["## Validation issues", ""]
     if not result.issues:

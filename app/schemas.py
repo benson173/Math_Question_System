@@ -109,3 +109,4 @@ class ExtractionResult(BaseModel):
     source: Optional[SourceDocument] = None
     run: Optional[ExtractionRun] = None
     diagrams: list[DiagramAsset] = Field(default_factory=list)
+    repairs: list[str] = Field(default_factory=list)

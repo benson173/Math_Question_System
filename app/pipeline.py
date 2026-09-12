@@ -12,6 +12,7 @@ from pathlib import Path
 from app.config import load_settings
 from app.diagram_renderer import render_diagrams
 from app.document_extractor import DocumentExtractor
+from app.extraction_repair import repair_shared_stems
 from app.extraction_validator import blocking_issues, validate_extraction
 from app.json_exporter import diagram_output_dir, export_extraction_json, extraction_output_path
 from app.markdown_exporter import export_extraction_markdown, markdown_output_path
@@ -34,6 +35,16 @@ class PdfIngestionPipeline:
         """
         print("Step 1: Extract PDF")
         result = self.extractor.extract(pdf_path)
+
+        if getattr(self.settings, "repair_extraction", True):
+            repairs = repair_shared_stems(result.document)
+            for repair in repairs:
+                print(f"Repaired {repair.parent}: removed {repair.removed!r} from the "
+                      f"shared stem ({repair.owner}'s own question)")
+            result.repairs = [
+                f"{r.parent}: removed {r.removed!r} from the shared stem "
+                f"({r.owner}'s own question)" for r in repairs
+            ]
 
         print("Step 2: Validate extraction")
         result.issues = validate_extraction(result.document)

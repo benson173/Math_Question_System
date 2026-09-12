@@ -13,6 +13,7 @@ DEFAULT_MAX_OUTPUT_TOKENS = 0
 # Diagram rendering
 DEFAULT_DIAGRAM_DPI = 200
 DEFAULT_RENDER_DIAGRAMS = True
+DEFAULT_REPAIR_EXTRACTION = True
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class Settings:
     gemini_timeout_seconds: float
     gemini_max_output_tokens: int
     render_diagrams: bool
+    repair_extraction: bool
     diagram_dpi: int
 
 
@@ -72,5 +74,6 @@ def load_settings() -> Settings:
         gemini_max_output_tokens=_env_number(
             "GEMINI_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS, int),
         render_diagrams=_env_flag("RENDER_DIAGRAMS", DEFAULT_RENDER_DIAGRAMS),
+        repair_extraction=_env_flag("REPAIR_EXTRACTION", DEFAULT_REPAIR_EXTRACTION),
         diagram_dpi=_env_number("DIAGRAM_DPI", DEFAULT_DIAGRAM_DPI, int),
     )

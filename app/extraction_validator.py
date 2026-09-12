@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 
 from app.diagram_geometry import is_usable_region
+from app.extraction_repair import find_stem_contamination
 from app.schemas import ExtractedDocument, Severity, ValidationIssue
 
 
@@ -225,6 +226,16 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
             found = ", ".join(sorted(set(broken)))
             report("POSSIBLE_BROKEN_POWER", "medium",
                    f"Question {qid} may have broken power notation: {found}", qid)
+
+    # Sibling-level: one part's question sitting in the stem every sibling
+    # shares. Each sibling then carries a question that is not its own, which no
+    # single-question check can see.
+    for contamination in find_stem_contamination(document.questions):
+        for qid in contamination.question_ids:
+            report("STEM_CONTAMINATION", "high",
+                   f"The stem shared by question {contamination.parent} ends with "
+                   f"{contamination.removed!r}, which is {contamination.owner}'s own "
+                   "question. Every part carries a question that is not its own.", qid)
 
     # Only meaningful when the paper prints marks at all: a paper with none is
     # fine, a paper that marks most questions and not others is not.

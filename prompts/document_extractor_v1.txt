@@ -52,6 +52,10 @@ TABLES
 
 - Keep empty cells empty; a table the student fills in must stay blank.
 - A stem-and-leaf diagram is a table. Use the same format.
+- Two tables printed side by side are two tables. Reproduce them as two
+  separate Markdown tables with a blank line between, never merged into one
+  wide table: their rows describe different things and pairing them invents a
+  relationship the paper does not state.
 
 MATHEMATICAL NOTATION
 - Write anything Unicode can express as Unicode, exactly as printed:

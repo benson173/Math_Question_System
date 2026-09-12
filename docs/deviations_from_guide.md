@@ -228,3 +228,52 @@ Validator 加 `RAGGED_TABLE`（medium）。**同 `MALFORMED_TABLE` 分開係刻�
 順便重整咗 `_pipe_blocks`：以前用「pipe 數一致」嚟分組，張 ragged 表會被拆成幾嚿，
 診斷唔準。而家先按「連續有 pipe 嘅行」分組，再用「有 separator **或者** pipe 數一致」
 判斷係咪表格，最後先分辨係 malformed 定 ragged。
+
+---
+
+## 15. Repair step — prompt 講唔掂嘅錯，喺 code 度整返
+
+同一份 PDF 抽三次（temperature=0），Q19 三條小題共用嘅題幹出現咗
+**錯 → 啱 → 錯**：其中一個小題（19(c)）嘅題目留咗喺共用題幹入面，搞到 19(a)、
+19(b) 都帶住唔屬於自己嘅題目。Prompt 已經明寫「共用材料去到第一個部分為止」，
+但模型唔穩定。
+
+**所以加咗第二步**：
+
+```text
+Step 1  Extract
+Step 2  Repair      ← 新增，app/extraction_repair.py
+Step 3  Validate
+Step 4  Render diagrams
+Step 5  Save
+```
+
+觸發條件**故意做得好窄**，寧願漏都唔好亂改:
+
+- 同一個 parent 至少兩條小題（`19(a)`/`19(b)` → parent `19`；
+  `18(a)(i)`/`18(a)(ii)` → parent `18(a)`）
+- 計所有兄弟嘅最長共同前綴，剪到最後一個句號為止 = 共用題幹
+- 題幹**最後嗰句**要啱啱好等於**某一條小題嘅全部剩餘題目**
+- 題幹至少兩句（淨係一句就唔敢剪，會剷走成個題幹）
+- 嗰句至少 8 個字
+
+改咗乜一定寫入嗰條題目嘅 `extraction_notes`，`ExtractionResult.repairs` 亦會記低，
+`.md` report 有「Repairs applied」一節。冇一個改動係靜雞雞。
+
+實測攞 run 3 嘅錯版落去修，出嚟同 run 2 嘅正確版本**逐個字一樣**；而同一份卷其他
+六組正常兄弟題（Q2、Q5、Q10、Q11、Q12、Q18(a)）一個都冇被郁過。
+
+`REPAIR_EXTRACTION=false` 可以熄。熄咗之後同一個情況會出 `STEM_CONTAMINATION`
+（high）—— 而且**三條小題全部報**。原本個 `REPEATED_TEXT_IN_QUESTION` 淨係捉到
+19(c)（因為佢自己同一句出現兩次），19(a) 同 19(b) 完全靜，呢個盲點要兄弟題層面
+嘅檢查先補得返。
+
+---
+
+## 16. 並排嘅兩張表唔可以合併
+
+Run 3 將 Q15 卷面並排嘅兩張表（頻數分佈 + 累積頻數分佈）合併成一張四欄表，
+run 2 就正確噉分開兩張。合併咗即係話「201–210 對應 210.5」，但卷面冇噉講過 ——
+兩張表只係印喺隔離，行與行之間冇定義關係。
+
+Prompt 加咗：並排嘅兩張表係兩張表，要分開出，中間留空行，唔可以併埋一張闊表。

@@ -25,6 +25,7 @@ class FakeSettings:
     """Diagram rendering is exercised in test_diagram_geometry, not here."""
     render_diagrams = False
     diagram_dpi = 200
+    repair_extraction = True
 
 
 class RecordingRepository:

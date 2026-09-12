@@ -185,6 +185,29 @@ pytest
 
 ---
 
+## 自動修正
+
+有啲錯 prompt 講極都唔穩定。同一份 PDF 抽三次，Gemini 曾經**出錯 → 改啱 → 又出錯**
+同一個問題：將其中一個小題嘅題目留咗喺兄弟題共用嘅題幹入面，搞到每條小題都帶住
+唔屬於自己嘅題目。
+
+所以呢個唔靠 prompt，喺 code 度整返:
+
+```text
+Step 1  Extract
+Step 2  Repair      ← 新增
+Step 3  Validate
+```
+
+修正**故意做得好窄** — 淨係喺「共用題幹最後嗰句，啱啱好等於某個小題嘅全部題目」
+嗰陣先郁手。改咗乜一定寫入嗰條題目嘅 `extraction_notes`，`.md` report 亦會有
+「Repairs applied」一節，唔會靜靜雞改。
+
+`REPAIR_EXTRACTION=false` 可以熄咗。熄咗之後同一個情況會出
+`STEM_CONTAMINATION`（high），而且**三條小題全部報**，唔止自我重複嗰條。
+
+---
+
 ## 圖片
 
 凡係 `diagram_required=true` 嘅題目，系統會由 PDF render 返張 PNG 出嚟：
@@ -240,6 +263,7 @@ render 失敗（library 冇裝、PDF 壞）**唔會累死成次抽題** — 只�
 | `DIAGRAM_REGION_UNUSABLE` | medium | 要圖但冇合理座標，會 render 成頁 |
 | `MALFORMED_TABLE` | medium | 表格冇 markdown separator row，render 唔到 |
 | `RAGGED_TABLE` | medium | 表格每行格數唔一致，通常係卷面有合併格／兩層表頭 |
+| `STEM_CONTAMINATION` | high | 共用題幹尾多咗一句係其中一個小題嘅題目 |
 | `REPEATED_TEXT_IN_QUESTION` | medium | 同題內有句子重複，通常係小題題目撈咗入題幹 |
 | `MARKS_MISSING` | low | 成份卷有分數，但呢條冇 |
 
