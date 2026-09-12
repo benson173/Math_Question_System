@@ -14,6 +14,7 @@ PROMPT_DOCUMENT_EXTRACTOR_V1 = PROMPTS_DIR / "document_extractor_v1.txt"
 
 DATA_DIR = PROJECT_ROOT / "data"
 EXTRACTED_DIR = DATA_DIR / "extracted"
+HISTORY_DIR = DATA_DIR / "history"
 DIAGRAMS_DIR = DATA_DIR / "diagrams"
 
 INBOX_PDF_DIR = PROJECT_ROOT / "inbox" / "pdf"

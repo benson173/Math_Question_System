@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import json
 
-from app.paths import DIAGRAMS_DIR, EXTRACTED_DIR
+from app.paths import DIAGRAMS_DIR, EXTRACTED_DIR, HISTORY_DIR
 from app.schemas import ExtractionResult
 
 
@@ -24,6 +24,18 @@ def extraction_output_path(result: ExtractionResult) -> Path:
 def diagram_output_dir(result: ExtractionResult) -> Path:
     """One folder per extraction, named like its JSON so the two line up."""
     return DIAGRAMS_DIR / extraction_output_path(result).stem
+
+
+def history_output_path(result: ExtractionResult) -> Path:
+    """Where this run is archived, so later runs can be compared against it.
+
+    The main JSON is overwritten each time the same PDF is ingested - that is
+    what makes it idempotent. Keeping every run under its run id is what makes
+    the model's inconsistency visible at all.
+    """
+    stem = extraction_output_path(result).stem
+    run_id = result.run.run_id if result.run else "norun"
+    return HISTORY_DIR / stem / f"{run_id}.json"
 
 
 def export_extraction_json(

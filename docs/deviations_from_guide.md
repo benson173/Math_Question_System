@@ -320,3 +320,36 @@ Validator 兩個配合改動：
 
 Renderer 同一頁只 rasterise 一次再重用：一條題目有圖加兩張表，原本會將同一頁
 render 三次。
+
+---
+
+## 18. 比較兩次 run
+
+同一份卷抽咗四次，model 產生過一段**卷面根本冇嘅文字**，仲附上一句 note 聲稱嗰段
+係卷面印錯：
+
+```text
+run 1-3   嘉欣得知 B 的底半徑為 18 cm。
+run 4     嘉欣得知 B 的底半徑為 B 為 18 cm。
+          note:「faithfully includes the printed typo ... from the paper」
+```
+
+**呢種嘢冇 validator 捉得到。** 單睇一次 run，佢語法啱、表格啱、題號啱、內部完全
+自洽。錯嘅係內容同現實唔對應，而 validator 睇唔到現實。仲衰嘅係個 note ——
+一段抄錯嘅字，扮成刻意忠於原文。
+
+同類但更隱蔽嘅：run 3 用 `−`(U+2212)，run 4 用 `–`(U+2013)。肉眼一模一樣，但
+下游做文字比對就會當成兩個唔同嘅題目。
+
+**唯一可靠訊號係兩次 run 唔同。**
+
+- `data/history/<stem>/<run_id>.json` —— 每次抽題 archive 一份。主 JSON 照舊
+  覆寫（保持 idempotent），archive 先係令 model 嘅不穩定變成睇得見
+- `app/extraction_diff.py` —— 逐條題目比 `question_text`、`marks`、
+  `group_marks`、頁數、`answer`、表格數目；文字差異用 difflib 壓縮成
+  `[-舊-]{+新+}` 加前後文，唔會 print 兩條長題目
+- `scripts/compare_extractions.py` —— 冇參數就比最近兩次。冇差異 exit 0，
+  有差異 exit 1，可以放入 script
+
+`agreement`（一致嘅題目比例）係最直接嘅信心指標。兩次一致嘅地方基本信得過；
+唔一致嗰幾條，先值得你揭返卷。

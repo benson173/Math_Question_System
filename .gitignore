@@ -15,6 +15,7 @@ processed/pdf/*
 failed/pdf/*
 data/extracted/*
 data/diagrams/*
+data/history/*
 !**/.gitkeep
 
 # OS

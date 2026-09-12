@@ -14,7 +14,8 @@ from app.diagram_renderer import render_question_images
 from app.document_extractor import DocumentExtractor
 from app.extraction_repair import repair_shared_stems
 from app.extraction_validator import blocking_issues, validate_extraction
-from app.json_exporter import diagram_output_dir, export_extraction_json, extraction_output_path
+from app.json_exporter import (diagram_output_dir, export_extraction_json,
+                               extraction_output_path, history_output_path)
 from app.markdown_exporter import export_extraction_markdown, markdown_output_path
 from app.repository import Repository
 from app.schemas import ExtractionResult
@@ -67,6 +68,8 @@ class PdfIngestionPipeline:
         output_path = extraction_output_path(result)
         export_extraction_json(result, output_path)
         print("Exported:", output_path)
+
+        export_extraction_json(result, history_output_path(result))
 
         report_path = markdown_output_path(output_path)
         export_extraction_markdown(result, report_path)

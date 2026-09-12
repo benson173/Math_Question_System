@@ -59,9 +59,10 @@ python -m scripts.ingest_pdfs                # 批量處理 inbox/pdf/ 所有 PD
 每次抽完會出三樣嘢:
 
 ```text
-data/extracted/<name>-<sha12>.json    # 機器讀嘅
-data/extracted/<name>-<sha12>.md      # 人讀嘅 report
-data/diagrams/<name>-<sha12>/16.png   # 抽到嘅圖
+data/extracted/<name>-<sha12>.json         # 機器讀嘅
+data/extracted/<name>-<sha12>.md           # 人讀嘅 report
+data/diagrams/<name>-<sha12>/16.png        # 抽到嘅圖同表
+data/history/<name>-<sha12>/<run_id>.json  # 每次 run 存返一份，用嚟比較
 ```
 
 用 hash 命名，所以兩份都叫 `sample.pdf` 嘅唔同卷唔會互相覆寫，而重做同一份卷就會
@@ -128,12 +129,14 @@ pytest
 | `app/diagram_renderer.py` | 🔵 Python | PDF → 圖片 PNG |
 | `app/json_exporter.py` | 🔵 Python | 輸出 JSON |
 | `app/markdown_exporter.py` | 🔵 Python | 輸出人讀嘅 .md report |
+| `app/extraction_diff.py` | 🔵 Python | 比較兩次 run |
 | `prompts/document_extractor_v1.txt` | 🟢 Prompt | Gemini 抽題指令 |
 | `scripts/test_load_pdf.py` | 🔴 Test | 測 PDF loader |
 | `scripts/ingest_one_pdf.py` | 🔴 Test | 處理一個 PDF |
 | `scripts/ingest_pdfs.py` | 🔴 Test | 批量處理 PDF |
 | `scripts/show_extraction.py` | 🔴 Test | 查返存低咗嘅結果 |
 | `scripts/export_markdown.py` | 🔴 Test | 由 JSON 重新整 .md report |
+| `scripts/compare_extractions.py` | 🔴 Test | 比較兩次 run |
 
 ---
 
@@ -182,6 +185,46 @@ pytest
 ```
 
 `sha256` 係之後 Supabase `source_documents` 做 dedupe 嘅 key。
+
+---
+
+## 比較兩次 run — 唯一捉到「作嘢」嘅方法
+
+同一份卷抽咗四次，出過:
+
+```text
+表格冇 separator row  →  有
+題幹帶住兄弟題目      →  冇  →  又有
+減號 U+2212           →  U+2013（肉眼睇唔出）
+「B 的底半徑為 18 cm」 →  「B 的底半徑為 B 為 18 cm」
+                          仲自己加個 note 話係卷面嘅 typo
+```
+
+**最後嗰個冇任何 validator 捉到** — 因為單睇一次 run，佢自己內部完全合理。兩次 run
+唔同先係訊號。
+
+每次抽題都會 archive 一份去 `data/history/<卷名>-<sha12>/<run_id>.json`
+（主 JSON 照舊覆寫，keep 到 idempotent）。抽多次就可以比:
+
+```bash
+python3 -m scripts.ingest_one_pdf          # 抽多一次
+python3 -m scripts.compare_extractions     # 比最近兩次
+```
+
+```text
+Identical : 37
+Changed   : 2
+Agreement : 95%
+
+======================================================================
+20(b)
+----------------------------------------------------------------------
+  question_text:
+    …知 B 的底半徑為 {+B 為 +}18 cm。她宣稱 …
+```
+
+兩次一致嘅地方，基本上信得過；唔一致嘅，就係要你揭返卷睇嗰幾條。冇差異 exit 0，
+有差異 exit 1。
 
 ---
 
