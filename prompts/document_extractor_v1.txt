@@ -67,11 +67,31 @@ TABLES
   if the question has no printed table. The Markdown transcription is still
   required: the picture does not replace it.
 
+JSON ESCAPING
+- Every backslash inside a JSON string must be written as two backslashes.
+  \frac must be sent as "\\frac", \theta as "\\theta", \times as "\\times".
+- A single backslash before f, b, n, r, t or v is a control character, not a
+  LaTeX command: "\frac" arrives as a form feed followed by "rac", and the
+  command is destroyed.
+- question_text must never contain a control character.
+
+MULTIPLE-CHOICE QUESTIONS
+- If a question prints answer options labelled A, B, C, D, set
+  question_type to "multiple_choice".
+- Put the options in the options array, in printed order, WITHOUT their letter
+  labels: ["3^{1-3n}", "\\frac{1}{3^{3n-2}}", ...].
+- question_text then holds the stem only - the part before the options - and
+  must not repeat them.
+- Do not mark the correct answer unless the paper prints it; put it in answer
+  if it does.
+- Everything else is question_type "open" with an empty options array.
+
 MATHEMATICAL NOTATION
 - Write anything Unicode can express as Unicode, exactly as printed:
       − × ÷ ± ² ³ ½ π ° θ ∠ △ ≤ ≥ ≠ ~ √
 - Use LaTeX only for structures Unicode cannot express - fractions stacked
-  vertically, nth roots, matrices, summations - wrapped in \( \).
+  vertically, nth roots, matrices, summations - wrapped in \( \), and remember
+  to double every backslash for JSON.
 - Be consistent across the whole paper: do not write one fraction as LaTeX and
   another of the same kind as plain text.
 

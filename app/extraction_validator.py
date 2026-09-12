@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 
 from app.diagram_geometry import is_usable_region
-from app.extraction_repair import find_stem_contamination
+from app.extraction_repair import find_control_characters, find_stem_contamination
 from app.schemas import ExtractedDocument, Severity, ValidationIssue
 
 
@@ -42,6 +42,10 @@ _TABLE_SEPARATOR = re.compile(r"^\s*\|?(\s*:?-{2,}:?\s*\|)+\s*:?-{2,}:?\s*\|?\s*
 
 # Sentence enders used to spot text duplicated inside one question.
 _SENTENCE_SPLIT = re.compile(r"[。？！\n]+")
+
+# A line beginning "A. ", "(B)", "C、" - a printed multiple-choice option.
+_OPTION_LINE = re.compile(r"^\s*\(?([A-D])[.)、．]\s", re.MULTILINE)
+MIN_OPTION_LETTERS = 3
 MIN_REPEATED_SENTENCE = 8
 
 
@@ -145,6 +149,12 @@ def find_repeated_sentences(text: str) -> list[str]:
     return sorted(s for s, count in seen.items() if count > 1)
 
 
+def looks_like_multiple_choice(text: str) -> bool:
+    """True when the text carries its own A/B/C/D option list."""
+    letters = {match.group(1) for match in _OPTION_LINE.finditer(text)}
+    return len(letters) >= MIN_OPTION_LETTERS
+
+
 def blocking_issues(issues: list[ValidationIssue]) -> list[ValidationIssue]:
     return [issue for issue in issues if issue.severity in BLOCKING_SEVERITIES]
 
@@ -209,6 +219,22 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
         has_picture = any(is_usable_region(r) for r in q.table_regions)
         table_severity: Severity = "low" if has_picture else "medium"
         fallback = " A picture of the table was captured." if has_picture else ""
+
+        control = find_control_characters(q.question_text)
+        if control:
+            found = ", ".join(f"{c!r}x{n}" for c, n in sorted(control.items()))
+            report("CONTROL_CHARACTER", "high",
+                   f"Question {qid} contains control characters ({found}). These come "
+                   "from a LaTeX backslash the model left unescaped in its JSON, so a "
+                   "command name is missing its backslash.", qid)
+
+        if q.question_type != "multiple_choice" and looks_like_multiple_choice(q.question_text):
+            report("OPTIONS_NOT_SEPARATED", "medium",
+                   f"Question {qid} prints A/B/C/D options inside question_text but is "
+                   "not marked multiple_choice, so nothing downstream can read them.", qid)
+        elif q.question_type == "multiple_choice" and not q.options:
+            report("OPTIONS_MISSING", "medium",
+                   f"Question {qid} is multiple choice but carries no options.", qid)
 
         malformed = find_malformed_tables(q.question_text)
         if malformed:

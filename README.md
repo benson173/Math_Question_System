@@ -369,12 +369,50 @@ Step 2  Repair      ← 新增
 Step 3  Validate
 ```
 
+修正有兩種:
+
+**1. LaTeX backslash 被 JSON 食咗**
+
+```text
+模型寫:      "\frac{3}{x-4}"        ← 單 backslash
+JSON 解碼:   \x0c + "rac{3}{x-4}"   ← \f 係 form feed
+你見到:      " rac{3}{x-4}"          ← \frac 冇咗
+```
+
+JSON 只認 `\b \f \n \r \t` 呢五個 escape，所以只有呢五個指令會**靜靜雞**壞。
+`\vec`、`\alpha` 呢啲唔係合法 escape，會直接 parse error（反而好，唔會扮冇事）。
+
+五個入面，`\b` 同 `\f` 喺正常文字絕對唔會出現 → **自動修返**（`\frac`、`\beta`
+救得返）。`\t` `\n` `\r` 本身係正常空白 → **淨係報，唔亂估**。
+
+**2. 共用題幹污染**
+
 修正**故意做得好窄** — 淨係喺「共用題幹最後嗰句，啱啱好等於某個小題嘅全部題目」
 嗰陣先郁手。改咗乜一定寫入嗰條題目嘅 `extraction_notes`，`.md` report 亦會有
 「Repairs applied」一節，唔會靜靜雞改。
 
 `REPAIR_EXTRACTION=false` 可以熄咗。熄咗之後同一個情況會出
 `STEM_CONTAMINATION`（high），而且**三條小題全部報**，唔止自我重複嗰條。
+
+---
+
+## 選擇題
+
+MC 卷嘅選項唔會留喺 `question_text`，會抽做結構:
+
+```json
+{
+  "source_question_id": "1",
+  "question_type": "multiple_choice",
+  "question_text": "\\( \\frac{81^{1-n}}{27^{2n}} = \\)",
+  "options": ["3^{1-3n}", "\\frac{1}{3^{3n-2}}", "\\frac{1}{3^{5n-2}}", "\\frac{1}{3^{10n-4}}"]
+}
+```
+
+噉樣之後先做得到打亂選項、對答案、出變化題 —— 選項一旦變咗散文就乜都做唔到。
+
+選項仲留喺 prose 會出 `OPTIONS_NOT_SEPARATED`。偵測要求 A/B/C/D 入面至少三個喺
+行首，所以幾何題寫 `A(5, 4) 及 B` 或者 `A、B、D、E 均是圓上的點` 都唔會誤判。
 
 ---
 
@@ -450,6 +488,9 @@ render 失敗（library 冇裝、PDF 壞）**唔會累死成次抽題** — 只�
 | `RAGGED_TABLE` | medium¹ | 表格每行格數唔一致，通常係卷面有合併格／兩層表頭 |
 | `TABLE_NOT_CAPTURED` | low | 有表格文字但冇影相 |
 | `STEM_CONTAMINATION` | high | 共用題幹尾多咗一句係其中一個小題嘅題目 |
+| `CONTROL_CHARACTER` | high | LaTeX backslash 俾 JSON escape 食咗，指令爛咗 |
+| `OPTIONS_NOT_SEPARATED` | medium | MC 選項留咗喺 question_text |
+| `OPTIONS_MISSING` | medium | 標咗 MC 但冇 options |
 | `REPEATED_TEXT_IN_QUESTION` | medium | 同題內有句子重複，通常係小題題目撈咗入題幹 |
 | `MARKS_MISSING` | low | 成份卷有分數，但呢條冇 |
 

@@ -12,7 +12,7 @@ from pathlib import Path
 from app.config import load_settings
 from app.diagram_renderer import render_question_images
 from app.document_extractor import DocumentExtractor
-from app.extraction_repair import repair_shared_stems
+from app.extraction_repair import repair_control_characters, repair_shared_stems
 from app.extraction_validator import blocking_issues, validate_extraction
 from app.json_exporter import (diagram_output_dir, export_extraction_json,
                                extraction_output_path, history_output_path)
@@ -38,13 +38,22 @@ class PdfIngestionPipeline:
         result = self.extractor.extract(pdf_path)
 
         if getattr(self.settings, "repair_extraction", True):
-            repairs = repair_shared_stems(result.document)
-            for repair in repairs:
+            stem_repairs = repair_shared_stems(result.document)
+            control_repairs = repair_control_characters(result.document)
+
+            for repair in stem_repairs:
                 print(f"Repaired {repair.parent}: removed {repair.removed!r} from the "
                       f"shared stem ({repair.owner}'s own question)")
+            for repair in control_repairs:
+                print(f"Repaired {repair.source_question_id}: restored {repair.count} "
+                      f"missing backslash(es) before {repair.character!r}")
+
             result.repairs = [
                 f"{r.parent}: removed {r.removed!r} from the shared stem "
-                f"({r.owner}'s own question)" for r in repairs
+                f"({r.owner}'s own question)" for r in stem_repairs
+            ] + [
+                f"{r.source_question_id}: restored {r.count} backslash(es) as "
+                f"{r.restored!r}" for r in control_repairs
             ]
 
         print("Step 2: Validate extraction")

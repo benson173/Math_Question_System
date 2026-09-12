@@ -424,3 +424,58 @@ Paper (2).pdf     ->  ![16](../diagrams/Paper (2)-abc123/16.png)      ← 括號
 
 去重一路以嚟都係認 sha256 唔認檔名，所以改名、複製都唔會令同一份卷抽兩次 ——
 呢點冇變。
+
+---
+
+## 22. LaTeX backslash 俾 JSON escape 食咗
+
+實測三份中學卷，S5 第 2 題出咗:
+
+```text
+化簡 \(\frac{6}{2x+5} - rac{3}{x-4}\)。
+                          ^^^^ \frac 冇咗個 \f
+```
+
+同一份卷第 1 題嘅 `\frac` 完全正常 —— 即係模型**唔穩定噉**漏咗 escape 個 backslash。
+
+成因：JSON 字串入面個 backslash 要寫兩個。模型寫咗 `"\frac"`，JSON 解碼器見到
+`\f` 就當係 form feed (U+000C)，剩返 `rac`。
+
+JSON 只定義咗 `\b \f \n \r \t`（連同 `\" \\ \/ \uXXXX`）。所以:
+
+| 指令 | 結果 |
+|---|---|
+| `\frac` `\forall` | FF + 文字 —— **靜靜雞壞** |
+| `\beta` `\binom` | BS + 文字 —— **靜靜雞壞** |
+| `\times` `\theta` | TAB + 文字 —— 壞，但 TAB 係正常空白 |
+| `\neq` `\rho` | LF / CR + 文字 —— 同上 |
+| `\vec` `\alpha` `\sum` | **唔係合法 escape → 成個 response parse 唔到** |
+
+最後嗰行其實係好消息：唔合法嘅會即刻炸，唔會扮冇事。
+
+**修法**:
+- Prompt 加 `JSON ESCAPING` 一節，明寫每個 backslash 要寫兩次，同埋
+  `question_text` 唔可以有控制字元
+- `repair_control_characters()` 自動修 BS 同 FF —— 呢兩個喺數學題文字入面
+  **絕對唔會**合法出現，所以零風險
+- TAB / LF / CR **唔會自動改**（佢哋係正常空白），只出 `CONTROL_CHARACTER`（high）
+- 每個修正都寫入 `extraction_notes`
+
+---
+
+## 23. 選擇題
+
+S6 係一份 45 條全 MC 嘅卷。系統當時將成段嘢（題幹 + A/B/C/D 四個選項）塞晒入
+`question_text`。
+
+噉樣後面做唔到：打亂選項、對答案、由選項出變化題、統計邊個 distractor 最多人揀。
+
+**改法**：`ExtractedQuestion` 加 `question_type`（`open` / `multiple_choice`）同
+`options: list[str]`（按印刷次序，唔要 A/B/C/D 標籤）。Prompt 要求 `question_text`
+淨係放題幹，唔可以重複啲選項。
+
+Validator 加 `OPTIONS_NOT_SEPARATED`（選項仲喺 prose）同 `OPTIONS_MISSING`
+（標咗 MC 但 options 空）。
+
+偵測用「A/B/C/D 至少三個出現喺行首，後面跟 `.` `)` `、` 加空白」。用三份卷嘅真實
+文字試過，幾何題寫 `A(5, 4) 及 B`、`A、B、D、E 和 F 均是圓上的點` 都唔會誤判。

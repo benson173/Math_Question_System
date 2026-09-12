@@ -24,6 +24,8 @@ def question_features(question: ExtractedQuestion) -> set[str]:
 
     if question.table_regions or _looks_like_a_table(question.question_text):
         features.add("table")
+    if question.question_type == "multiple_choice":
+        features.add("multiple choice")
     if question.diagram_required:
         features.add("diagram")
     if parent_id(question.source_question_id):
@@ -40,7 +42,7 @@ def question_features(question: ExtractedQuestion) -> set[str]:
         features.add("no marks")
     if question.answer:
         features.add("printed answer")
-    if not features & {"table", "diagram", "latex"}:
+    if not features & {"table", "diagram", "latex", "multiple choice"}:
         features.add("prose only")
 
     return features

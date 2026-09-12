@@ -26,6 +26,31 @@ _TRAILING_PART = re.compile(r"^(.+?)\s*\([^()]*\)\s*$")
 _SENTENCE_END = "。？！"
 MIN_STEM_SENTENCE = 8
 
+# A LaTeX command whose backslash the model failed to escape in its JSON comes
+# back as the control character that escape denotes: "\\frac" is written as
+# "\frac", and the JSON decoder reads \f as a form feed, leaving FF + "rac".
+#
+# JSON defines only \b \f \n \r \t (plus \" \\ \/ \uXXXX), so those are the
+# only commands that can be damaged this way - "\vec" or "\alpha" would make
+# the whole response invalid JSON and fail loudly instead.
+#
+# Of the five, only backspace and form feed can never legitimately appear in a
+# question, so only those are rewritten. Tab, newline and carriage return begin
+# \times, \neq and \rho but are also ordinary whitespace, so they are reported
+# rather than guessed at.
+EATEN_BACKSLASH = {
+    "\x0c": "f",   # \frac, \forall, \fbox
+    "\x08": "b",   # \beta, \bar, \binom
+}
+
+
+@dataclass
+class ControlCharacterRepair:
+    source_question_id: str
+    character: str
+    restored: str
+    count: int
+
 
 @dataclass
 class StemRepair:
@@ -107,6 +132,55 @@ def find_stem_contamination(questions: list[ExtractedQuestion]) -> list[StemRepa
                 question_ids=[q.source_question_id for q in members],
                 owner=owner,
             ))
+
+    return repairs
+
+
+def find_control_characters(text: str) -> dict[str, int]:
+    """Control characters in a question, counted by character."""
+    found: dict[str, int] = {}
+    for character in text:
+        if ord(character) < 32 and character != "\n":
+            found[character] = found.get(character, 0) + 1
+    return found
+
+
+def restore_eaten_backslashes(text: str) -> tuple[str, dict[str, int]]:
+    """Turn a control character back into the LaTeX command it came from.
+
+    Returns the repaired text and what was restored, keyed by the letter that
+    now follows the backslash.
+    """
+    restored: dict[str, int] = {}
+    for character, letter in EATEN_BACKSLASH.items():
+        count = text.count(character)
+        if count:
+            text = text.replace(character, "\\" + letter)
+            restored[letter] = count
+    return text, restored
+
+
+def repair_control_characters(document: ExtractedDocument) -> list[ControlCharacterRepair]:
+    """Undo unescaped LaTeX backslashes across a document, in place."""
+    repairs: list[ControlCharacterRepair] = []
+
+    for question in document.questions:
+        repaired, restored = restore_eaten_backslashes(question.question_text)
+        if not restored:
+            continue
+
+        question.question_text = repaired
+        for letter, count in sorted(restored.items()):
+            repairs.append(ControlCharacterRepair(
+                source_question_id=question.source_question_id,
+                character=letter,
+                restored="\\" + letter,
+                count=count,
+            ))
+            question.extraction_notes.append(
+                f"Repaired: restored {count} unescaped backslash(es) before "
+                f"{letter!r} - the JSON escape had eaten it."
+            )
 
     return repairs
 

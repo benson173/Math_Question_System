@@ -4,6 +4,8 @@ from typing import Literal, Optional
 
 Severity = Literal["critical", "high", "medium", "low"]
 
+QuestionType = Literal["open", "multiple_choice"]
+
 # Gemini reports boxes on a 0-1000 grid relative to the page, ordered
 # [y_min, x_min, y_max, x_max]. Kept as named fields so the ordering cannot be
 # mixed up on the way through.
@@ -31,6 +33,12 @@ class ExtractedQuestion(BaseModel):
     page_start: int
     page_end: int
     question_text: str
+    question_type: QuestionType = "open"
+    # Multiple-choice options in printed order, without their A/B/C/D labels.
+    # Kept out of question_text so a later stage can shuffle them, check an
+    # answer against them, or generate a variant - none of which is possible
+    # once they are prose.
+    options: list[str] = Field(default_factory=list)
     marks: Optional[float] = None
     # Papers often print one mark total for a whole question whose parts are
     # separate entries here. Recording that as data beats a free-text note:

@@ -109,6 +109,9 @@ def _question_section(
     elif question.group_marks is not None:
         scope = question.group_marks_scope or "the group"
         labels.append(f"{_marks_label(question.group_marks)} for {scope}")
+    if question.question_type == "multiple_choice":
+        labels.append(f"MC, {len(question.options)} options"
+                      if question.options else "MC")
     if question.diagram_required:
         labels.append("diagram")
 
@@ -117,6 +120,11 @@ def _question_section(
     if labels:
         meta += " · " + " · ".join(labels)
     lines += [f"*{meta}*", "", question.question_text, ""]
+
+    if question.options:
+        for letter, option in zip("ABCDEFGH", question.options):
+            lines.append(f"{letter}. {option}")
+        lines.append("")
 
     if asset:
         lines += _image_lines(asset, question.source_question_id, report_path)
