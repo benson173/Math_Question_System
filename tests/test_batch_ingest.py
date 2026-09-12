@@ -51,7 +51,7 @@ def fake_pipeline(monkeypatch):
                                   page_end=1, question_text=f"題 {n + 1}")
                 for n in range(count)
             ]
-            document = ExtractedDocument(file_name=path.name, page_count=1,
+            document = ExtractedDocument(level="F4", file_name=path.name, page_count=1,
                                          questions=questions)
             return ExtractionResult(document=document,
                                     issues=validate_extraction(document))

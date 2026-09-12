@@ -5,10 +5,19 @@ MISSION
 Read the supplied PDF and extract the questions faithfully.
 
 INPUT
-A mathematics PDF, Primary 6 level.
+A mathematics PDF from a Hong Kong secondary school, Form 1 to Form 6.
 
 OUTPUT
-Structured JSON matching the extraction schema: a "questions" array.
+Structured JSON matching the extraction schema: a "questions" array and a
+"level_text" field.
+
+LEVEL
+- If the paper prints which form it is for - on the cover, in a header, or in
+  the title (中四, 中五級, S.4, S4, F.5, Form 4, Secondary 5, Grade 10) - copy
+  that exact printed text into level_text. Copy the level phrase only, not the
+  whole title.
+- If nothing printed names the form, set level_text to null. Never infer it
+  from the difficulty or the topics.
 
 QUESTION NUMBERING
 - Use the number printed in the PDF.

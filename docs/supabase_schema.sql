@@ -18,6 +18,7 @@ create table if not exists source_documents (
   file_name      text not null,
   page_count     integer not null,
   byte_size      bigint not null,
+  level          text,                      -- F1-F6, null if unknown
   first_seen_at  timestamptz not null default now()
 );
 
@@ -43,6 +44,7 @@ create table if not exists questions (
   extraction_run_id    uuid not null references extraction_runs(id) on delete cascade,
   source_document_id   uuid not null references source_documents(id) on delete cascade,
   source_question_id   text not null,
+  level                text,                -- F1-F6, copied from the document
   position             integer not null,
   question_type        text not null default 'open',
   question_text        text not null,
@@ -64,8 +66,13 @@ create table if not exists questions (
 
 create index if not exists questions_document_idx  on questions (source_document_id);
 create index if not exists questions_type_idx      on questions (question_type);
+create index if not exists questions_level_idx     on questions (level);
 create index if not exists runs_document_idx       on extraction_runs (source_document_id);
 create index if not exists runs_current_idx        on extraction_runs (source_document_id) where is_current;
+
+-- Tables created before the level column existed: add it in place.
+alter table source_documents add column if not exists level text;
+alter table questions        add column if not exists level text;
 
 -- The questions of the current run for every paper.
 create or replace view current_questions as

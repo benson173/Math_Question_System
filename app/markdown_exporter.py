@@ -53,6 +53,8 @@ def _summary_table(result: ExtractionResult) -> list[str]:
     rows = [
         ("PDF", document.file_name),
         ("Pages", str(document.page_count)),
+        ("Level", f"{document.level} (from {document.level_source})"
+                  if document.level else "unknown"),
         ("Questions", str(len(document.questions))),
     ]
     if source:

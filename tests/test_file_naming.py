@@ -23,7 +23,7 @@ from app.schemas import (
 
 
 def result_for(file_name: str) -> ExtractionResult:
-    document = ExtractedDocument(file_name=file_name, page_count=1, questions=[
+    document = ExtractedDocument(level="F4", file_name=file_name, page_count=1, questions=[
         ExtractedQuestion(source_question_id="16", page_start=1, page_end=1,
                           question_text="圖中…", diagram_required=True)])
     return ExtractionResult(

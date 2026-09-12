@@ -56,6 +56,8 @@ class Repository:
         print("=== SAVE DOCUMENT ===")
         print("File:", document.file_name)
         print("Pages:", document.page_count)
+        print("Level:", f"{document.level} (from {document.level_source})"
+                        if document.level else "unknown")
         print("Questions:", len(document.questions))
         if result.source:
             print("SHA256:", result.source.sha256)
@@ -103,7 +105,7 @@ class Repository:
 
     def _save_quietly(self, result: ExtractionResult) -> None:
         document = result.document
-        parts = [f"{len(document.questions)} questions"]
+        parts = [document.level or "level unknown", f"{len(document.questions)} questions"]
         if result.issues:
             parts.append(f"{len(result.issues)} issues")
         if result.diagrams:

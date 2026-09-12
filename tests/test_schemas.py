@@ -24,8 +24,8 @@ def test_question_requires_text():
         ExtractedQuestion(source_question_id="1", page_start=1, page_end=1)
 
 
-def test_extraction_payload_carries_questions_only():
-    assert set(QuestionExtractionPayload.model_fields) == {"questions"}
+def test_extraction_payload_carries_questions_and_the_printed_level():
+    assert set(QuestionExtractionPayload.model_fields) == {"questions", "level_text"}
 
 
 def test_payload_does_not_ask_the_model_for_document_facts():

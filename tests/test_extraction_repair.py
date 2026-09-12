@@ -34,7 +34,7 @@ def question(question_id: str, text: str) -> ExtractedQuestion:
 
 
 def document(questions) -> ExtractedDocument:
-    return ExtractedDocument(file_name="s.pdf", page_count=12, questions=list(questions))
+    return ExtractedDocument(level="F4", file_name="s.pdf", page_count=12, questions=list(questions))
 
 
 @pytest.fixture

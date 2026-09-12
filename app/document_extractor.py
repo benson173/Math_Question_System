@@ -14,6 +14,7 @@ import uuid
 from app.config import load_settings
 from app.document_loader import LoadedDocument, load_pdf
 from app.gemini_client import GeminiClient
+from app.level import resolve_level
 from app.paths import PROMPT_DOCUMENT_EXTRACTOR_V1
 from app.schemas import (
     ExtractedDocument,
@@ -43,10 +44,14 @@ class DocumentExtractor:
             pdf_bytes=loaded.data,
         )
 
+        resolved = resolve_level(loaded.file_name, payload.level_text)
         document = ExtractedDocument(
             file_name=loaded.file_name,
             page_count=loaded.page_count,
             questions=list(payload.questions),
+            level=resolved.level,
+            level_source=resolved.source,
+            level_text=payload.level_text,
         )
 
         return ExtractionResult(

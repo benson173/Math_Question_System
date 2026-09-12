@@ -33,7 +33,7 @@ def question(question_id="1", text="求 x 的值。", **overrides) -> ExtractedQ
 
 
 def result(questions, file_name="p.pdf", pages=1, issues=None) -> ExtractionResult:
-    document = ExtractedDocument(file_name=file_name, page_count=pages,
+    document = ExtractedDocument(level="F4", file_name=file_name, page_count=pages,
                                  questions=list(questions))
     return ExtractionResult(
         document=document,

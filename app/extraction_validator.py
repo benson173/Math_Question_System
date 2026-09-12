@@ -10,6 +10,7 @@ import re
 
 from app.diagram_geometry import is_usable_region
 from app.extraction_repair import find_control_characters, find_stem_contamination
+from app.level import level_from_filename, level_from_paper
 from app.schemas import ExtractedDocument, Severity, ValidationIssue
 
 
@@ -191,6 +192,29 @@ def count_dashes(text: str) -> dict[str, int]:
             for character in DASHES if character in prose}
 
 
+def find_level_issues(document: ExtractedDocument) -> list[tuple[str, Severity, str]]:
+    """Is the paper's form known, and do its two sources agree?"""
+    from_name = level_from_filename(document.file_name)
+    from_paper = level_from_paper(document.level_text)
+
+    if document.level is None:
+        if document.level_text:
+            why = (f"The paper prints {document.level_text!r}, which is not a "
+                   f"recognised form, and the file name has none.")
+        else:
+            why = "Neither the file name nor the paper names a form."
+        return [("LEVEL_MISSING", "low",
+                 f"{why} Put it in the file name, e.g. F4-{document.file_name}.")]
+
+    if from_name and from_paper and from_name != from_paper:
+        return [("LEVEL_MISMATCH", "medium",
+                 f"File name says {from_name} but the paper prints "
+                 f"{document.level_text!r} ({from_paper}); using {document.level} "
+                 f"from the {document.level_source}. Rename the file if the paper "
+                 f"is right.")]
+    return []
+
+
 def blocking_issues(issues: list[ValidationIssue]) -> list[ValidationIssue]:
     return [issue for issue in issues if issue.severity in BLOCKING_SEVERITIES]
 
@@ -215,6 +239,9 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
 
     if not document.questions:
         report("NO_QUESTIONS_FOUND", "critical", "No questions were extracted.")
+
+    for code, severity, message in find_level_issues(document):
+        report(code, severity, message)
 
     seen_ids: set[str] = set()
 

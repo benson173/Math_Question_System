@@ -7,7 +7,8 @@ client. If your tables use different column names, the builders are the one
 place to change.
 
 One extraction becomes:
-    1 source_documents row   (upserted on sha256 - the same PDF is one document)
+    1 source_documents row   (upserted on sha256 - the same PDF is one document;
+                              carries the form, F1-F6)
     1 extraction_runs row    (every run is kept; the newest is is_current)
     N questions rows         (one per question, tied to that run)
 
@@ -51,6 +52,7 @@ def document_row(result: ExtractionResult) -> dict[str, Any]:
         "file_name": result.source.file_name,
         "page_count": result.source.page_count,
         "byte_size": result.source.byte_size,
+        "level": result.document.level,
     }
 
 
@@ -100,6 +102,7 @@ def question_rows(result: ExtractionResult, document_id: str, run_id: str) -> li
             "extraction_run_id": run_id,
             "source_document_id": document_id,
             "source_question_id": q.source_question_id,
+            "level": result.document.level,
             "position": position,
             "question_type": q.question_type,
             "question_text": q.question_text,

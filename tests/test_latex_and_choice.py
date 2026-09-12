@@ -29,7 +29,7 @@ def question(question_id="1", text="求 x 的值。", **overrides) -> ExtractedQ
 
 
 def codes(questions) -> list[str]:
-    document = ExtractedDocument(file_name="s.pdf", page_count=1,
+    document = ExtractedDocument(level="F4", file_name="s.pdf", page_count=1,
                                  questions=list(questions))
     return sorted({issue.issue_code for issue in validate_extraction(document)})
 
@@ -80,7 +80,7 @@ def test_a_tab_is_reported_but_never_rewritten():
 def test_the_issue_names_the_cause():
     damaged = as_json_would_decode("\\frac")
     issues = [i for i in validate_extraction(
-        ExtractedDocument(file_name="s.pdf", page_count=1,
+        ExtractedDocument(level="F4", file_name="s.pdf", page_count=1,
                           questions=[question("2", damaged)]))
         if i.issue_code == "CONTROL_CHARACTER"]
     assert len(issues) == 1
@@ -90,7 +90,7 @@ def test_the_issue_names_the_cause():
 
 def test_repair_touches_only_damaged_questions():
     good = "化簡 \\(\\frac{x}{y}\\)。"
-    document = ExtractedDocument(file_name="s.pdf", page_count=1, questions=[
+    document = ExtractedDocument(level="F4", file_name="s.pdf", page_count=1, questions=[
         question("1", good),
         question("2", as_json_would_decode("\\frac")),
     ])
@@ -103,7 +103,7 @@ def test_repair_touches_only_damaged_questions():
 
 
 def test_repair_is_idempotent():
-    document = ExtractedDocument(file_name="s.pdf", page_count=1,
+    document = ExtractedDocument(level="F4", file_name="s.pdf", page_count=1,
                                  questions=[question("1", as_json_would_decode("\\frac"))])
     assert repair_control_characters(document)
     assert repair_control_characters(document) == []

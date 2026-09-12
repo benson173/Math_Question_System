@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field
+from typing import Optional
 
 from app.extraction_repair import parent_id
 from app.extraction_validator import _looks_like_a_table
@@ -68,6 +69,7 @@ class PaperStats:
     pages: int
     questions: int
     issues: int
+    level: Optional[str] = None
     codes: Counter = field(default_factory=Counter)
 
     @property
@@ -110,6 +112,7 @@ def analyse(results: list[ExtractionResult]) -> Analysis:
             sha256=result.source.sha256 if result.source else "",
             model=result.run.model if result.run else "",
             pages=document.page_count,
+            level=document.level,
             questions=len(document.questions),
             issues=len(result.issues),
             codes=Counter(i.issue_code for i in result.issues),
@@ -164,10 +167,12 @@ def render_analysis(analysis: Analysis, top_questions: int = 15) -> str:
         lines.append("| (none) | 0 |")
 
     lines += ["", "## By paper", "",
-              "| Paper | Pages | Questions | Q/page | Issues |", "|---|---|---|---|---|"]
+              "| Paper | Level | Pages | Questions | Q/page | Issues |",
+              "|---|---|---|---|---|---|"]
     for paper in sorted(analysis.papers, key=lambda p: -p.issues):
-        lines.append(f"| {paper.file_name} | {paper.pages} | {paper.questions} | "
-                     f"{paper.questions_per_page:.1f} | {paper.issues} |")
+        lines.append(f"| {paper.file_name} | {paper.level or '?'} | {paper.pages} | "
+                     f"{paper.questions} | {paper.questions_per_page:.1f} | "
+                     f"{paper.issues} |")
 
     if analysis.worst_questions:
         lines += ["", "## Questions with the most issues", "",

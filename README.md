@@ -82,13 +82,16 @@ python -m scripts.ingest_pdfs               # 批量 —— 不論幾多份
 **建議噉改**（純粹方便你自己日後搵）:
 
 ```text
-2024-DSE-M1-paper1.pdf
-2023-mock-stpaul-paper2.pdf
-P6-uniform-test-2024-03.pdf
+F4-2024-mock-paper1.pdf
+F5-2023-stpaul-paper2.pdf
+F6-uniform-test-2024-03.pdf
 ```
 
-即係「年份 - 來源 - 卷別」，全部細楷、用 `-` 分隔。噉樣排序自然、shell 唔使 quote、
-`analyse_extractions` 出嗰張表亦都對得齊易睇。
+即係「級別 - 年份 - 來源 - 卷別」，全部細楷／大楷都得，用 `-` 分隔。噉樣排序自然、
+shell 唔使 quote、`analyse_extractions` 出嗰張表亦都對得齊易睇。
+
+**檔名頭嗰個級別係有用嘅** —— 見下面「級別 (F1–F6)」。冇寫都唔會壞，系統會睇返份卷
+自己印住嘅「中四 / S.4」，兩樣都冇先會報一個 low。
 
 想分類就用**子資料夾**，系統會遞歸執，搬去 `processed/` 嗰陣保留返結構:
 
@@ -201,6 +204,7 @@ pytest
 | `.env.example` | 🟡 Config | 設定樣板 |
 | `app/config.py` | 🔵 Python | 讀設定（有 cache） |
 | `app/paths.py` | 🔵 Python | 所有路徑錨住 repo root |
+| `app/level.py` | 🔵 Python | 中四 / S.4 / Form 4 → `F4` |
 | `app/errors.py` | 🔵 Python | 錯誤類型 |
 | `app/schemas.py` | 🔵 Python | 定義資料格式 |
 | `app/document_loader.py` | 🔵 Python | 讀 PDF 基本資料 |
@@ -229,11 +233,61 @@ pytest
 
 ---
 
+## 級別 (F1–F6)
+
+每份卷、每條題目都會標住係邊一級，統一用 **`F1` – `F6`**（中一至中六）。
+
+### 邊度睇返個級別
+
+```text
+S4        中四        Form 4      Secondary 4    Grade 10
+```
+
+全部正規化做 `F4`。大細楷、有冇點（`S.4`）、有冇空格（`F 4`）都認。
+
+### 兩個來源，邊個贏
+
+| 來源 | 例 | 幾時用 |
+|---|---|---|
+| **檔名** | `S4-2024-mock.pdf`、`2526_1st_S4MATH1.pdf` | 永遠優先 |
+| **份卷印住嘅字** | 封面寫「中四上學期測驗」 | 檔名冇寫先用 |
+
+檔名贏，因為嗰個係你自己改嘅，改錯即刻 rename 就得；份卷印咩字係 Gemini 讀一次封面
+嘅結果。兩邊唔同 **唔會靜靜雞揀一個**，會報 `LEVEL_MISMATCH`（medium）話你知邊個用咗。
+
+### 認唔到會點
+
+| 情況 | 結果 |
+|---|---|
+| 檔名或者份卷有級別 | `level = "F4"`，`level_source` 話你知邊度嚟 |
+| 兩樣都冇 | `level = null` + `LEVEL_MISSING`（low），照樣抽得題目 |
+| 「中一至中三」噉嘅範圍 | 當冇 —— 唔會亂揀第一個 |
+| 「其中一個」 | 唔會當「中一」 |
+
+**級別唔會靠估。** 唔會睇題目深淺或者課題去猜，因為估錯嘅級別比冇級別更難搞。
+
+### 存喺邊
+
+```json
+"document": { "level": "F4", "level_source": "filename", "level_text": "中四" }
+```
+
+Supabase 入面 `source_documents.level` 同 `questions.level` 都有，所以
+
+```sql
+select * from current_questions where level = 'F4';
+```
+
+就係中四嘅題庫。
+
+---
+
 ## Question Object
 
 ```json
 {
   "source_question_id": "1(a)",
+  "level": "F4",
   "page_start": 1,
   "page_end": 1,
   "question_text": "Factorise 1 - 225x².",
@@ -509,6 +563,8 @@ render 失敗（library 冇裝、PDF 壞）**唔會累死成次抽題** — 只�
 | `INCONSISTENT_MINUS_SIGN` | low | 同一份卷用咗幾種唔同減號字元 |
 | `REPEATED_TEXT_IN_QUESTION` | medium | 同題內有句子重複，通常係小題題目撈咗入題幹 |
 | `MARKS_MISSING` | low | 成份卷有分數，但呢條冇 |
+| `LEVEL_MISMATCH` | medium | 檔名同份卷講唔同級別 |
+| `LEVEL_MISSING` | low | 檔名同份卷都搵唔到 F1–F6 |
 
 粗體嘅兩個係 **blocking** — 會令 PDF 入 `failed/pdf/`。
 
@@ -526,9 +582,9 @@ render 失敗（library 冇裝、PDF 壞）**唔會累死成次抽題** — 只�
 
 | Table | 一行係咩 | Key |
 |---|---|---|
-| `source_documents` | 一份 PDF（按內容 hash） | `sha256` unique |
+| `source_documents` | 一份 PDF（按內容 hash），連級別 | `sha256` unique |
 | `extraction_runs` | 一次抽題 | `run_id` unique；`is_current` 標住最新一次 |
-| `questions` | 一條題目（屬於某次 run） | `(extraction_run_id, source_question_id)` unique |
+| `questions` | 一條題目（屬於某次 run），連級別 | `(extraction_run_id, source_question_id)` unique |
 
 同一份 PDF 再抽一次，**唔會**覆蓋：加一行新 run，舊 run 嘅 `is_current` 變 `false`。
 `current_questions` view 就係每份卷最新一次 run 嘅題目。每次 run 嘅 issues、

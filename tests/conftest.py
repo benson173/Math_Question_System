@@ -26,13 +26,16 @@ def make_question():
 
 @pytest.fixture
 def make_document(make_question):
-    def _make(questions=None, page_count=1, file_name="sample.pdf") -> ExtractedDocument:
+    def _make(questions=None, page_count=1, file_name="sample.pdf",
+              level="F4", level_source="filename") -> ExtractedDocument:
         if questions is None:
             questions = [make_question()]
         return ExtractedDocument(
             file_name=file_name,
             page_count=page_count,
             questions=questions,
+            level=level,
+            level_source=level_source,
         )
     return _make
 

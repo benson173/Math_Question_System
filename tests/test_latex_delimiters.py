@@ -18,7 +18,7 @@ def question(question_id, text) -> ExtractedQuestion:
 
 
 def codes(questions) -> list[str]:
-    document = ExtractedDocument(file_name="s.pdf", page_count=1,
+    document = ExtractedDocument(level="F4", file_name="s.pdf", page_count=1,
                                  questions=list(questions))
     return sorted({issue.issue_code for issue in validate_extraction(document)})
 
@@ -50,7 +50,7 @@ def test_correct_maths_is_never_flagged(text):
 
 
 def test_the_issue_lists_what_it_found():
-    issues = [i for i in validate_extraction(ExtractedDocument(
+    issues = [i for i in validate_extraction(ExtractedDocument(level="F4",
         file_name="s.pdf", page_count=1,
         questions=[question("18(a)", r"L = 10 \log \frac{I}{10^{-12}}")]))
         if i.issue_code == "LATEX_NOT_DELIMITED"]
@@ -77,7 +77,7 @@ def test_a_paper_mixing_dashes_is_reported():
 
 def test_it_is_only_informational():
     issue = next(i for i in validate_extraction(
-        ExtractedDocument(file_name="s.pdf", page_count=1, questions=MIXED_PAPER))
+        ExtractedDocument(level="F4", file_name="s.pdf", page_count=1, questions=MIXED_PAPER))
         if i.issue_code == "INCONSISTENT_MINUS_SIGN")
     assert issue.severity == "low"
     assert "3 different dash characters" in issue.message

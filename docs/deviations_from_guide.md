@@ -622,3 +622,47 @@ Guide 話 Repository 係「唯一寫資料嘅地方」，之後接 Supabase。�
 未驗證：呢個環境連唔到 PyPI 同 Supabase，`supabase-py` 嘅 `upsert(on_conflict=)`、
 `update().eq().neq()`、`select(count="exact")` 係按官方文件寫，第一次真接
 Supabase 請先行 `db_check`。
+
+
+## 31. 級別 F1–F6：兩個來源，一個碼
+
+Guide 由頭到尾寫住「Primary 6 level」，即係成個 system 淨係一級，所以 Question
+Object 冇級別呢個欄。實際上收返嚟嘅係中四、中五、中六嘅卷，冇級別就分唔到題庫。
+
+加咗 `app/level.py`，做一件事：將人寫級別嘅所有寫法，變做一個碼。
+
+```text
+S4   S.4   s4   F4   F.4   F 4   Form 4   Secondary 4   Sec 4   中四   中五級   Grade 10
+```
+
+全部 → `F4` / `F5`。碼只有 `F1`–`F6`。
+
+### 點解唔淨係信份卷
+
+Prompt 加咗一個 `level_text`，叫 Gemini **照抄**封面印住嘅字（「中四」），唔好解讀。
+解讀係 code 做，因為：
+
+1. **抄字係確定性嘅，解讀唔係。** §22、§27 已經證咗 prompt 叫佢做判斷會時好時壞。
+   「中四」呢兩個字抄出嚟，之後每次 parse 都一定係 `F4`。
+2. **檔名優先。** 檔名係你自己改，錯就 rename，即刻改到；份卷印咩字係 model 讀一次
+   封面。所以 `S5-mock.pdf` 入面印住「中四」，用 `F5`，同時報 `LEVEL_MISMATCH`
+   叫你睇返。兩個來源唔同 **一定要有人知**，唔可以靜靜雞揀一個。
+3. **估唔到就唔估。** 「中一至中三」搵到兩個級別，`parse_level` 返 `None` 而唔係揀
+   第一個；「其中一個」入面嘅「中一」有 negative lookbehind 擋住。寧願 `LEVEL_MISSING`
+   （low，唔 blocking）都好過寫錯級別入 database —— 錯級別會靜靜雞污染成個題庫。
+
+### 邊度用得著
+
+`questions.level` 係 denormalise 出嚟嘅（document 已經有一份）。多存一欄嘅原因係
+最常問嗰句 SQL：
+
+```sql
+select * from current_questions where level = 'F4' and question_type = 'open';
+```
+
+唔使 join 就出到「中四所有非選擇題」。
+
+### 冇級別唔會擋住抽題
+
+`LEVEL_MISSING` 係 low，唔係 blocking。冇級別嘅卷照抽、照存，只係之後篩唔到。呢個
+係刻意嘅：抽題目同分類係兩件事，一件失敗唔應該拖冧另一件。

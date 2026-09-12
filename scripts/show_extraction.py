@@ -44,6 +44,9 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"File   : {path}")
     print(f"PDF    : {document['file_name']}  ({document['page_count']} pages)")
+    level = document.get("level")
+    print(f"Level  : {level} (from {document.get('level_source')})" if level
+          else "Level  : unknown")
     if source:
         print(f"SHA256 : {source['sha256']}")
     if run:

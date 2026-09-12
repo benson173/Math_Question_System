@@ -66,12 +66,23 @@ class QuestionExtractionPayload(BaseModel):
     """
 
     questions: list[ExtractedQuestion]
+    # The exact printed words naming the form (中四, S.4, Form 4), or null.
+    # Copied, not interpreted: app/level.py turns it into an F1-F6 code.
+    level_text: Optional[str] = None
+
+
+LevelSource = Literal["filename", "paper"]
 
 
 class ExtractedDocument(BaseModel):
     file_name: str
     page_count: int
     questions: list[ExtractedQuestion]
+    # Canonical form code, F1-F6 (中一至中六), and where it came from. None
+    # when neither the file name nor the paper says.
+    level: Optional[str] = None
+    level_source: Optional[LevelSource] = None
+    level_text: Optional[str] = None
 
 
 class SourceDocument(BaseModel):

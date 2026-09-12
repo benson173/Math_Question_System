@@ -33,7 +33,7 @@ def question(question_id, text=PROSE, *, diagram=False, diagram_region=None,
 
 
 def document(questions, page_count=12) -> ExtractedDocument:
-    return ExtractedDocument(file_name="s.pdf", page_count=page_count,
+    return ExtractedDocument(level="F4", file_name="s.pdf", page_count=page_count,
                              questions=list(questions))
 
 

@@ -129,7 +129,8 @@ def make_result(questions=None, issues=None, sha="a" * 64, run_id="run1") -> Ext
                           diagram_region=PageRegion(page=2, y_min=1, x_min=1, y_max=9, x_max=9),
                           extraction_notes=["note"]),
     ]
-    document = ExtractedDocument(file_name="p.pdf", page_count=3, questions=questions)
+    document = ExtractedDocument(file_name="p.pdf", page_count=3, questions=questions,
+                                 level="F4", level_source="filename")
     return ExtractionResult(
         document=document,
         issues=issues or [],
@@ -146,9 +147,10 @@ def make_result(questions=None, issues=None, sha="a" * 64, run_id="run1") -> Ext
 
 # --- row builders -----------------------------------------------------------
 
-def test_document_row_carries_the_hash():
+def test_document_row_carries_the_hash_and_the_form():
     row = document_row(make_result())
-    assert row == {"sha256": "a" * 64, "file_name": "p.pdf", "page_count": 3, "byte_size": 100}
+    assert row == {"sha256": "a" * 64, "file_name": "p.pdf", "page_count": 3,
+                   "byte_size": 100, "level": "F4"}
 
 
 def test_document_row_needs_a_source():
@@ -185,6 +187,7 @@ def test_question_rows_keep_order_and_every_field():
     assert second["diagram_region"]["page"] == 2
     assert second["extraction_notes"] == ["note"]
     assert all(r["extraction_run_id"] == "run-1" for r in rows)
+    assert all(r["level"] == "F4" for r in rows)      # every question knows its form
 
 
 def test_rendered_images_are_attached_to_their_question():

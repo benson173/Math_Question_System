@@ -35,7 +35,7 @@ def question(question_id, text, *, marks=None, tables=0) -> ExtractedQuestion:
 
 def result(questions, sha256="a" * 64) -> ExtractionResult:
     return ExtractionResult(
-        document=ExtractedDocument(file_name="sample.pdf", page_count=12,
+        document=ExtractedDocument(level="F4", file_name="sample.pdf", page_count=12,
                                    questions=list(questions)),
         source=SourceDocument(file_name="sample.pdf", sha256=sha256,
                               page_count=12, byte_size=1),

@@ -34,7 +34,7 @@ def question(question_id, text) -> ExtractedQuestion:
 
 
 def document(questions) -> ExtractedDocument:
-    return ExtractedDocument(file_name="s.pdf", page_count=14,
+    return ExtractedDocument(level="F4", file_name="s.pdf", page_count=14,
                              questions=list(questions))
 
 
