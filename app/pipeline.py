@@ -14,6 +14,7 @@ from app.diagram_renderer import render_diagrams
 from app.document_extractor import DocumentExtractor
 from app.extraction_validator import blocking_issues, validate_extraction
 from app.json_exporter import diagram_output_dir, export_extraction_json, extraction_output_path
+from app.markdown_exporter import export_extraction_markdown, markdown_output_path
 from app.repository import Repository
 from app.schemas import ExtractionResult
 
@@ -47,6 +48,10 @@ class PdfIngestionPipeline:
         output_path = extraction_output_path(result)
         export_extraction_json(result, output_path)
         print("Exported:", output_path)
+
+        report_path = markdown_output_path(output_path)
+        export_extraction_markdown(result, report_path)
+        print("Report:  ", report_path)
 
         for asset in result.diagrams:
             kind = "cropped" if asset.cropped else "full page"

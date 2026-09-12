@@ -126,3 +126,16 @@ Render 失敗（library 冇裝、PDF 壞）唔會累死成次抽題 — 印個�
 
 `DiagramAsset` 刻意唔放入 `ExtractedQuestion` — Question Object 要保持係
 Rule 2 講嗰張標準表格，我哋自己整出嚟嘅檔案放喺 `ExtractionResult.diagrams`。
+
+---
+
+## 9. Markdown report（guide 冇）
+
+除咗 JSON，每次抽完會喺隔離寫多份 `.md`：每條題目一個 section、題幹原文照擺（本身
+就係 markdown，所以印出嚟嘅表格會 render 返做表格）、圖用**相對路徑**連住、最後一
+張 validation issue 表（最嚴重排先）。
+
+相對路徑係刻意嘅：report 喺 `data/extracted/`，圖喺 `data/diagrams/`，連結寫成
+`../diagrams/.../16.png`，所以成個 `data/` folder 搬去邊都唔會斷。
+
+`scripts/export_markdown.py` 可以由已存嘅 JSON 重新整份 report，唔使再燒 API。

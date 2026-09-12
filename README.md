@@ -56,8 +56,29 @@ python -m scripts.ingest_one_pdf paper.pdf   # 或者指定 file
 python -m scripts.ingest_pdfs                # 批量處理 inbox/pdf/ 所有 PDF
 ```
 
-輸出：`data/extracted/<name>-<sha256 前 12 位>.json` — 用 hash 命名，所以兩份都叫
-`sample.pdf` 嘅唔同卷唔會互相覆寫，而重做同一份卷就會覆寫自己上次嘅結果。
+每次抽完會出三樣嘢:
+
+```text
+data/extracted/<name>-<sha12>.json    # 機器讀嘅
+data/extracted/<name>-<sha12>.md      # 人讀嘅 report
+data/diagrams/<name>-<sha12>/16.png   # 抽到嘅圖
+```
+
+用 hash 命名，所以兩份都叫 `sample.pdf` 嘅唔同卷唔會互相覆寫，而重做同一份卷就會
+覆寫自己上次嘅結果。
+
+### `.md` report
+
+睇得明、可以直接 upload 出去嘅版本 — 每條題目一個 section，題幹嘅 markdown 表格會
+正常 render，圖用**相對路徑**連住（所以成個 `data/` folder 搬去邊都唔會斷），最後有
+張 validation issue 表。
+
+想由舊 JSON 重新整返個 report（唔使再叫 Gemini）:
+
+```bash
+python3 -m scripts.export_markdown              # 最新嗰份
+python3 -m scripts.export_markdown path/x.json  # 指定
+```
 
 所有 script 喺任何 directory 行都可以（path 由 `app/paths.py` 錨住 repo root）。
 
@@ -106,11 +127,13 @@ pytest
 | `app/diagram_geometry.py` | 🔵 Python | Crop 座標數學（純函數） |
 | `app/diagram_renderer.py` | 🔵 Python | PDF → 圖片 PNG |
 | `app/json_exporter.py` | 🔵 Python | 輸出 JSON |
+| `app/markdown_exporter.py` | 🔵 Python | 輸出人讀嘅 .md report |
 | `prompts/document_extractor_v1.txt` | 🟢 Prompt | Gemini 抽題指令 |
 | `scripts/test_load_pdf.py` | 🔴 Test | 測 PDF loader |
 | `scripts/ingest_one_pdf.py` | 🔴 Test | 處理一個 PDF |
 | `scripts/ingest_pdfs.py` | 🔴 Test | 批量處理 PDF |
 | `scripts/show_extraction.py` | 🔴 Test | 查返存低咗嘅結果 |
+| `scripts/export_markdown.py` | 🔴 Test | 由 JSON 重新整 .md report |
 
 ---
 
