@@ -593,3 +593,32 @@ LaTeX 入面 ASCII `-` 就係正確嘅減號，用 U+2212 反而唔標準。所�
 規則：散文 U+2212，公式內 ASCII hyphen。
 
 好處係呢三份卷而家係**真正零 issue**，而唔係一個要人手排除嘅誤報。
+
+## 30. Supabase：先做 row builder，再做 store
+
+Guide 話 Repository 係「唯一寫資料嘅地方」，之後接 Supabase。接嘅時候分咗兩層：
+
+- `document_row` / `run_row` / `question_rows` 係純函數：`ExtractionResult` 入，
+  plain dict 出。寫入嘅每個 column 都可以用 fake client 測，唔使有 database。
+- `SupabaseStore.save` 得三十行：upsert document → insert run → insert questions
+  → 將舊 run 嘅 `is_current` 改做 false。
+
+同 guide 唔同嘅地方：
+
+1. **每次 run 都留低，唔覆蓋。** Guide 只講三個 table。實際跑落嚟，同一份卷會抽好幾
+   次（prompt 改咗、model 改咗、想比較），而 §18–§20 嘅 run-to-run diff 正正需要舊
+   run 仲喺度。所以 `extraction_runs` 加 `is_current`，`questions` 掛喺 run 而唔係
+   直接掛喺 document。
+2. **`source_documents` 用 sha256 做 unique key。** 同一份 PDF 改咗檔名再放入
+   inbox，仍然係同一個 document，只係多一個 run。
+3. **冇 transaction 就自己收拾。** Supabase REST 一次一個 request。Run row 寫咗但
+   questions 寫唔入，會即刻刪返個 run row，寧願重跑都唔好留低空 run。
+4. **冇 `.env` 就唔連。** `Repository()` 見 `SUPABASE_URL` 空或者仲係 `put_...`
+   就當冇 database，行為同 v1.1 之前一模一樣。Batch、單份、test 都唔會因為冇
+   Supabase 而壞。
+5. **`scripts/db_check.py` 先行一次。** 佢會逐個 table select 齊 store 會寫嘅
+   column。Column 名對唔上會喺 ingest 之前爆，而唔係抽完題目先發現寫唔入。
+
+未驗證：呢個環境連唔到 PyPI 同 Supabase，`supabase-py` 嘅 `upsert(on_conflict=)`、
+`update().eq().neq()`、`select(count="exact")` 係按官方文件寫，第一次真接
+Supabase 請先行 `db_check`。

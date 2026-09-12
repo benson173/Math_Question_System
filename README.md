@@ -44,6 +44,7 @@ pip install -r requirements.txt
 # 2. 設定
 cp .env.example .env
 #    填返 GEMINI_API_KEY 同 GEMINI_EXTRACTOR_MODEL
+#    （可選）SUPABASE_URL + SUPABASE_SECRET_KEY，見下面「Supabase」
 
 # 3. 放 PDF
 cp your_paper.pdf inbox/pdf/sample.pdf
@@ -206,7 +207,9 @@ pytest
 | `app/gemini_client.py` | 🔵 Python | 呼叫 Gemini |
 | `app/document_extractor.py` | 🔵 Python | PDF → Questions |
 | `app/extraction_validator.py` | 🔵 Python | 檢查抽題結果 |
-| `app/repository.py` | 🔵 Python | 保存資料 |
+| `app/repository.py` | 🔵 Python | 保存資料（有 Supabase 就寫入，冇就 print） |
+| `app/supabase_store.py` | 🔵 Python | Extraction → 三個 table 嘅 rows |
+| `docs/supabase_schema.sql` | 🟡 Config | Supabase table 定義 |
 | `app/pipeline.py` | 🔵 Python | 串流程 |
 | `app/diagram_geometry.py` | 🔵 Python | Crop 座標數學（純函數） |
 | `app/diagram_renderer.py` | 🔵 Python | PDF → 圖片 PNG |
@@ -222,6 +225,7 @@ pytest
 | `scripts/export_markdown.py` | 🔴 Test | 由 JSON 重新整 .md report |
 | `scripts/compare_extractions.py` | 🔴 Test | 比較兩次 run |
 | `scripts/analyse_extractions.py` | 🔴 Test | 按題型分析多份卷 |
+| `scripts/db_check.py` | 🔴 Test | 驗證 Supabase 連線同 schema |
 
 ---
 
@@ -512,15 +516,47 @@ render 失敗（library 冇裝、PDF 壞）**唔會累死成次抽題** — 只�
 
 ---
 
-## 🟣 Supabase（之後做）
+## 🟣 Supabase
 
-而家 `Repository` 淨係 print + export JSON。之後至少要有以下 table：
+`Repository` 係全系統唯一寫資料嘅地方。`.env` 有 `SUPABASE_URL` 同
+`SUPABASE_SECRET_KEY` 就會寫入 Supabase；冇就照舊淨係 print + export JSON，
+所以冇 database 嘅電腦一樣行到。
 
-```text
-source_documents
-extraction_runs
-questions
+### 三個 table
+
+| Table | 一行係咩 | Key |
+|---|---|---|
+| `source_documents` | 一份 PDF（按內容 hash） | `sha256` unique |
+| `extraction_runs` | 一次抽題 | `run_id` unique；`is_current` 標住最新一次 |
+| `questions` | 一條題目（屬於某次 run） | `(extraction_run_id, source_question_id)` unique |
+
+同一份 PDF 再抽一次，**唔會**覆蓋：加一行新 run，舊 run 嘅 `is_current` 變 `false`。
+`current_questions` view 就係每份卷最新一次 run 嘅題目。每次 run 嘅 issues、
+repairs、圖片路徑都一齊存低（jsonb），所以之後查「呢條題目點解係咁」有得追。
+
+### 點設定
+
+```bash
+# 1. Supabase Dashboard → SQL Editor → 貼 docs/supabase_schema.sql 行一次
+# 2. Dashboard → Project Settings → API：
+#    URL              → SUPABASE_URL
+#    service_role key → SUPABASE_SECRET_KEY   （唔係 anon key）
+# 3. 驗證連線同 schema
+python3 -m scripts.db_check
+# 4. 之後每次 ingest 都會自動寫入
+python3 -m scripts.ingest_pdfs --redo
 ```
+
+`db_check` 會逐個 table 讀一次「store 會寫嘅所有 column」，缺一個都會 FAIL 並列出
+期望嘅 column。如果你已經有自己嘅 table，column 名唔同，改 `app/supabase_store.py`
+入面三個 row builder（`document_row` / `run_row` / `question_rows`）就得，其他嘢
+唔使掂。
+
+Supabase REST 冇 transaction。如果 run 已經寫咗但 questions 寫唔入，個 run row 會
+即刻刪返，唔會留低一個空 run。
+
+> `SUPABASE_SECRET_KEY` 係 service_role key，可以繞過 RLS。**唔好** commit `.env`，
+> 亦唔好放入任何前端。
 
 ---
 
