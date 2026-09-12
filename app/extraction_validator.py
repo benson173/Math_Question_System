@@ -46,6 +46,17 @@ _SENTENCE_SPLIT = re.compile(r"[。？！\n]+")
 # A line beginning "A. ", "(B)", "C、" - a printed multiple-choice option.
 _OPTION_LINE = re.compile(r"^\s*\(?([A-D])[.)、．]\s", re.MULTILINE)
 MIN_OPTION_LETTERS = 3
+
+# A delimited maths span, which is where LaTeX belongs.
+_MATH_SPAN = re.compile(r"\\\(.*?\\\)|\$\$.*?\$\$|\$[^$\n]+\$", re.DOTALL)
+# LaTeX left outside one: a command, or a braced super/subscript.
+_LOOSE_COMMAND = re.compile(r"\\[a-zA-Z]{2,}")
+_LOOSE_SCRIPT = re.compile(r"[\^_]\{[^}\n]{1,30}\}")
+
+# The three characters a paper's minus sign comes back as. One document should
+# settle on one of them; mixing breaks any later text match.
+DASHES = {"-": "U+002D hyphen", "\u2013": "U+2013 en dash", "\u2212": "U+2212 minus"}
+MIN_DASH_USES = 3
 MIN_REPEATED_SENTENCE = 8
 
 
@@ -155,6 +166,27 @@ def looks_like_multiple_choice(text: str) -> bool:
     return len(letters) >= MIN_OPTION_LETTERS
 
 
+def find_undelimited_latex(text: str) -> list[str]:
+    """LaTeX sitting outside \\( \\) - it will not render anywhere.
+
+    Delimited spans are removed first, so correctly written maths never counts.
+    """
+    outside = _MATH_SPAN.sub(" ", text)
+    return ([m.group() for m in _LOOSE_COMMAND.finditer(outside)]
+            + [m.group() for m in _LOOSE_SCRIPT.finditer(outside)])
+
+
+def count_dashes(text: str) -> dict[str, int]:
+    """How often each dash character appears.
+
+    Counted plainly rather than only where a minus sign is likely: a minus and
+    a printed range cannot be told apart from context anyway, and either way
+    one document should spell the character one way.
+    """
+    return {character: text.count(character)
+            for character in DASHES if character in text}
+
+
 def blocking_issues(issues: list[ValidationIssue]) -> list[ValidationIssue]:
     return [issue for issue in issues if issue.severity in BLOCKING_SEVERITIES]
 
@@ -219,6 +251,13 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
         has_picture = any(is_usable_region(r) for r in q.table_regions)
         table_severity: Severity = "low" if has_picture else "medium"
         fallback = " A picture of the table was captured." if has_picture else ""
+
+        loose = find_undelimited_latex(q.question_text)
+        if loose:
+            found = ", ".join(sorted(set(loose))[:5])
+            report("LATEX_NOT_DELIMITED", "medium",
+                   f"Question {qid} has LaTeX outside \\( \\): {found}. It will not "
+                   "render, and the same paper writes other maths correctly.", qid)
 
         control = find_control_characters(q.question_text)
         if control:
@@ -290,6 +329,19 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
                        f"Question {q.source_question_id} has no marks, but "
                        f"{len(marked)} of {len(document.questions)} questions do.",
                        q.source_question_id)
+
+    # Document-level: the paper prints one minus sign; the extraction should
+    # not come back with three different characters for it.
+    totals: dict[str, int] = {}
+    for q in document.questions:
+        for character, count in count_dashes(q.question_text).items():
+            totals[character] = totals.get(character, 0) + count
+    used = sorted(c for c, n in totals.items() if n >= MIN_DASH_USES)
+    if len(used) > 1:
+        named = ", ".join(f"{DASHES[c]} x{totals[c]}" for c in used)
+        report("INCONSISTENT_MINUS_SIGN", "low",
+               f"This paper came back with {len(used)} different dash characters "
+               f"({named}). The page prints one; matching text later needs one.")
 
     if document.questions and document.page_count >= MIN_PAGES_FOR_DENSITY_CHECK:
         expected = document.page_count * MIN_QUESTIONS_PER_PAGE

@@ -491,6 +491,8 @@ render 失敗（library 冇裝、PDF 壞）**唔會累死成次抽題** — 只�
 | `CONTROL_CHARACTER` | high | LaTeX backslash 俾 JSON escape 食咗，指令爛咗 |
 | `OPTIONS_NOT_SEPARATED` | medium | MC 選項留咗喺 question_text |
 | `OPTIONS_MISSING` | medium | 標咗 MC 但冇 options |
+| `LATEX_NOT_DELIMITED` | medium | LaTeX 冇包喺 `\( \)` 入面，render 唔到 |
+| `INCONSISTENT_MINUS_SIGN` | low | 同一份卷用咗幾種唔同減號字元 |
 | `REPEATED_TEXT_IN_QUESTION` | medium | 同題內有句子重複，通常係小題題目撈咗入題幹 |
 | `MARKS_MISSING` | low | 成份卷有分數，但呢條冇 |
 

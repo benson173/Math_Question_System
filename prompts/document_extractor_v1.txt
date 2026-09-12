@@ -94,6 +94,13 @@ MATHEMATICAL NOTATION
   to double every backslash for JSON.
 - Be consistent across the whole paper: do not write one fraction as LaTeX and
   another of the same kind as plain text.
+- ALL LaTeX must sit inside \( \), including a formula on its own line. Writing
+  L = 10 \\log \\frac{I}{10^{-12}} bare will not render anywhere; write
+  L = \\( 10 \\log \\frac{I}{10^{-12}} \\) instead. The same applies to a lone
+  superscript: i^{1029} must be \\( i^{1029} \\), or written as i¹⁰²⁹.
+- Use U+2212 (−) for every minus sign and subtraction throughout the paper.
+  Do not mix it with a hyphen (-) or an en dash (–): the page prints one
+  character and the extraction must not come back with three.
 
 MARKS
 - If the mark is printed for this individual part, put it in marks.
