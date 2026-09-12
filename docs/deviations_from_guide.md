@@ -666,3 +666,54 @@ select * from current_questions where level = 'F4' and question_type = 'open';
 
 `LEVEL_MISSING` 係 low，唔係 blocking。冇級別嘅卷照抽、照存，只係之後篩唔到。呢個
 係刻意嘅：抽題目同分類係兩件事，一件失敗唔應該拖冧另一件。
+
+## 32. Schema 檔要補得返，唔可以淨係「開新 table」
+
+第一次真連 Supabase，`db_check` 三個 table 全部 FAIL：
+
+```text
+FAIL source_documents   APIError: column source_documents.sha256 does not exist  (42703)
+FAIL extraction_runs    APIError: column extraction_runs.run_id does not exist
+FAIL questions          APIError: column questions.extraction_run_id does not exist
+```
+
+`42703` 係 **undefined_column**，唔係 undefined_table —— 即係三個 table 都喺度，
+但入面乜 column 都冇。用 Supabase table editor 開一個 table 就係噉：得
+`id bigint identity` 同 `created_at`。
+
+原本份 `supabase_schema.sql` 全部係 `create table if not exists`，遇到呢個情況乜都
+唔做（table 「已經存在」），於是永遠 FAIL 落去。改成三段：
+
+1. `create table if not exists` —— 全新 project 一步搞掂。
+2. 一個 `do $$` block，逐隻 column `add column if not exists`。補出嚟嘅 column
+   **一律 nullable**，因為已經存在嘅 row 冇可能追溯滿足 NOT NULL；pipeline 每次都
+   寫齊所有欄，所以冇損失。
+3. Unique index（`sha256`、`run_id`、`(extraction_run_id, source_question_id)`）。
+   `sha256` 嗰個唔係裝飾 —— 冇佢 `upsert(on_conflict="sha256")` 根本做唔到，同一份
+   PDF 就會變幾行。
+
+兩個 foreign key column 嘅型別係由 parent 個 `id` **讀返嚟**再 `format()` 出去，
+所以 table editor 嗰個 `bigint` id 同全新 schema 嘅 `uuid` id 都接得上。Table 連
+`id` 都冇嘅話，會補一個 `uuid default gen_random_uuid()`；`gen_random_uuid()` 係
+volatile，Postgres 會逐行計一次，所以舊 row 唔會攞到同一個 id。
+
+### 真係跑過先算
+
+呢啲嘢估唔得，所以喺本機開咗個 Postgres 16 測四種情況，每種都行埋 store 嗰串
+寫入（upsert document → insert run → insert questions → 舊 run 轉 `is_current=false`）：
+
+| 情況 | 結果 |
+|---|---|
+| 全新空 database | 建齊，寫入正常 |
+| 再行多次 | 冇變化，寫入正常 |
+| Table editor 開嘅 table（bigint id，已有 row） | 補齊 column，FK 變 bigint，舊 row 留住 |
+| 手開、冇 `id`、已有三行 | 補 uuid id，三行三個唔同 id |
+
+四種都係 `documents = 1, runs = 2, current run = run-b, questions = 3`。
+
+### `db_check` 要講得出邊隻 column
+
+之前佢一次 select 晒所有 column，PostgREST 只報第一隻唔見嘅，於是你要「補一隻、行
+一次、再補一隻」。而家逐隻 column 試一次（三個 table 加埋四十個 request，一次過嘅
+嘢，唔緊要），一次過列晒。同時分開兩種情況：`select *` 都失敗 = table 唔存在；
+`select *` 得、逐隻 column 失敗 = column 對唔上 —— 兩種嘅下一步唔同。

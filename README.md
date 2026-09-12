@@ -603,10 +603,31 @@ python3 -m scripts.db_check
 python3 -m scripts.ingest_pdfs --redo
 ```
 
-`db_check` 會逐個 table 讀一次「store 會寫嘅所有 column」，缺一個都會 FAIL 並列出
-期望嘅 column。如果你已經有自己嘅 table，column 名唔同，改 `app/supabase_store.py`
-入面三個 row builder（`document_row` / `run_row` / `question_rows`）就得，其他嘢
-唔使掂。
+### 已經自己開咗 table？
+
+`docs/supabase_schema.sql` **行幾多次都得**，而且**唔會 drop 任何嘢**：
+
+- table 未有 → 開返
+- table 有咗但冇某啲 column（例如用 Supabase table editor 開，得 `id` +
+  `created_at`）→ 補返缺嗰啲，你原本啲 row 照留
+- 兩條 foreign key column 會跟返你 `id` 嘅型別，所以 table editor 嗰個
+  `bigint` id 同全新嘅 `uuid` id 都用得
+
+### `db_check` 講咩
+
+逐個 column 試一次，所以係列晒邊幾隻唔見，唔係淨係報第一隻：
+
+```text
+  DIFFERS  source_documents     0 rows, 5 column(s) not there:
+           - sha256
+           - file_name
+           ...
+  ok       questions            128 rows, all 21 columns present
+```
+
+如果你張 table 係另一套設計、想keep 住，佢會印一條 SQL 俾你 dump 返自己嘅 column 名，
+之後改 `app/supabase_store.py` 入面三個 row builder（`document_row` / `run_row` /
+`question_rows`）就得，其他嘢唔使掂。
 
 Supabase REST 冇 transaction。如果 run 已經寫咗但 questions 寫唔入，個 run row 會
 即刻刪返，唔會留低一個空 run。
