@@ -169,6 +169,7 @@ pytest
 | `app/json_exporter.py` | 🔵 Python | 輸出 JSON |
 | `app/markdown_exporter.py` | 🔵 Python | 輸出人讀嘅 .md report |
 | `app/extraction_diff.py` | 🔵 Python | 比較兩次 run |
+| `app/extraction_stats.py` | 🔵 Python | 按題型統計出事率 |
 | `prompts/document_extractor_v1.txt` | 🟢 Prompt | Gemini 抽題指令 |
 | `scripts/test_load_pdf.py` | 🔴 Test | 測 PDF loader |
 | `scripts/ingest_one_pdf.py` | 🔴 Test | 處理一個 PDF |
@@ -176,6 +177,7 @@ pytest
 | `scripts/show_extraction.py` | 🔴 Test | 查返存低咗嘅結果 |
 | `scripts/export_markdown.py` | 🔴 Test | 由 JSON 重新整 .md report |
 | `scripts/compare_extractions.py` | 🔴 Test | 比較兩次 run |
+| `scripts/analyse_extractions.py` | 🔴 Test | 按題型分析多份卷 |
 
 ---
 
@@ -224,6 +226,48 @@ pytest
 ```
 
 `sha256` 係之後 Supabase `source_documents` 做 dedupe 嘅 key。
+
+---
+
+## 睇下抽唔同題目會點
+
+抽咗 20 份卷、800 條題目之後，逐條睇冇意義。你想知嘅係**邊種題型系統做得差**。
+
+```bash
+python3 -m scripts.ingest_pdfs          # 掟一批唔同嘅卷落去
+python3 -m scripts.analyse_extractions  # 睇 pattern
+```
+
+```text
+## By what the question contains
+
+| Feature | Questions | Flagged | Rate | Most common issue |
+|---|---|---|---|---|
+| table          |  8 | 5 | 62% | `MALFORMED_TABLE` (5) |
+| sub-question   | 12 | 5 | 42% | `MALFORMED_TABLE` (4) |
+| diagram        |  6 | 2 | 33% | `REPEATED_TEXT_IN_QUESTION` (1) |
+| prose only     |  3 | 1 | 33% | `POSSIBLE_BROKEN_POWER` (1) |
+| group marks    |  3 | 0 |  0% | |
+| latex          |  1 | 0 |  0% | |
+```
+
+一眼睇到：**有表格嘅題目出事率 62%，純文字得 33%**。噉你就知精力要放邊。
+
+系統會按題目**實際內容**分類，一條題目可以屬於幾類（所以百分比會疊）:
+
+| 類別 | 點判斷 |
+|---|---|
+| `table` | 題幹有 markdown 表，或者有 `table_regions` |
+| `diagram` | `diagram_required=true` |
+| `sub-question` | 題號有括號，例如 `2(a)` |
+| `spans pages` | `page_end > page_start` |
+| `latex` | 題幹有 `\(` |
+| `own marks` / `group marks` / `no marks` | 分數嚟自邊 |
+| `printed answer` | 卷面已經印咗答案 |
+| `prose only` | 冇表、冇圖、冇 LaTeX |
+
+仲會列出**邊份卷最多問題**、**邊幾條題目最多問題**，同埋每份卷嘅 Q/page（抽漏題就
+會偏低）。報告會寫入 `data/extracted/analysis-<時間>.md`。
 
 ---
 

@@ -374,3 +374,25 @@ Lesson 18 個批量 script 邏輯啱，但係為咗示範寫，真係掟幾十�
 
 Pipeline 喺**任何 file 搬動之前**就起好 —— 冇 API key 就即刻炸，唔會半個 inbox
 搬晒先發現。
+
+---
+
+## 20. 按題型分析（guide 冇）
+
+抽一份卷，你睇得晒 39 條。抽 20 份卷 800 條，逐條睇冇意義 —— 而你真正想知嘅唔係
+「呢條啱唔啱」，係「**邊種題型系統做得差**」。
+
+`app/extraction_stats.py` 按題目**實際內容**分類（有表、有圖、有小題、跨頁、
+有 LaTeX、分數嚟自邊、卷面有冇印答案、純文字），然後 cross-tab 每類嘅 issue 出事率。
+
+一條題目可以同時屬於幾類，所以啲百分比係**故意重疊**嘅 —— 重點係比較
+「有表格」對「純文字」，唔係要分割成互斥嘅類別。
+
+仲會出：邊份卷最多問題、邊幾條題目最多問題、每份卷嘅 questions-per-page
+（抽漏題就會偏低）。
+
+`scripts/analyse_extractions.py` 讀晒 `data/extracted/*.json` 出報告，
+亦都寫入 `analysis-<時間>.md`。
+
+Document 層面嘅 issue（例如 `SUSPICIOUSLY_FEW_QUESTIONS`，冇
+`source_question_id`）會計入總數，但**唔會賴落任何題型**，否則會冤枉咗啲題目。
