@@ -53,8 +53,9 @@ _MATH_SPAN = re.compile(r"\\\(.*?\\\)|\$\$.*?\$\$|\$[^$\n]+\$", re.DOTALL)
 _LOOSE_COMMAND = re.compile(r"\\[a-zA-Z]{2,}")
 _LOOSE_SCRIPT = re.compile(r"[\^_]\{[^}\n]{1,30}\}")
 
-# The three characters a paper's minus sign comes back as. One document should
-# settle on one of them; mixing breaks any later text match.
+# The three characters a paper's minus sign comes back as in prose. One
+# document should settle on one of them; mixing breaks any later text match.
+# (Inside LaTeX the hyphen is the minus and is not counted here.)
 DASHES = {"-": "U+002D hyphen", "\u2013": "U+2013 en dash", "\u2212": "U+2212 minus"}
 MIN_DASH_USES = 3
 MIN_REPEATED_SENTENCE = 8
@@ -177,14 +178,17 @@ def find_undelimited_latex(text: str) -> list[str]:
 
 
 def count_dashes(text: str) -> dict[str, int]:
-    """How often each dash character appears.
+    """How often each dash character appears in the prose of a question.
 
-    Counted plainly rather than only where a minus sign is likely: a minus and
-    a printed range cannot be told apart from context anyway, and either way
-    one document should spell the character one way.
+    Delimited maths is left out: inside \\( \\) an ASCII hyphen is the correct
+    LaTeX minus and U+2212 would be the odd one out, so a paper writing − in its
+    sentences and - in its formulas is consistent, not mixed. Within the prose
+    itself a minus and a printed range cannot be told apart from context, so
+    all three characters are counted plainly.
     """
-    return {character: text.count(character)
-            for character in DASHES if character in text}
+    prose = _MATH_SPAN.sub(" ", text)
+    return {character: prose.count(character)
+            for character in DASHES if character in prose}
 
 
 def blocking_issues(issues: list[ValidationIssue]) -> list[ValidationIssue]:

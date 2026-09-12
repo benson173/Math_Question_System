@@ -98,6 +98,27 @@ def test_a_couple_of_stray_dashes_do_not_trigger_it():
     ("x - 6x² - 4 = 0", {"-": 2}),
     ("2x² + 8x − 3 = 0", {"−": 1}),
     ("求 x 的值。", {}),
+    # A hyphen inside \( \) is the LaTeX minus and is not a prose dash.
+    (r"化簡 \( \frac{6}{2x + 5} - \frac{3}{x - 4} \)。", {}),
+    (r"若聲音強度為 \( 10^{-7.2} \) 單位，求 L − 3。", {"−": 1}),
 ])
 def test_count_dashes(text, expected):
     assert count_dashes(text) == expected
+
+
+# The only issue three otherwise-clean papers reported, traced to hyphens that
+# were all inside formulas. Each line is copied from those papers as extracted.
+CLEAN_PAPER = [
+    question("9", r"已知 θ 是銳角，以 cos θ 表示 \( \frac{\tan\theta - \sin\theta}{\tan\theta + \sin\theta} \)。"),
+    question("18", r"L = \( 10\log\frac{I}{10^{-12}} \)" "\n" r"若聲音強度為 \( 10^{-7.2} \) 單位。"),
+    question("2", r"化簡 \( \frac{6}{2x + 5} - \frac{3}{x - 4} \)。"),
+    question("11", r"\( 4 - x < \frac{5 - 2x}{3} \) 及 \( 18 + x > 4 \) …… (*)"),
+    question("36", r"\( \begin{cases} x + 2y \le 40 \\ y \ge x - 10 \end{cases} \)"),
+    question("3", "9u² − 4v² + 10v − 15u ="),
+    question("7", "設 f(x) = 2x² − 3x + 1。則 f(α) − f(2 − α) ="),
+    question("9b", "3x − 5 ≤ 10 − 2x < 18 的解為"),
+]
+
+
+def test_hyphens_inside_formulas_do_not_make_a_paper_inconsistent():
+    assert "INCONSISTENT_MINUS_SIGN" not in codes(CLEAN_PAPER)

@@ -102,9 +102,11 @@ MATHEMATICAL NOTATION
   exponent that is a decimal, a fraction or an expression must be LaTeX:
   10 to the power -7.2 is \( 10^{-7.2} \), never 10⁻⁷·² - there is no
   superscript decimal point, and a middle dot standing in for one is wrong.
-- Use U+2212 (−) for every minus sign and subtraction throughout the paper.
-  Do not mix it with a hyphen (-) or an en dash (–): the page prints one
+- In prose, use U+2212 (−) for every minus sign and subtraction throughout the
+  paper. Do not mix it with a hyphen (-) or an en dash (–): the page prints one
   character and the extraction must not come back with three.
+- Inside \( \), use the ordinary ASCII hyphen (-) for minus, as LaTeX expects;
+  U+2212 does not belong inside a formula.
 
 MARKS
 - If the mark is printed for this individual part, put it in marks.

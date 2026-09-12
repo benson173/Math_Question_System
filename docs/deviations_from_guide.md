@@ -572,3 +572,24 @@ L = 10 \log \frac{I}{10^{-12}}        →  \( L = 10 \log \frac{I}{10^{-12}} \)
 
 Prompt 加咗：Unicode 上標淨係載得起單一整數指數；小數、分數、或者式做指數
 一律要用 LaTeX（`\( 10^{-7.2} \)`）。
+
+---
+
+## 29. 減號檢查要分「散文」同「LaTeX」
+
+§25 個 `INCONSISTENT_MINUS_SIGN` 上線之後，三份本來乾淨嘅卷全部報咗一個 low：
+
+```text
+S4-2nd   hyphen x4   minus x20
+S5       hyphen x8   minus x26
+S6-2nd   hyphen x5   minus x39
+```
+
+逐個 hyphen 追返，**14 個全部喺 `\( \)` 入面**：`\frac{6}{2x + 5} - \frac{3}{x - 4}`、
+`10^{-12}`、`\begin{cases} ... y \ge x - 10`。
+
+LaTeX 入面 ASCII `-` 就係正確嘅減號，用 U+2212 反而唔標準。所以「散文用 −、公式
+用 -」係一致，唔係撈亂。個 check 而家先剷走 `\( \)` 區段再數。Prompt 亦改成兩條
+規則：散文 U+2212，公式內 ASCII hyphen。
+
+好處係呢三份卷而家係**真正零 issue**，而唔係一個要人手排除嘅誤報。
