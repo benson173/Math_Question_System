@@ -56,6 +56,10 @@ python -m scripts.ingest_one_pdf paper.pdf   # 或者指定 file
 python -m scripts.ingest_pdfs               # 批量 —— 不論幾多份
 ```
 
+> **成功抽完，份 PDF 會搬去 `processed/pdf/`。** 所以連續行兩次
+> `ingest_one_pdf` 唔加參數，第二次會話你 inbox 已經冇嘢 —— 呢個係正常，唔係壞咗。
+> 佢會順手話返你份卷而家喺邊，同埋畀返條重抽嘅命令。
+
 ### 檔名點改？
 
 **技術上冇要求** —— 副檔名係 `.pdf` 或者 `.PDF` 就得，其他隨你。抽題同去重都係認
