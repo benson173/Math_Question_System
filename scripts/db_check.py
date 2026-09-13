@@ -44,6 +44,11 @@ EXPECTED_COLUMNS = {
 EXPECTED_COLUMNS["skills"] = ["skill_id", "strand", "unit", "name_en", "name_zh", "form",
                               "foundation", "prerequisites"]
 EXPECTED_COLUMNS["error_patterns"] = ["error_id", "name_en", "name_zh", "skills", "description"]
+EXPECTED_COLUMNS["question_analyses"] = [
+    "id", "question_key", "source_sha256", "source_question_id", "analysis_run_id",
+    "analyzer_version", "prompt_sha256", "model", "level", "skill_family", "atomic_skills",
+    "method_cues", "strategies", "rpdice", "difficulty_drivers", "possible_errors",
+    "proposed_skills", "proposed_errors", "confidence", "issues", "is_current"]
 
 SCHEMA_FILE = "docs/supabase_schema.sql"
 

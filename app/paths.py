@@ -54,11 +54,15 @@ def project_absolute(path: str | Path) -> Path:
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
 PROMPT_DOCUMENT_EXTRACTOR_V1 = PROMPTS_DIR / "document_extractor_v1.txt"
 PROMPT_MARKING_SCHEME_V1 = PROMPTS_DIR / "marking_scheme_v1.txt"
+PROMPT_ANALYZER_V1 = PROMPTS_DIR / "analyzer_v1.txt"
 
 DATA_DIR = PROJECT_ROOT / "data"
 EXTRACTED_DIR = DATA_DIR / "extracted"
 HISTORY_DIR = DATA_DIR / "history"
 DIAGRAMS_DIR = DATA_DIR / "diagrams"
+ANALYSES_DIR = DATA_DIR / "analyses"
+GOLD_DIR = PROJECT_ROOT / "taxonomy" / "golden"
+RPDICE_GOLD_CSV = GOLD_DIR / "rpdice_gold.csv"
 
 INBOX_PDF_DIR = PROJECT_ROOT / "inbox" / "pdf"
 PROCESSED_PDF_DIR = PROJECT_ROOT / "processed" / "pdf"

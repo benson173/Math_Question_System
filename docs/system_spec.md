@@ -96,6 +96,11 @@ E = Error Exposure    呢題容易暴露咩錯誤
 > RPDICE 量度嘅係「題目本身要求學生做啲咩」,唔係直接量度「學生有幾叻」,亦唔係直接
 > 量度「幾多人答啱」。學生實際答對率同真實難度,要等學生作答數據返嚟先可以校準。
 
+### 每級嘅準則
+
+六個維度每個 0–3 級嘅可觀察準則喺 `docs/rpdice_rubric.md`,機器版係 `app/rpdice.py`
+嘅 `LEVELS`。Analyzer prompt 由 `LEVELS` 生成。
+
 ### RPDICE 係掛喺 strategy 度,唔係掛喺 question 度
 
 同一條題可以有幾個解法,每個解法嘅 R/P/D/I/C/E 唔同(用平方差 vs 提公因式,D 同 P

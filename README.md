@@ -210,6 +210,12 @@ pytest
 | `app/marking_scheme.py` | 🔵 Python | Marking scheme 配對、抽取、合併 |
 | `app/extraction_io.py` | 🔵 Python | 讀返存低嘅 JSON(所有 script 共用) |
 | `app/taxonomy.py` | 🔵 Python | 讀、驗 `taxonomy/*.csv` |
+| `app/rpdice.py` | 🔵 Python | RPDICE 標準、analysis schema、validator、黃金集、計分 |
+| `app/analyzer.py` | 🔵 Python | 砌 prompt、跑 Gemini、存 analysis |
+| `app/analysis_store.py` | 🔵 Python | `question_analyses` rows |
+| `prompts/analyzer_v1.txt` | 🟢 Prompt | RPDICE Analyzer 指令(rubric 由 code 注入) |
+| `taxonomy/golden/rpdice_gold.csv` | 🟡 Config | 人手評分黃金集 |
+| `docs/rpdice_rubric.md` | 📄 Doc | 評分標準(人讀版) |
 | `taxonomy/skills.csv` | 🟡 Config | 369 個 atomic skill(HKDSE 必修 + KS3) |
 | `taxonomy/error_patterns.csv` | 🟡 Config | 99 個 error pattern |
 | `prompts/marking_scheme_v1.txt` | 🟢 Prompt | Gemini 抄 marking scheme 指令 |
@@ -242,6 +248,8 @@ pytest
 | `scripts/attach_marking_scheme.py` | 🔴 Test | 將 marking scheme 合入已抽嘅卷 |
 | `scripts/check_taxonomy.py` | 🔴 Test | 驗 taxonomy CSV |
 | `scripts/db_push_taxonomy.py` | 🔴 Test | Taxonomy 推上 Supabase |
+| `scripts/analyse_rpdice.py` | 🔴 Test | 跑 Analyzer |
+| `scripts/score_rpdice.py` | 🔴 Test | Analyzer 對黃金集計分 |
 
 ---
 
@@ -410,6 +418,31 @@ python3 -m scripts.db_push_taxonomy     # upsert 上 Supabase 嘅 skills / error
 
 > 呢份係由 2017 C&A Guide 同 KS3 補充文件嘅記憶起稿,冇對住官方 PDF 逐條核對
 > (呢個環境連唔到 edb.gov.hk)。Unit 名同 foundation 標記請對返官方文件改。
+
+---
+
+## RPDICE Analyzer
+
+`docs/rpdice_rubric.md` 係標準:六個維度每個 0–3 級,每級係可觀察嘅準則。機器版喺
+`app/rpdice.py` 嘅 `LEVELS`,Analyzer 嘅 prompt 由佢生成,所以人同 model 讀嘅係同一
+份字。
+
+```bash
+python3 -m scripts.analyse_rpdice            # data/extracted/*.json → data/analyses/*.json + .md
+python3 -m scripts.score_rpdice              # 對返 taxonomy/golden/rpdice_gold.csv
+python3 -m scripts.score_rpdice --check      # 只驗黃金集
+```
+
+Analyzer 每條題目 output:skill_family、`atomic_skills`(只可以係 taxonomy id)、每個
+strategy 嘅 steps 同 RPDICE profile(每級要 evidence)、`method_cues`(原文照抄)、
+`possible_errors`(只可以係 error_id)、`difficulty_drivers`、`confidence`,
+`empirical_difficulty` 永遠 null。Validator 會查十幾樣嘢(見 rubric 文件),有問題唔會
+靜靜雞入 database。
+
+Supabase `question_analyses` 一條題目一次 run 一行,掛 `question_key`;最新一次係
+`is_current`。
+
+黃金集 30 條係 draft,你核對完改 `status: confirmed`。
 
 ---
 

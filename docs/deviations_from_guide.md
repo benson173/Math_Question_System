@@ -878,3 +878,45 @@ prerequisite 寫咗 `na.coord.plot-line` 但坐標系我放咗喺 `ms`。人手 
   KS3 嘅 form 分配全部係記憶,要你對返 C&A Guide(2017)同 KS3 補充文件。
 - Prerequisites 只填關鍵幾個,唔係完整 dependency graph。
 - Analyzer 用呢份表嘅 prompt 未寫(第 4 步)。
+
+## 37. RPDICE 自動化嘅標準(system_review 第 4 步)
+
+Spec §1 講 RPDICE 六個字母係乜;要自動化,要多三樣嘢:每級嘅可觀察準則、一個查得到嘅
+output 格式、一個人手評分嘅黃金集。三樣都喺呢個 commit。
+
+### 準則要可觀察,唔可以係形容詞
+
+「R 高」冇用;「要先睇出隱藏結構先有方法可用」(R2)同「認出嚟係關鍵而且冇任何提示」
+(R3)先係兩個人會落同一個數嘅寫法。每個字母每級一句,加 anchor 例子(全部由五份樣本卷
+攞)。文字喺 `app/rpdice.py` 嘅 `LEVELS`,prompt 由佢生成 —— 人讀嘅 rubric 文件同
+model 讀嘅 prompt 唔會漂移。
+
+### 幾條硬規則,validator 而唔係 prompt 去守
+
+- **Method cue 封頂 D。** 題目印住「利用二次公式」,D 最多 1。Cue 要原文照抄,validator
+  查佢真係喺題目度(`METHOD_CUE_NOT_IN_TEXT`)、查 D 冇超(`DECISION_IGNORES_CUE`)。
+- **Skill / error 只可以揀。** 唔喺 taxonomy 就係 `SKILL_UNKNOWN` (high);想加新嘅放
+  `proposed_skills`。呢個係 §36 講嘅「受控詞彙」真正生效嘅位。
+- **Error 要屬於列出嘅 skill。** 否則 `ERROR_NOT_OF_SKILL`。
+- **I 對返 unit 數目。** I ≥ 2 但所有 skill 同一 unit,或者 I = 0 但有幾個 skill,報
+  `INTEGRATION_INCONSISTENT`。
+- **`difficulty_drivers` 係 derived。** 由 levels 計出嚟,model 寫錯就重算(同 §27 一樣
+  道理:定義清楚嘅嘢 code 做)。
+- **`empirical_difficulty` 必須 null。** Analyzer 估答對率係違反 spec §2。
+
+### 黃金集
+
+`taxonomy/golden/rpdice_gold.csv`,30 條由五份樣本卷揀,每條人手評 skills、R–E、
+errors。全部標 `claude-draft` / `draft`:呢啲係我嘅評分,唔係你嘅;你核對完改
+`confirmed`。計分 script 對每個維度出 exact、within-1、mean |diff|、bias,加 skill /
+error 嘅 Jaccard,加最大分歧嗰幾條。
+
+點解要有 bias 呢個數:prompt 改一句,Analyzer 可能全面評高半級。Exact agreement 跌咗
+唔知點解,bias 一睇就知係漂移定係亂。
+
+### 未驗證
+
+Analyzer 本身要 Gemini,呢度跑唔到。Prompt、schema、validator、scorer、store 全部有
+test(695 passed),但「Gemini 對住呢份 rubric 評得幾準」要你跑
+`scripts.analyse_rpdice` 再 `scripts.score_rpdice` 先知。第一個要睇嘅數係 within-1
+agreement:低過 80% 就係 rubric 或者 prompt 未夠清楚,唔係 model 唔夠叻。

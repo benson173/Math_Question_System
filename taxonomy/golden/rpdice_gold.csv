@@ -1,0 +1,33 @@
+question_key,paper,source_question_id,skills,R,P,D,I,C,E,errors,rater,status,notes
+# Hand-rated RPDICE for questions from the five sample papers. status = draft until a
+# person confirms it. Levels follow docs/rpdice_rubric.md. skills / errors use ";".
+b584940bfebb:4(a),2526_1st_S4MATH1.pdf,4(a),na.factor.dos,1,1,1,0,1,2,err.dos.as-square-of-difference,claude-draft,draft,9a² − 25: the squares are cued by the notation
+b584940bfebb:4(c),2526_1st_S4MATH1.pdf,4(c),na.factor.common;na.factor.complete,2,1,2,1,1,2,err.factor.sign-in-bracket;err.factor.incomplete,claude-draft,draft,see it as (a) minus (b); decide the grouping
+b584940bfebb:7(b),2526_1st_S4MATH1.pdf,7(b),na.approx.bounds;na.approx.round,1,1,1,1,2,2,err.error.bound-direction,claude-draft,draft,bounds of six cans then compare with 8.69 kg
+b584940bfebb:8(b),2526_1st_S4MATH1.pdf,8(b),ms.similar.ratio-length;ms.pythag.converse,2,2,2,2,2,1,err.geo.similar-corresponding-sides,claude-draft,draft,find AC from (a) then test the converse
+b584940bfebb:12,2526_1st_S4MATH1.pdf,12,na.quad.discriminant-condition,1,2,1,1,1,2,err.quad.discriminant-condition-reversed;err.eq.invalid-root-in-context,claude-draft,draft,k in every coefficient; reject k = 0
+b584940bfebb:15,2526_1st_S4MATH1.pdf,15,na.quad.i-powers,2,1,1,0,1,2,err.complex.i-cycle,claude-draft,draft,
+b584940bfebb:17,2526_1st_S4MATH1.pdf,17,na.quad.word,2,2,2,1,2,2,err.eq.invalid-root-in-context,claude-draft,draft,model the digits as 10a + b
+b584940bfebb:19(c),2526_1st_S4MATH1.pdf,19(c),na.quad.equation-with-new-roots;na.quad.symmetric-functions,1,3,2,1,2,2,err.quad.sum-product-sign;err.surd.not-simplified,claude-draft,draft,surds throughout
+b584940bfebb:20(d),2526_1st_S4MATH1.pdf,20(d),ms.coordgeo.section;ms.coord.area-on-grid,2,2,3,2,3,2,err.coord.midpoint-vs-distance,claude-draft,draft,evaluate a claim; devise the check
+b584940bfebb:21(b)(ii),2526_1st_S4MATH1.pdf,21(b)(ii),ms.coordgeo.centres;ms.circle.semicircle,3,2,2,2,3,1,,claude-draft,draft,circumcentre on the hypotenuse midpoint iff right angle
+a4079fdbf5f3:10(a),2526_2nd_S4MATH1.pdf,10(a),na.quad.solve-formula,0,1,0,0,1,2,err.quad.formula-sign;err.quad.formula-division,claude-draft,draft,method stated: 利用二次公式
+a4079fdbf5f3:10(b),2526_2nd_S4MATH1.pdf,10(b),na.eqn.higher-degree-substitution,2,1,1,1,1,1,err.eq.sign-transposing,claude-draft,draft,see 1 + y as x; cue 利用 (a)
+a4079fdbf5f3:14,2526_2nd_S4MATH1.pdf,14,na.func.vertex-form,0,2,0,0,1,2,err.quad.vertex-sign,claude-draft,draft,method stated: 利用配方法
+a4079fdbf5f3:18(a),2526_2nd_S4MATH1.pdf,18(a),na.log.applications;na.log.laws,1,1,1,1,1,2,err.log.power-misplaced,claude-draft,draft,
+a4079fdbf5f3:20(b),2526_2nd_S4MATH1.pdf,20(b),na.quad.discriminant;na.poly.find-coefficient,2,2,2,1,2,2,err.quad.discriminant-condition-reversed,claude-draft,draft,two quadratic factors; count real roots
+a4079fdbf5f3:21(b),2526_2nd_S4MATH1.pdf,21(b),na.log.exp-equation;na.exp.graph;na.percent.growth-decay,3,2,3,2,3,2,err.exp.equate-bases-wrong,claude-draft,draft,compare two exponential models for all m
+a4079fdbf5f3:22(b),2526_2nd_S4MATH1.pdf,22(b),na.func.optimise-word;na.func.vertex-form,1,2,1,1,1,1,err.quad.vertex-sign,claude-draft,draft,maximum implies complete the square
+2696ce453070:9(b),2526_1st_S5MATH1.pdf,9(b),na.poly.factorise-cubic;na.quad.discriminant,2,2,2,2,3,2,err.quad.discriminant-condition-reversed,claude-draft,draft,factorise then judge the quadratic factor's roots
+2696ce453070:11(b),2526_1st_S5MATH1.pdf,11(b),na.ineq.compound,0,1,1,0,1,2,err.ineq.flip-missing,claude-draft,draft,smallest integer after (a)
+2696ce453070:13(b),2526_1st_S5MATH1.pdf,13(b),na.ineq.quadratic-graph,2,0,1,0,2,3,err.ineq.quadratic-region,claude-draft,draft,all x except 10/3: the equality case is the trap
+2696ce453070:18(b),2526_1st_S5MATH1.pdf,18(b),na.quad.symmetric-functions;na.ineq.quadratic-algebra,3,3,2,2,2,2,err.ineq.quadratic-region;err.surd.not-simplified,claude-draft,draft,AB = |α − β| = √Δ / |a| must be seen
+2696ce453070:20(a)(ii),2526_1st_S5MATH1.pdf,20(a)(ii),ms.circle.tangent-secant,1,1,1,1,2,1,err.geo.similar-corresponding-sides,claude-draft,draft,follows from the ratio in (a)(i)
+2696ce453070:22(a),2526_1st_S5MATH1.pdf,22(a),ms.deduct.centres;ms.circle.concyclic-test,3,1,3,2,3,1,err.geo.reason-missing,claude-draft,draft,proof from incentre angle facts
+8372ee2b558d:9,2526_1st_S6MATH2.pdf,9,na.poly.remainder-quadratic-divisor,2,2,2,1,1,1,err.eq.sign-transposing,claude-draft,draft,remainder is linear ax + b: two conditions
+8372ee2b558d:31,2526_1st_S6MATH2.pdf,31,na.log.equation;na.eqn.exp-log-type,3,2,2,2,1,2,err.log.power-misplaced;err.log.base-change,claude-draft,draft,quadratic in log₃ y; then log₉ y
+8372ee2b558d:39,2526_1st_S6MATH2.pdf,39,ms.trig.equation-quadratic,2,2,1,1,2,3,err.trig.second-solution-missed;err.trig.quadrant-sign,claude-draft,draft,sin² to 1 − cos²; reject |cos θ| > 1; count roots
+8372ee2b558d:43,2526_1st_S6MATH2.pdf,43,dh.prob2.turns-until;na.seq.gs-sum-infinity,3,2,2,2,2,3,err.prob.turns-first-only,claude-draft,draft,infinite geometric series in disguise
+bd61803dcf81:16,2526_2st_S6MATH2.pdf,16,ms.mensur.arc-sector;na.var.percent-change,2,1,2,2,2,2,err.percent.base-wrong,claude-draft,draft,arc fixed so radius rises 25%
+bd61803dcf81:30,2526_2st_S6MATH2.pdf,30,dh.central.unknown-datum;dh.central.median,1,1,1,1,2,2,err.stat.median-unsorted,claude-draft,draft,case analysis on m and n
+bd61803dcf81:45,2526_2st_S6MATH2.pdf,45,dh.disp.effect-change;dh.disp.variance,1,0,0,0,2,2,err.stat.effect-of-constant,claude-draft,draft,range is |−3| r; variance is 9v

@@ -147,6 +147,10 @@ class GeminiClient:
         finally:
             self._delete_quietly(uploaded)
 
+    def generate_json(self, prompt: str, schema):
+        """A text-only structured call - the Analyzer sends questions, not a PDF."""
+        return self._generate_contents([prompt], schema)
+
     def _delete_quietly(self, uploaded: Any) -> None:
         """Remove an uploaded file so repeated batches do not fill the quota."""
         name = getattr(uploaded, "name", None)
@@ -157,13 +161,16 @@ class GeminiClient:
         except Exception as exc:
             print(f"Warning: could not delete uploaded file {name}: {exc}")
 
+    def _generate(self, pdf_part: Any, prompt: str, schema):
+        return self._generate_contents([pdf_part, prompt], schema)
+
     @retry(
         retry=retry_if_exception(is_retryable_error),
         stop=stop_after_attempt(MAX_ATTEMPTS),
         wait=wait_exponential(multiplier=2, min=2, max=30),
         reraise=True,
     )
-    def _generate(self, pdf_part: Any, prompt: str, schema):
+    def _generate_contents(self, contents: list, schema):
         config_kwargs: dict[str, Any] = {
             "temperature": 0.0,
             "response_mime_type": "application/json",
@@ -174,7 +181,7 @@ class GeminiClient:
 
         response = self.client.models.generate_content(
             model=self.settings.gemini_extractor_model,
-            contents=[pdf_part, prompt],
+            contents=contents,
             config=types.GenerateContentConfig(**config_kwargs),
         )
         self.last_usage = usage_from(response)

@@ -16,6 +16,7 @@ failed/pdf/*
 data/extracted/*
 data/diagrams/*
 data/history/*
+data/analyses/*
 !**/.gitkeep
 
 # OS

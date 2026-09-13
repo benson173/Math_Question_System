@@ -114,6 +114,37 @@ create table if not exists error_patterns (
   updated_at     timestamptz not null default now()
 );
 
+-- One row per question per Analyzer run. Hangs off question_key, so a
+-- re-extraction of the paper does not orphan it.
+create table if not exists question_analyses (
+  id                  uuid primary key default gen_random_uuid(),
+  question_key        text not null,
+  source_sha256       text not null,
+  source_question_id  text not null,
+  analysis_run_id     text not null,
+  analyzer_version    text not null,
+  prompt_sha256       text,
+  model               text,
+  level               text,
+  skill_family        text,
+  atomic_skills       jsonb not null default '[]'::jsonb,
+  method_cues         jsonb not null default '[]'::jsonb,
+  strategies          jsonb not null default '[]'::jsonb,
+  rpdice              jsonb not null default '{}'::jsonb,   -- primary strategy levels {"R":2,...}
+  difficulty_drivers  jsonb not null default '[]'::jsonb,
+  possible_errors     jsonb not null default '[]'::jsonb,
+  proposed_skills     jsonb not null default '[]'::jsonb,
+  proposed_errors     jsonb not null default '[]'::jsonb,
+  confidence          numeric,
+  issues              jsonb not null default '[]'::jsonb,
+  is_current          boolean not null default true,
+  created_at          timestamptz not null default now(),
+  unique (analysis_run_id, question_key)
+);
+
+create index if not exists analyses_key_idx     on question_analyses (question_key);
+create index if not exists analyses_current_idx on question_analyses (question_key) where is_current;
+
 create index if not exists skills_form_idx   on skills (form);
 create index if not exists skills_unit_idx   on skills (unit);
 
