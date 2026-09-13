@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from urllib.parse import quote
 
+from app.paths import project_absolute
 from app.schemas import ExtractedQuestion, ExtractionResult, RenderedImage, ValidationIssue
 
 
@@ -41,7 +42,8 @@ def _relative_link(image_path: str, report_path: Path) -> str:
     Markdown link early and the image would not render.
     """
     try:
-        relative = os.path.relpath(Path(image_path).resolve(), report_path.parent.resolve())
+        relative = os.path.relpath(project_absolute(image_path).resolve(),
+                                   report_path.parent.resolve())
     except ValueError:
         # Different drives on Windows - an absolute path is the best we can do.
         relative = str(image_path)
@@ -81,6 +83,10 @@ def _summary_table(result: ExtractionResult) -> list[str]:
         rows.append(("Model", run.model))
         rows.append(("Run", f"`{run.run_id}`"))
         rows.append(("Versions", f"{run.extraction_version} / {run.question_object_version}"))
+        if run.prompt_sha256:
+            rows.append(("Prompt", f"`{run.prompt_sha256}`"))
+        if run.input_tokens is not None or run.output_tokens is not None:
+            rows.append(("Tokens", f"{run.input_tokens or 0:,} in / {run.output_tokens or 0:,} out"))
     if result.repairs:
         rows.append(("Repairs", str(len(result.repairs))))
     for label, assets in (("Diagrams", result.diagrams), ("Tables captured", result.tables)):

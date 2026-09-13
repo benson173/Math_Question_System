@@ -97,9 +97,10 @@ class PdfIngestionPipeline:
             result.diagrams = [i for i in images if i.kind == "diagram"]
             result.tables = [i for i in images if i.kind == "table"]
 
+        # The JSON is written before anything that can fail remotely. It is the
+        # archive: an extraction that reached this point cost an API call, and a
+        # database that is down must not turn it into a paper filed as failed.
         print("Step 4: Save result")
-        self.repository.save_extraction_result(result)
-
         output_path = extraction_output_path(result)
         export_extraction_json(result, output_path)
         print("Exported:", output_path)
@@ -109,6 +110,14 @@ class PdfIngestionPipeline:
         report_path = markdown_output_path(output_path)
         export_extraction_markdown(result, report_path)
         print("Report:  ", report_path)
+
+        try:
+            self.repository.save_extraction_result(result)
+        except Exception as exc:
+            result.database_error = f"{type(exc).__name__}: {exc}"
+            print(f"Warning: not saved to the database ({result.database_error}).\n"
+                  f"         The JSON is on disk; push it later with: "
+                  f"python3 -m scripts.db_push")
 
         for asset in result.diagrams + result.tables:
             how = "cropped" if asset.cropped else "full page"
@@ -183,6 +192,7 @@ class PdfIngestionPipeline:
             question_object_version=previous.question_object_version if previous
             else self.settings.question_object_version,
             model=previous.model if previous else self.settings.gemini_extractor_model,
+            prompt_sha256=previous.prompt_sha256 if previous else None,
         )
 
     def _render_images(self, pdf_path, result, kinds):

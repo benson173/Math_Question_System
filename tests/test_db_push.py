@@ -81,11 +81,13 @@ def test_a_run_already_in_the_database_is_not_pushed_twice(tmp_path, wired, caps
     assert "already" in capsys.readouterr().out
 
 
-def test_force_pushes_a_run_that_is_already_there(tmp_path, wired):
+def test_force_replaces_a_run_that_is_already_there(tmp_path, wired):
     path = write_extraction(tmp_path, run_id="run-a")
     db_push.main([str(path)])
-    db_push.main([str(path), "--force"])
-    assert len(wired.rows["extraction_runs"]) == 2
+    assert db_push.main([str(path), "--force"]) == 0
+    # run_id is unique in the database, so --force replaces rather than doubles
+    assert [r["run_id"] for r in wired.rows["extraction_runs"]] == ["run-a"]
+    assert len(wired.rows["questions"]) == 2
 
 
 def test_a_write_that_fails_is_reported_and_the_rest_continue(tmp_path, monkeypatch, capsys):
@@ -166,7 +168,7 @@ def test_a_file_name_with_no_form_stays_null(tmp_path, wired):
     export_extraction_json(result, tmp_path / "x.json")
 
     assert db_push.main([str(tmp_path / "x.json")]) == 0
-    assert wired.rows["source_documents"][0]["level"] is None
+    assert wired.rows["source_documents"][0].get("level") is None
 
 
 def test_an_old_extraction_gets_its_paper_context_from_the_file_name(tmp_path, wired):

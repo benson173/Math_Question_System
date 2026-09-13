@@ -92,7 +92,26 @@ def main(argv: list[str] | None = None) -> int:
     pipeline = PdfIngestionPipeline(repository=repository)
     result = pipeline.run_one_pdf(pdf_path)
 
+    moved = file_away_if_in_inbox(pdf_path, result)
+    if moved:
+        print(f"Moved to {moved}")
+
     return 1 if blocking_issues(result.issues) else 0
+
+
+def file_away_if_in_inbox(pdf_path: Path, result) -> Path | None:
+    """Move an inbox PDF to processed/ or failed/, like the batch does.
+
+    A PDF named from anywhere else is left where it is: it was not queued
+    for ingestion, it was pointed at.
+    """
+    from scripts.ingest_pdfs import destination_directory, file_away
+    try:
+        Path(pdf_path).resolve().relative_to(INBOX_PDF_DIR.resolve())
+    except ValueError:
+        return None
+    destination = destination_directory(result)
+    return file_away(Path(pdf_path), destination, INBOX_PDF_DIR)
 
 
 if __name__ == "__main__":

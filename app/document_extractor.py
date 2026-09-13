@@ -13,7 +13,7 @@ import uuid
 
 from app.config import load_settings
 from app.document_loader import LoadedDocument, load_pdf
-from app.gemini_client import GeminiClient
+from app.gemini_client import GeminiClient, prompt_sha256
 from app.level import resolve_level
 from app.paper_meta import resolve_paper_meta, sidecar_level
 from app.paths import PROMPT_DOCUMENT_EXTRACTOR_V1
@@ -64,20 +64,15 @@ class DocumentExtractor:
             run=self._describe_run(),
         )
 
-    @staticmethod
-    def _describe_source(loaded: LoadedDocument) -> SourceDocument:
-        return SourceDocument(
-            file_name=loaded.file_name,
-            sha256=loaded.sha256,
-            page_count=loaded.page_count,
-            byte_size=loaded.byte_size,
-        )
-
     def _describe_run(self) -> ExtractionRun:
+        usage = getattr(self.gemini, "last_usage", {}) or {}
         return ExtractionRun(
             run_id=uuid.uuid4().hex[:12],
             extracted_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
             extraction_version=self.settings.extraction_version,
             question_object_version=self.settings.question_object_version,
             model=self.settings.gemini_extractor_model,
+            prompt_sha256=prompt_sha256(PROMPT_DOCUMENT_EXTRACTOR_V1),
+            input_tokens=usage.get("input_tokens"),
+            output_tokens=usage.get("output_tokens"),
         )

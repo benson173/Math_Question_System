@@ -4,6 +4,8 @@ Every path used by the system is resolved from this file's location, so the
 scripts work no matter which directory you run them from.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 import re
 
@@ -29,6 +31,25 @@ def safe_stem(name: str) -> str:
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+def project_relative(path: str | Path) -> str:
+    """A path as stored in JSON and the database: relative to the repo root.
+
+    An absolute /Users/benson/... path is true on one machine only. Paths
+    outside the project stay absolute, because there is nothing better.
+    """
+    resolved = Path(path).resolve()
+    try:
+        return resolved.relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        return str(resolved)
+
+
+def project_absolute(path: str | Path) -> Path:
+    """The reverse: a stored path back to a real one on this machine."""
+    candidate = Path(path)
+    return candidate if candidate.is_absolute() else PROJECT_ROOT / candidate
 
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
 PROMPT_DOCUMENT_EXTRACTOR_V1 = PROMPTS_DIR / "document_extractor_v1.txt"

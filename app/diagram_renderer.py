@@ -25,6 +25,7 @@ from app.diagram_geometry import (
     page_index_for,
     safe_asset_name,
 )
+from app.paths import project_relative
 from app.schemas import ExtractedDocument, PageRegion, RenderedImage
 
 
@@ -103,7 +104,7 @@ def render_question_images(
                 kind=kind,
                 index=index,
                 page=page_index + 1,
-                image_path=str(path),
+                image_path=project_relative(path),
                 cropped=cropped,
                 width=image.width,
                 height=image.height,

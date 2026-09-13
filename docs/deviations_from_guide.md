@@ -812,3 +812,31 @@ database 話「唔收」係自相矛盾。
 
 603 tests。Schema 喺 Postgres 16 上由三個起點升級(空 / table editor / 上一版
 schema 檔),全部收到有重複題號嘅 run,`current_questions` 有 `question_key`。
+
+## 35. Ingestion 層嘅 15 個 bug(system_review 第 2 步)
+
+全部係之前 review 列出、呢個 commit 修嘅。逐個講點解係咁修。
+
+| # | 問題 | 修法 |
+|---|---|---|
+| A1 | DB 寫入排喺 JSON 之前,Supabase 一死成次 Gemini call 白燒、PDF 入 `failed/` | JSON 先落地;DB 失敗變 warning + `database_error`,batch 標 `not saved to database`,唔算 failed |
+| A2 | 抽到 0 條嘅 run 會變 current,冚咗好嘅舊 run | Blocking run `is_current=false`,亦唔 supersede 任何人 |
+| A3 | `DUPLICATE_QUESTION_ID` 唔 blocking 但 DB unique 令成個 run 爆 | §34 已改 `(run, position)` |
+| A4 | `db_push --force` 撞 `run_id` unique | 先 `delete_run`(連 questions)再 save;FakeClient 而家會 enforce uniqueness,所以呢類盲點以後 test 捉到 |
+| A5 | Rollback 只刪 run,補 schema 嗰條路冇 cascade → 孤兒 questions | 刪 questions 再刪 run |
+| B6 | anon key 喺 RLS 下讀寫靜靜雞變空,`db_check` 照過 | `key_warning()`:認 `sb_publishable_` / JWT role;`db_check` 同 `Repository` 都會講 |
+| B7 | `image_path` 係 `/Users/benson/...` | 存 repo-relative;report 用 `project_absolute()` 解返 |
+| B8 | README 話 `ingest_one_pdf` 會搬 PDF,code 冇 | 而家真係搬(只搬 inbox 入面嘅;指定其他路徑嘅唔郁) |
+| B9 | README 叫人 `ingest_pdfs --redo` 補 database,但 inbox 係空 | 改 `db_push` |
+| B10 | `level: null` upsert 冚走已知級別 | 未知就唔送呢個 column |
+| C11 | Run 唔知用咗邊個 prompt | `prompt_sha256`(12 位)入 run、JSON、report、DB |
+| C12 | 冇記 token | `input_tokens` / `output_tokens` 由 `usage_metadata` 讀,同上 |
+| C13 | `db_check` 驗唔到 index | REST 冇路驗;output 講明 index 由 schema 檔負責 |
+| C14 | 三個 script 各自 load JSON | `app/extraction_io.py` 一個 loader |
+| C15 | supabase-py 未真跑過 | 冇得喺呢度修;第一次真寫入係你嗰邊 |
+
+兩個 test 要改期望,因為舊期望就係 bug 本身:`--force` 之前會變兩個 run(而家一個),
+有 critical issue 嘅 run 之前 `is_current=True`(而家 False)。
+
+Schema 檔再喺 Postgres 16 由三個起點升級(空 / 上一版 / 再上一版),run row 帶
+`prompt_sha256`、tokens、`is_current=false` 都寫得入。629 tests。

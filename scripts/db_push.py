@@ -17,11 +17,11 @@ Exit codes: 0 nothing went wrong, 1 at least one file failed, 2 not configured.
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
 from app.config import load_settings
+from app.extraction_io import load_extractions
 from app.level import resolve_level
 from app.paper_meta import meta_from_filename
 from app.paths import EXTRACTED_DIR
@@ -31,14 +31,8 @@ from app.supabase_store import TABLE_RUNS, StoreError, SupabaseStore, connect
 
 def load_results(paths: list[Path]) -> list[tuple[Path, ExtractionResult]]:
     """Read each file, keeping the path so a failure can be named."""
-    loaded = []
-    for path in sorted(paths):
-        try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
-            loaded.append((path, ExtractionResult.model_validate(raw)))
-        except Exception as exc:
-            print(f"  skipped  {path.name}  not an extraction ({type(exc).__name__})")
-    return loaded
+    return load_extractions(paths, on_skip=lambda path, exc: print(
+        f"  skipped  {path.name}  not an extraction ({type(exc).__name__})"))
 
 
 def fill_in_level(result: ExtractionResult) -> str | None:
@@ -115,10 +109,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  paper    {name}  read year/term/type off the file name")
 
         try:
-            if not force and already_pushed(store.client, run_id):
-                print(f"  already  {name}  run {run_id[:8]} is in the database")
-                skipped += 1
-                continue
+            if already_pushed(store.client, run_id):
+                if not force:
+                    print(f"  already  {name}  run {run_id[:8]} is in the database")
+                    skipped += 1
+                    continue
+                store.delete_run(run_id)           # --force: replace, never duplicate
 
             outcome = store.save(result)
         except Exception as exc:

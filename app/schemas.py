@@ -147,6 +147,11 @@ class ExtractionRun(BaseModel):
     extraction_version: str
     question_object_version: str
     model: str
+    # Which prompt text produced this run, and what it cost. Two runs of the
+    # same paper that differ can then be blamed on the prompt or on the model.
+    prompt_sha256: Optional[str] = None
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
 
 
 class RenderedImage(BaseModel):
@@ -182,3 +187,6 @@ class ExtractionResult(BaseModel):
     diagrams: list[RenderedImage] = Field(default_factory=list)
     tables: list[RenderedImage] = Field(default_factory=list)
     repairs: list[str] = Field(default_factory=list)
+    # Set when the JSON was written but the database write failed. Not part
+    # of the archive: db_push will make it true again.
+    database_error: Optional[str] = None

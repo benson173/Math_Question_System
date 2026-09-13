@@ -287,6 +287,8 @@ def main(argv: list[str] | None = None) -> int:
             destination = destination_directory(result)
             failed = destination == FAILED_PDF_DIR
             detail = ", ".join(sorted({i.issue_code for i in blocking_issues(result.issues)}))
+            if result.database_error:
+                detail = ", ".join(filter(None, [detail, "not saved to database"]))
 
             if not keep:
                 file_away(pdf_path, destination, inbox)

@@ -208,6 +208,7 @@ pytest
 | `app/question_key.py` | 🔵 Python | 重抽都唔變嘅題目 id |
 | `app/paper_meta.py` | 🔵 Python | 年份 / 學期 / 考試類型,由檔名或 sidecar |
 | `app/marking_scheme.py` | 🔵 Python | Marking scheme 配對、抽取、合併 |
+| `app/extraction_io.py` | 🔵 Python | 讀返存低嘅 JSON(所有 script 共用) |
 | `prompts/marking_scheme_v1.txt` | 🟢 Prompt | Gemini 抄 marking scheme 指令 |
 | `app/errors.py` | 🔵 Python | 錯誤類型 |
 | `app/schemas.py` | 🔵 Python | 定義資料格式 |
@@ -691,8 +692,8 @@ repairs、圖片路徑都一齊存低（jsonb），所以之後查「呢條題�
 #    service_role key → SUPABASE_SECRET_KEY   （唔係 anon key）
 # 3. 驗證連線同 schema
 python3 -m scripts.db_check
-# 4. 之後每次 ingest 都會自動寫入
-python3 -m scripts.ingest_pdfs --redo
+# 4. 已經抽咗嘅卷推上去（唔使再叫 Gemini）；之後每次 ingest 都會自動寫入
+python3 -m scripts.db_push
 ```
 
 ### 已經自己開咗 table？
@@ -751,6 +752,19 @@ Supabase REST 冇 transaction。如果 run 已經寫咗但 questions 寫唔入�
 
 > `SUPABASE_SECRET_KEY` 係 service_role key，可以繞過 RLS。**唔好** commit `.env`，
 > 亦唔好放入任何前端。
+>
+> 擺錯 anon / publishable key 嘅話,RLS 會令讀寫**靜靜雞**變空,唔會報錯。所以
+> `db_check` 同每次 ingest 都會睇下個 key 係邊種,唔啱會即刻話你知。
+
+### Database 寫唔入,唔會蝕咗份卷
+
+JSON 永遠先落地,之後先寫 Supabase。Supabase 唔通、schema 唔對、key 錯,份卷照樣
+`processed/`、JSON 照樣有,只係 batch report 會標 `not saved to database`,之後
+`python3 -m scripts.db_push` 補返。抽題嗰下 Gemini 已經燒咗錢,唔可以因為 database
+嘅事白燒。
+
+有 blocking issue 嘅 run(例如抽到 0 條)會存低但**唔會**變 `is_current`,所以重抽出事
+唔會冚咗之前好嘅一次。
 
 ---
 

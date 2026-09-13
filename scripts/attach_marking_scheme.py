@@ -14,10 +14,10 @@ inbox, whether or not its paper is in the same batch.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 import sys
 
+from app.extraction_io import load_extraction
 from app.marking_scheme import marking_scheme_stem
 from app.paths import EXTRACTED_DIR, safe_stem
 from app.pipeline import PdfIngestionPipeline
@@ -36,7 +36,7 @@ def find_extraction_for(scheme_path: Path) -> Path | None:
 
 
 def load_result(path: Path) -> ExtractionResult:
-    return ExtractionResult.model_validate(json.loads(path.read_text(encoding="utf-8")))
+    return load_extraction(path)
 
 
 def main(argv: list[str] | None = None) -> int:

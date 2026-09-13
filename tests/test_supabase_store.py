@@ -105,6 +105,12 @@ class FakeClient:
             return FakeResponse([row])
         if query.op == "insert":
             rows = query.payload if isinstance(query.payload, list) else [query.payload]
+            if query.table_name == "extraction_runs":
+                taken = {r["run_id"] for r in store}
+                for r in rows:
+                    if r["run_id"] in taken:
+                        raise RuntimeError(f"duplicate key value violates unique "
+                                           f"constraint extraction_runs_run_id_key: {r['run_id']}")
             written = [{"id": self._id(), **r} for r in rows]
             store.extend(written)
             return FakeResponse(written)
@@ -181,7 +187,7 @@ def test_run_row_summarises_the_run():
     assert row["blocking"] is True
     assert row["issues"][0]["issue_code"] == "NO_QUESTIONS_FOUND"
     assert row["repairs"] == ["19: removed 'x'"]
-    assert row["is_current"] is True
+    assert row["is_current"] is False      # a blocking run never becomes current
 
 
 def test_question_rows_keep_order_and_every_field():

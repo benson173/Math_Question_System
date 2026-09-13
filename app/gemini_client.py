@@ -48,6 +48,21 @@ def is_retryable_error(exc: BaseException) -> bool:
     return isinstance(exc, (TimeoutError, ConnectionError))
 
 
+def usage_from(response: Any) -> dict[str, int | None]:
+    """Token counts from a response, or Nones when the SDK gives none."""
+    usage = getattr(response, "usage_metadata", None)
+    return {
+        "input_tokens": getattr(usage, "prompt_token_count", None),
+        "output_tokens": getattr(usage, "candidates_token_count", None),
+    }
+
+
+def prompt_sha256(prompt_path: str | Path) -> str:
+    """Twelve hex characters identifying the exact prompt text used."""
+    import hashlib
+    return hashlib.sha256(Path(prompt_path).read_bytes()).hexdigest()[:12]
+
+
 def finish_reason_name(response: Any) -> str | None:
     """Read the first candidate's finish_reason as a plain upper-case name."""
     candidates = getattr(response, "candidates", None) or []
@@ -101,6 +116,9 @@ class GeminiClient:
             raise ValueError("Missing GEMINI_API_KEY in .env")
         if not self.settings.gemini_extractor_model:
             raise ValueError("Missing GEMINI_EXTRACTOR_MODEL in .env")
+
+        # Filled after every call, read by whoever builds the run record.
+        self.last_usage: dict[str, int | None] = {"input_tokens": None, "output_tokens": None}
 
         self.client = genai.Client(
             api_key=self.settings.gemini_api_key,
@@ -159,4 +177,5 @@ class GeminiClient:
             contents=[pdf_part, prompt],
             config=types.GenerateContentConfig(**config_kwargs),
         )
+        self.last_usage = usage_from(response)
         return parse_response(response, schema)

@@ -48,14 +48,18 @@ class SaveOutcome:
 def document_row(result: ExtractionResult) -> dict[str, Any]:
     if result.source is None:
         raise StoreError("Cannot save an extraction with no source document (sha256).")
-    return {
+    row = {
         "sha256": result.source.sha256,
         "file_name": result.source.file_name,
         "page_count": result.source.page_count,
         "byte_size": result.source.byte_size,
-        "level": result.document.level,
         **_paper_columns(result),
     }
+    # Only a known form is written: an upsert with level null would wipe the
+    # form a previous run of the same paper had established.
+    if result.document.level:
+        row["level"] = result.document.level
+    return row
 
 
 def _paper_columns(result: ExtractionResult) -> dict[str, Any]:
@@ -82,6 +86,9 @@ def run_row(result: ExtractionResult, document_id: str) -> dict[str, Any]:
         "extraction_version": result.run.extraction_version,
         "question_object_version": result.run.question_object_version,
         "model": result.run.model,
+        "prompt_sha256": result.run.prompt_sha256,
+        "input_tokens": result.run.input_tokens,
+        "output_tokens": result.run.output_tokens,
         "question_count": len(result.document.questions),
         "issue_count": len(result.issues),
         "blocking": bool(blocking_issues(result.issues)),
@@ -91,7 +98,10 @@ def run_row(result: ExtractionResult, document_id: str) -> dict[str, Any]:
                                     if result.document.marking_scheme else None,
         "marking_scheme_sha256": result.document.marking_scheme.sha256
                                  if result.document.marking_scheme else None,
-        "is_current": True,
+        # A run with a blocking issue is kept for the record but never becomes
+        # the paper's current questions: a re-extraction that came back empty
+        # must not hide the good run before it.
+        "is_current": not bool(blocking_issues(result.issues)),
     }
 
 
@@ -174,12 +184,28 @@ class SupabaseStore:
         run_id = self._insert_run(result, document_id)
         try:
             count = self._insert_questions(result, document_id, run_id)
-            superseded = self._supersede_older_runs(document_id, run_id)
+            superseded = (self._supersede_older_runs(document_id, run_id)
+                          if not blocking_issues(result.issues) else 0)
         except Exception:
-            # No transactions over REST: do not leave a run with no questions.
-            self.client.table(TABLE_RUNS).delete().eq("id", run_id).execute()
+            # No transactions over REST: do not leave a half-written run, and
+            # not its questions either - the migrated schema has no cascade.
+            self._delete_run_rows(run_id)
             raise
         return SaveOutcome(document_id, run_id, count, superseded)
+
+    def delete_run(self, run_id: str) -> bool:
+        """Remove a run and its questions by the pipeline's run_id, if present."""
+        response = (self.client.table(TABLE_RUNS).select("id")
+                    .eq("run_id", run_id).limit(1).execute())
+        rows = getattr(response, "data", None) or []
+        if not rows:
+            return False
+        self._delete_run_rows(str(rows[0]["id"]))
+        return True
+
+    def _delete_run_rows(self, run_row_id: str) -> None:
+        self.client.table(TABLE_QUESTIONS).delete().eq("extraction_run_id", run_row_id).execute()
+        self.client.table(TABLE_RUNS).delete().eq("id", run_row_id).execute()
 
     def _upsert_document(self, result: ExtractionResult) -> str:
         response = (self.client.table(TABLE_DOCUMENTS)
@@ -206,6 +232,36 @@ class SupabaseStore:
                     .eq("is_current", True)
                     .execute())
         return len(getattr(response, "data", None) or [])
+
+
+def key_warning(key: str) -> str | None:
+    """Why this key will not be able to write, if it will not.
+
+    Tables made in the Supabase UI have row-level security on with no
+    policies, so an anon or publishable key reads nothing and writes nothing -
+    without an error. Only the service_role (secret) key bypasses that.
+    """
+    if not key:
+        return None
+    if key.startswith("sb_publishable_"):
+        return ("SUPABASE_SECRET_KEY is a publishable key. Use the secret "
+                "(service_role) key: writes with this one are refused by row-level "
+                "security, silently.")
+    if key.startswith("sb_secret_"):
+        return None
+    parts = key.split(".")
+    if len(parts) == 3:                              # a JWT: read its role claim
+        import base64
+        import json
+        try:
+            payload = parts[1] + "=" * (-len(parts[1]) % 4)
+            role = json.loads(base64.urlsafe_b64decode(payload)).get("role")
+        except Exception:
+            return None
+        if role and role != "service_role":
+            return (f"SUPABASE_SECRET_KEY is the {role!r} key. Use the service_role key: "
+                    f"writes with this one are refused by row-level security, silently.")
+    return None
 
 
 def connect(url: str, key: str) -> Any:

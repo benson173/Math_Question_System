@@ -22,6 +22,7 @@ from app.supabase_store import (
     TABLE_RUNS,
     StoreError,
     connect,
+    key_warning,
 )
 
 
@@ -29,7 +30,8 @@ EXPECTED_COLUMNS = {
     TABLE_DOCUMENTS: ["id", "sha256", "file_name", "page_count", "byte_size", "level",
                       "year", "term", "exam_type", "paper_number", "school", "topics"],
     TABLE_RUNS: ["id", "run_id", "source_document_id", "extracted_at", "extraction_version",
-                 "question_object_version", "model", "question_count", "issue_count",
+                 "question_object_version", "model", "prompt_sha256", "input_tokens",
+                 "output_tokens", "question_count", "issue_count",
                  "blocking", "issues", "repairs", "marking_scheme_file_name",
                  "marking_scheme_sha256", "is_current"],
     TABLE_QUESTIONS: ["id", "extraction_run_id", "source_document_id", "source_question_id",
@@ -128,11 +130,21 @@ def main() -> int:
         return 2
 
     print(f"Checking {url}\n")
+    warning = key_warning(key)
+    if warning:
+        print(f"  KEY      {warning}\n")
+
     results = [probe_table(client, table, columns)
                for table, columns in EXPECTED_COLUMNS.items()]
 
     if report(results):
-        print("\nSchema matches. The pipeline will write here on the next ingestion.")
+        if warning:
+            print("\nThe columns are there, but this key cannot write to them. "
+                  "Set the service_role key and run this again.")
+            return 1
+        print("\nSchema matches. The pipeline will write here on the next ingestion.\n"
+              "(Indexes cannot be checked over the API; docs/supabase_schema.sql "
+              "creates them.)")
         return 0
 
     advise(results)

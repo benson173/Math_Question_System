@@ -12,7 +12,7 @@ from __future__ import annotations
 from app.config import load_settings
 from app.extraction_validator import blocking_issues
 from app.schemas import ExtractionResult
-from app.supabase_store import SaveOutcome, SupabaseStore, connect
+from app.supabase_store import SaveOutcome, SupabaseStore, connect, key_warning
 
 
 class Repository:
@@ -28,6 +28,9 @@ class Repository:
         url, key = self.settings.supabase_url, self.settings.supabase_secret_key
         if not url or not key or url.startswith("put_") or key.startswith("put_"):
             return None
+        warning = key_warning(key)
+        if warning:
+            print(f"Warning: {warning}")
         return SupabaseStore(connect(url, key))
 
     @property

@@ -13,24 +13,19 @@ Writes data/extracted/analysis-<timestamp>.md as well as printing.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-import json
 import sys
 from pathlib import Path
 
+from app.extraction_io import load_extractions
 from app.extraction_stats import analyse, render_analysis
 from app.paths import EXTRACTED_DIR
 from app.schemas import ExtractionResult
 
 
 def load_results(paths: list[Path]) -> list[ExtractionResult]:
-    results = []
-    for path in paths:
-        try:
-            results.append(
-                ExtractionResult.model_validate(json.loads(path.read_text(encoding="utf-8"))))
-        except Exception as exc:
-            print(f"Skipping {path.name}: {type(exc).__name__}: {exc}", file=sys.stderr)
-    return results
+    return [result for _, result in load_extractions(
+        paths, on_skip=lambda path, exc: print(
+            f"Skipping {path.name}: {type(exc).__name__}: {exc}", file=sys.stderr))]
 
 
 def main(argv: list[str] | None = None) -> int:

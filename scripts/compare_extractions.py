@@ -14,17 +14,17 @@ the same PDF gives you something to compare against.
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
 from app.extraction_diff import compare_extractions, render_diff
 from app.paths import HISTORY_DIR
+from app.extraction_io import load_extraction
 from app.schemas import ExtractionResult
 
 
 def load(path: Path) -> ExtractionResult:
-    return ExtractionResult.model_validate(json.loads(path.read_text(encoding="utf-8")))
+    return load_extraction(path)
 
 
 def two_most_recent() -> tuple[Path, Path]:
