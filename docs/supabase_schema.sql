@@ -90,6 +90,34 @@ create table if not exists questions (
 );
 
 
+-- The controlled vocabularies (taxonomy/*.csv), pushed by db_push_taxonomy.
+-- Analyses reference skill_id / error_id; nothing here is ever free text.
+
+create table if not exists skills (
+  skill_id       text primary key,
+  strand         text not null,           -- na | ms | dh | fl
+  unit           text not null,
+  name_en        text not null,
+  name_zh        text not null,
+  form           text not null,           -- F1-F6
+  foundation     text,                    -- foundation | non-foundation | null (KS3)
+  prerequisites  jsonb not null default '[]'::jsonb,
+  updated_at     timestamptz not null default now()
+);
+
+create table if not exists error_patterns (
+  error_id       text primary key,
+  name_en        text not null,
+  name_zh        text not null,
+  skills         jsonb not null default '[]'::jsonb,
+  description    text,
+  updated_at     timestamptz not null default now()
+);
+
+create index if not exists skills_form_idx   on skills (form);
+create index if not exists skills_unit_idx   on skills (unit);
+
+
 -- ------------------------------------------------- tables that already existed
 --
 -- Adds any column the pipeline writes that is not there yet. Added columns are

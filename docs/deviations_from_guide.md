@@ -840,3 +840,41 @@ schema 檔),全部收到有重複題號嘅 run,`current_questions` 有 `question
 
 Schema 檔再喺 Postgres 16 由三個起點升級(空 / 上一版 / 再上一版),run row 帶
 `prompt_sha256`、tokens、`is_current=false` 都寫得入。629 tests。
+
+## 36. Skills 同 error patterns 受控詞彙表(system_review 第 3 步)
+
+`system_review.md` 1.1 講咗:skill 唔可以 free text。呢個 commit 起咗份表。
+
+### 點解係 CSV,唔係 JSON / YAML / database
+
+人手 curate 嘅嘢要人手改得舒服。CSV 用 Excel / Numbers 開、git diff 一行一 skill、
+唔使裝 YAML library。Database 係 CSV 推上去嘅副本(`db_push_taxonomy`,upsert),唔係
+source of truth。
+
+### 粒度
+
+拆到「一個動作」:唔係「因式分解」一個 skill,係提公因式 / 分組 / 認出完全平方項 /
+平方差 / 完全平方 / 十字相乘(a=1)/ 十字相乘(a≠1)/ 揀方法 / 完全分解 九個。
+`Factorise 1 − 225x²` 嗰條,spec 嘅 worked example 就對得上 `na.factor.recognise-square`
+→ `na.factor.dos`,R 同 P 分得開。
+
+359 個 skill:KS3 187、必修部分 172(138 foundation、34 non-foundation)。
+95 個 error pattern,117 個 skill 有至少一個。
+
+### Validator 先行,然後先信
+
+`app/taxonomy.py` 讀完即驗:id 格式、id 同 strand 一致、form F1–F6、必修部分必須有
+foundation 標記而 KS3 必須冇、prerequisite 存在、唔可以指自己、冇循環、error 一定掛
+至少一個存在嘅 skill。`load_taxonomy()` 有問題就 raise 晒全部,唔會靜靜雞用一半。
+
+寫完 CSV 第一次跑就捉到三個錯:兩行英文名入面有逗號(CSV 拆咗欄),一個
+prerequisite 寫咗 `na.coord.plot-line` 但坐標系我放咗喺 `ms`。人手 curate 一定會有
+呢類錯,所以 `scripts/check_taxonomy.py` 係「改完必行」,test suite 亦會 load 真正嗰
+份檔。
+
+### 未做
+
+- **未對住官方文件核對。** 呢個環境連唔到 edb.gov.hk。Unit 名、foundation 標記、
+  KS3 嘅 form 分配全部係記憶,要你對返 C&A Guide(2017)同 KS3 補充文件。
+- Prerequisites 只填關鍵幾個,唔係完整 dependency graph。
+- Analyzer 用呢份表嘅 prompt 未寫(第 4 步)。

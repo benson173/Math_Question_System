@@ -139,6 +139,10 @@ Structural + Empirical 合埋,放入 L1–L5(或者其他 scale)。**只有** Ad
 
 ## 3. Analyzer output contract
 
+`atomic_skills` 同 `possible_errors` 只可以係 `taxonomy/skills.csv` 嘅 `skill_id` 同
+`taxonomy/error_patterns.csv` 嘅 `error_id`。搵唔到啱嘅,Analyzer 寫入 `proposed_skills` /
+`proposed_errors`(free text),人手 review 先入表——唔可以自己創。
+
 Analyzer output Structural Analysis,**唔** output empirical difficulty。
 
 ```json

@@ -1,0 +1,376 @@
+skill_id,strand,unit,name_en,name_zh,form,foundation,prerequisites
+# HKDSE Mathematics Compulsory Part (S4-6, C&A Guide 2017) and Key Stage 3 (S1-3).
+# One row per atomic skill. form = the form it is usually taught in (KS3 forms follow
+# the common textbook sequence; the EDB fixes strands, not forms). foundation: F =
+# Foundation Topic, N = Non-Foundation Topic (Compulsory Part only; blank for KS3).
+# prerequisites: skill_ids separated by ";". Lines starting with # are comments.
+#
+# ============================== KEY STAGE 3 (F1-F3) ==============================
+# --- Number and Algebra ---------------------------------------------------------
+na.directed.order,na,Directed numbers,Order directed numbers on the number line,在數線上排列有向數,F1,,
+na.directed.add-sub,na,Directed numbers,Add and subtract directed numbers,有向數加減,F1,,na.directed.order
+na.directed.mul-div,na,Directed numbers,Multiply and divide directed numbers,有向數乘除,F1,,na.directed.add-sub
+na.directed.mixed,na,Directed numbers,Evaluate mixed operations with directed numbers,有向數混合運算,F1,,na.directed.mul-div
+na.directed.word,na,Directed numbers,Use directed numbers in context (temperature/altitude/finance),有向數應用題,F1,,na.directed.add-sub
+na.numsys.place-value,na,Numeral systems,Read place value in denary and other bases,不同基數的位值,F1,,
+na.numsys.binary-denary,na,Numeral systems,Convert between binary and denary,二進制與十進制互換,F1,,na.numsys.place-value
+na.numsys.hex-denary,na,Numeral systems,Convert between hexadecimal and denary,十六進制與十進制互換,F1,,na.numsys.place-value
+na.approx.round,na,Approximation and errors,Round off to a number of decimal places,四捨五入至指定小數位,F1,,
+na.approx.sigfig,na,Approximation and errors,Round off to a number of significant figures,四捨五入至指定有效數字,F2,,na.approx.round
+na.approx.round-up-down,na,Approximation and errors,Round up / round down in context,在情境中進位或捨去,F2,,na.approx.round
+na.approx.max-abs-error,na,Approximation and errors,Find the maximum absolute error of a measurement,求最大絕對誤差,F2,,na.approx.round
+na.approx.bounds,na,Approximation and errors,Find upper and lower limits of a measured value,求量度值的上下限,F2,,na.approx.max-abs-error
+na.approx.relative-error,na,Approximation and errors,Find relative error,求相對誤差,F2,,na.approx.max-abs-error
+na.approx.percentage-error,na,Approximation and errors,Find percentage error,求百分誤差,F2,,na.approx.relative-error
+na.approx.estimate,na,Approximation and errors,Estimate a result by rounding or clustering,用近似策略估算,F2,,na.approx.round
+na.approx.sci-notation,na,Approximation and errors,Write and use scientific notation,科學記數法,F2,,na.indices.laws
+na.rational.classify,na,Rational and irrational numbers,Classify a number as integer/rational/irrational/real,分辨整數、有理數、無理數、實數,F2,,
+na.rational.fraction-decimal,na,Rational and irrational numbers,Convert between fractions and recurring decimals,分數與循環小數互換,F2,,
+na.rational.surd-simplify,na,Rational and irrational numbers,Simplify a surd (√a with a square factor),化簡根式,F3,,na.rational.classify
+na.rational.surd-operate,na,Rational and irrational numbers,Add / subtract / multiply / divide surds,根式運算,F3,,na.rational.surd-simplify
+na.rational.rationalise,na,Rational and irrational numbers,Rationalise a denominator,有理化分母,F3,,na.rational.surd-operate
+na.rational.number-line,na,Rational and irrational numbers,Locate a real number (incl. √2) on the number line,在數線上表示實數,F2,,na.rational.classify
+na.percent.basic,na,Using percentages,Find a percentage of a quantity and express one as a percentage of another,百分數基本計算,F1,,
+na.percent.increase-decrease,na,Using percentages,Apply percentage increase / decrease,百分增加 / 減少,F1,,na.percent.basic
+na.percent.original-value,na,Using percentages,Find the original value from a changed value (reverse percentage),由變化後的值求原值,F1,,na.percent.increase-decrease
+na.percent.profit-loss,na,Using percentages,Profit / loss / discount and their percentages,盈利、虧蝕、折扣百分率,F1,,na.percent.increase-decrease
+na.percent.successive,na,Using percentages,Successive percentage changes,連續百分變化,F2,,na.percent.increase-decrease
+na.percent.simple-interest,na,Using percentages,Simple interest,單利息,F2,,na.percent.basic
+na.percent.compound-interest,na,Using percentages,Compound interest (with different compounding periods),複利息(不同計息期),F3,,na.percent.successive;na.indices.laws
+na.percent.growth-decay,na,Using percentages,Growth and depreciation problems,增長與折舊,F3,,na.percent.compound-interest
+na.percent.tax-rates,na,Using percentages,Salaries tax / rates and other tax problems,薪俸稅、差餉等稅務問題,F3,,na.percent.basic
+na.percent.inflation,na,Using percentages,Inflation and change in purchasing power,通脹與購買力,F3,,na.percent.growth-decay
+na.ratio.simplify,na,Rate and ratio,Simplify a ratio and write it in the form 1:n / n:1,化簡比及寫成 1:n,F2,,
+na.ratio.share,na,Rate and ratio,Divide a quantity in a given ratio,按比分配,F2,,na.ratio.simplify
+na.ratio.three-terms,na,Rate and ratio,Combine ratios into a three-term ratio a:b:c,合併成三項比,F2,,na.ratio.simplify
+na.ratio.equation,na,Rate and ratio,Solve a problem by setting up a ratio equation,以比例式解題,F2,,na.ratio.simplify;na.lineq.solve
+na.ratio.rate,na,Rate and ratio,Use rates (speed / density / unit price) and convert units,率(速率、密度、單價)及單位換算,F2,,
+na.ratio.average-speed,na,Rate and ratio,Average speed over several stages,多段路程的平均速率,F2,,na.ratio.rate
+na.ratio.scale,na,Rate and ratio,Use map scale and scale drawings,比例尺,F2,,na.ratio.simplify
+na.formula.substitute,na,Formulas,Substitute values into a formula and evaluate,代入公式求值,F1,,na.directed.mixed
+na.formula.change-subject,na,Formulas,Change the subject of a formula,更改公式主項,F3,,na.lineq.solve;na.identity.expand
+na.formula.change-subject-radical,na,Formulas,Change the subject when the variable is under a root / index,主項在根號或指數內的更改主項,F3,,na.formula.change-subject;na.indices.laws
+na.algexp.translate,na,Algebraic expressions,Translate words into algebraic expressions,把文字化成代數式,F1,,
+na.algexp.like-terms,na,Algebraic expressions,Collect like terms,合併同類項,F1,,na.directed.add-sub
+na.algexp.expand-bracket,na,Algebraic expressions,Expand a(b + c) and remove brackets with signs,展開一次括號,F1,,na.algexp.like-terms
+na.algexp.substitute,na,Algebraic expressions,Evaluate an expression by substitution,代入求代數式的值,F1,,na.formula.substitute
+na.algexp.sequence-term,na,Algebraic expressions,Find the general term of a simple number sequence,求簡單數列的通項,F1,,na.algexp.translate
+na.algexp.polynomial-terms,na,Algebraic expressions,Identify degree / coefficient / constant term of a polynomial,多項式的次數、係數、常數項,F2,,na.algexp.like-terms
+na.algexp.poly-add-sub,na,Algebraic expressions,Add and subtract polynomials,多項式加減,F2,,na.algexp.like-terms
+na.algexp.poly-mul,na,Algebraic expressions,Multiply polynomials (binomial x binomial and beyond),多項式相乘,F2,,na.algexp.expand-bracket
+na.algexp.poly-div-monomial,na,Algebraic expressions,Divide a polynomial by a monomial,多項式除以單項式,F2,,na.indices.laws
+na.lineq.solve,na,Linear equations in one unknown,Solve a linear equation by balancing / transposing,解一元一次方程,F1,,na.algexp.like-terms
+na.lineq.brackets,na,Linear equations in one unknown,Solve linear equations with brackets,解含括號的一次方程,F1,,na.lineq.solve;na.algexp.expand-bracket
+na.lineq.fractions,na,Linear equations in one unknown,Solve linear equations with fractional coefficients,解含分數係數的一次方程,F1,,na.lineq.solve
+na.lineq.word,na,Linear equations in one unknown,Set up and solve a linear equation from a word problem,列一次方程解應用題,F1,,na.lineq.solve;na.algexp.translate
+na.lineq.age-number,na,Linear equations in one unknown,Age / number / consecutive-integer problems,年齡及數字問題,F1,,na.lineq.word
+na.lineq.motion,na,Linear equations in one unknown,Distance-speed-time problems with a linear equation,行程問題,F1,,na.lineq.word;na.ratio.rate
+na.simeq.solution-check,na,Linear equations in two unknowns,Check whether an ordered pair satisfies a system,驗證有序對是否方程組的解,F2,,
+na.simeq.graph,na,Linear equations in two unknowns,Solve simultaneous linear equations graphically,以圖解法解聯立一次方程,F2,,ms.coord.plot-line
+na.simeq.substitution,na,Linear equations in two unknowns,Solve by substitution,代入消元法,F2,,na.lineq.solve
+na.simeq.elimination,na,Linear equations in two unknowns,Solve by elimination,加減消元法,F2,,na.lineq.solve
+na.simeq.choose-method,na,Linear equations in two unknowns,Choose substitution or elimination for a given system,選擇合適的消元法,F2,,na.simeq.substitution;na.simeq.elimination
+na.simeq.word,na,Linear equations in two unknowns,Set up and solve simultaneous equations from a word problem,列聯立方程解應用題,F2,,na.simeq.choose-method;na.algexp.translate
+na.identity.expand,na,Identities,Expand (a+b)(c+d) into four terms,展開兩個二項式之積,F2,,na.algexp.poly-mul
+na.identity.check,na,Identities,Distinguish an identity from an equation,分辨恆等式與方程,F2,,na.identity.expand
+na.identity.perfect-square,na,Identities,Use (a ± b)² = a² ± 2ab + b²,完全平方恆等式,F2,,na.identity.expand
+na.identity.dos,na,Identities,Use (a + b)(a − b) = a² − b²,平方差恆等式,F2,,na.identity.expand
+na.identity.numeric-trick,na,Identities,Use identities for numerical computation (e.g. 101²),用恆等式速算,F2,,na.identity.perfect-square;na.identity.dos
+na.factor.common,na,Factorisation,Take out the highest common factor,提取公因式,F2,,na.algexp.expand-bracket
+na.factor.grouping,na,Factorisation,Factorise by grouping terms,分組分解法,F2,,na.factor.common
+na.factor.recognise-square,na,Factorisation,Recognise a term as a perfect square (e.g. 225x² as (15x)²),認出完全平方項,F2,,na.indices.laws
+na.factor.dos,na,Factorisation,Factorise a difference of two squares,平方差因式分解,F2,,na.factor.recognise-square;na.identity.dos
+na.factor.perfect-square,na,Factorisation,Factorise a perfect square trinomial,完全平方三項式因式分解,F2,,na.factor.recognise-square;na.identity.perfect-square
+na.factor.cross,na,Factorisation,Factorise x² + bx + c by the cross method,十字相乘法(首項係數 1),F2,,na.identity.expand
+na.factor.cross-leading,na,Factorisation,Factorise ax² + bx + c (a ≠ 1) by the cross method,十字相乘法(首項係數非 1),F3,,na.factor.cross
+na.factor.choose-method,na,Factorisation,Choose the factorisation method for a given expression,選擇因式分解方法,F3,,na.factor.common;na.factor.dos;na.factor.perfect-square;na.factor.cross-leading
+na.factor.complete,na,Factorisation,Factorise completely (common factor then identity),完全因式分解(多步),F3,,na.factor.choose-method
+na.factor.sum-cube,na,Factorisation,Factorise a³ ± b³,立方和 / 立方差因式分解,F4,N,na.factor.dos
+na.indices.zero-negative,na,Laws of integral indices,Use a⁰ = 1 and negative indices,零指數與負指數,F2,,
+na.indices.laws,na,Laws of integral indices,Apply the laws of integral indices,整數指數定律,F2,,na.indices.zero-negative
+na.indices.simplify,na,Laws of integral indices,Simplify an expression with several index laws,綜合運用指數定律化簡,F2,,na.indices.laws
+na.indices.equation,na,Laws of integral indices,Solve a simple exponential equation by equating indices,以同底比較指數解方程,F3,,na.indices.laws
+na.lineineq.properties,na,Linear inequalities in one unknown,Use properties of inequalities (adding / multiplying by a negative),不等式性質(乘負數變向),F3,,
+na.lineineq.solve,na,Linear inequalities in one unknown,Solve a linear inequality and show the solution on a number line,解一元一次不等式並在數線上表示,F3,,na.lineineq.properties;na.lineq.solve
+na.lineineq.word,na,Linear inequalities in one unknown,Set up a linear inequality from a word problem,列不等式解應用題,F3,,na.lineineq.solve
+na.algfrac.simplify,na,Algebraic fractions,Simplify an algebraic fraction by factorising and cancelling,約簡代數分式,F3,,na.factor.complete
+na.algfrac.mul-div,na,Algebraic fractions,Multiply and divide algebraic fractions,代數分式乘除,F3,,na.algfrac.simplify
+na.algfrac.add-sub,na,Algebraic fractions,Add and subtract algebraic fractions (common denominator),代數分式加減(通分),F3,,na.algfrac.simplify
+na.algfrac.equation,na,Algebraic fractions,Solve an equation containing algebraic fractions,解含代數分式的方程,F3,,na.algfrac.add-sub;na.lineq.solve
+# --- Measures, Shape and Space ----------------------------------------------------
+ms.estimate.length-area,ms,Estimation in measurement,Estimate lengths / areas / volumes with suitable units,以合適單位估計長度、面積、體積,F1,,
+ms.estimate.strategy,ms,Estimation in measurement,Choose a strategy to estimate a measurement,選擇估量策略,F1,,ms.estimate.length-area
+ms.mensur.rect-tri-area,ms,Mensuration,Area of rectangles / triangles / parallelograms / trapeziums,長方形、三角形、平行四邊形、梯形面積,F1,,
+ms.mensur.composite-area,ms,Mensuration,Area of a composite figure,複合圖形面積,F1,,ms.mensur.rect-tri-area
+ms.mensur.circle,ms,Mensuration,Circumference and area of a circle,圓周及圓面積,F1,,
+ms.mensur.arc-sector,ms,Mensuration,Arc length and area of a sector,弧長及扇形面積,F3,,ms.mensur.circle
+ms.mensur.segment,ms,Mensuration,Area of a segment (sector minus triangle),弓形面積,F3,,ms.mensur.arc-sector;ms.trig.area-formula
+ms.mensur.prism-cylinder,ms,Mensuration,Volume and surface area of prisms and cylinders,柱體及圓柱的體積與表面積,F2,,ms.mensur.rect-tri-area;ms.mensur.circle
+ms.mensur.pyramid-cone,ms,Mensuration,Volume and surface area of pyramids and cones,錐體及圓錐的體積與表面積,F3,,ms.mensur.prism-cylinder;ms.pythag.apply
+ms.mensur.frustum,ms,Mensuration,Volume / surface area of a frustum by subtraction,截頭錐體,F3,,ms.mensur.pyramid-cone;ms.similar.ratio-length
+ms.mensur.sphere,ms,Mensuration,Volume and surface area of spheres and hemispheres,球體及半球,F3,,
+ms.mensur.composite-solid,ms,Mensuration,Volume / surface area of a composite solid,複合立體,F3,,ms.mensur.pyramid-cone;ms.mensur.sphere
+ms.mensur.similar-ratio,ms,Mensuration,Ratios of areas and volumes of similar figures (k² and k³),相似圖形的面積比與體積比,F3,,ms.similar.ratio-length
+ms.mensur.unit-convert,ms,Mensuration,Convert units of area and volume (cm²↔m² and cm³↔L),面積及體積單位換算,F2,,
+ms.mensur.dimension-check,ms,Mensuration,Judge whether a formula represents length / area / volume by dimension,以量綱判斷公式,F3,,
+ms.angles.basic,ms,Angles related with lines,Angles at a point / on a straight line / vertically opposite,對頂角、同頂角、直線上的鄰角,F1,,
+ms.angles.parallel,ms,Angles related with lines,Corresponding / alternate / interior angles with parallel lines,平行線的同位角、內錯角、同旁內角,F1,,ms.angles.basic
+ms.angles.parallel-prove,ms,Angles related with lines,Prove two lines parallel from angle relations,由角的關係證明平行,F1,,ms.angles.parallel
+ms.angles.triangle-sum,ms,Angles of rectilinear figures,Angle sum and exterior angle of a triangle,三角形內角和及外角,F1,,ms.angles.basic
+ms.angles.polygon-sum,ms,Angles of rectilinear figures,Interior and exterior angle sums of polygons,多邊形內角和及外角和,F2,,ms.angles.triangle-sum
+ms.angles.regular-polygon,ms,Angles of rectilinear figures,Angles of a regular polygon and finding n,正多邊形的角及求邊數,F2,,ms.angles.polygon-sum
+ms.angles.isosceles,ms,Angles of rectilinear figures,Properties of isosceles and equilateral triangles,等腰及等邊三角形性質,F1,,ms.angles.triangle-sum
+ms.angles.multi-step,ms,Angles of rectilinear figures,Multi-step angle chasing with reasons stated,多步求角並寫理由,F2,,ms.angles.parallel;ms.angles.triangle-sum
+ms.congr.conditions,ms,Congruence and similarity,Recognise SSS / SAS / ASA / AAS / RHS,全等三角形的判定條件,F2,,
+ms.congr.prove,ms,Congruence and similarity,Prove two triangles congruent,證明三角形全等,F2,,ms.congr.conditions
+ms.congr.use,ms,Congruence and similarity,Deduce equal sides / angles from congruence,由全等推出對應邊角相等,F2,,ms.congr.prove
+ms.similar.conditions,ms,Congruence and similarity,Recognise AAA / three sides proportional / ratio of two sides and included angle,相似三角形的判定條件,F2,,
+ms.similar.prove,ms,Congruence and similarity,Prove two triangles similar,證明三角形相似,F2,,ms.similar.conditions
+ms.similar.ratio-length,ms,Congruence and similarity,Find lengths from corresponding sides of similar triangles,由相似三角形求邊長,F2,,ms.similar.prove;na.ratio.equation
+ms.similar.hidden,ms,Congruence and similarity,Identify similar triangles in an overlapping / nested figure,在重疊圖形中認出相似三角形,F3,,ms.similar.prove
+ms.deduct.triangle-centres,ms,Deductive geometry,Properties of medians / altitudes / angle bisectors / perpendicular bisectors,三角形的中線、高、角平分線、垂直平分線,F3,,ms.congr.use
+ms.deduct.centres,ms,Deductive geometry,Centroid / orthocentre / incentre / circumcentre,重心、垂心、內心、外心,F3,,ms.deduct.triangle-centres
+ms.deduct.midpoint-theorem,ms,Deductive geometry,Mid-point theorem and its converse,中點定理及其逆定理,F3,,ms.similar.ratio-length
+ms.deduct.intercept-theorem,ms,Deductive geometry,Intercept theorem (equal intercepts),截線定理,F3,,ms.deduct.midpoint-theorem
+ms.deduct.proof-writing,ms,Deductive geometry,Write a deductive proof with reasons for every step,寫出每步附理由的演繹證明,F3,,ms.angles.multi-step;ms.congr.prove
+ms.quad.properties,ms,Quadrilaterals,Properties of parallelogram / rectangle / rhombus / square / trapezium,各類四邊形的性質,F3,,ms.angles.parallel
+ms.quad.conditions,ms,Quadrilaterals,Conditions for a quadrilateral to be a parallelogram,平行四邊形的判定條件,F3,,ms.quad.properties
+ms.quad.prove,ms,Quadrilaterals,Prove a quadrilateral is a particular type,證明四邊形的類型,F3,,ms.quad.conditions;ms.deduct.proof-writing
+ms.pythag.apply,ms,Pythagoras' theorem,Find a side of a right-angled triangle,以畢氏定理求邊,F2,,na.rational.surd-simplify
+ms.pythag.converse,ms,Pythagoras' theorem,Use the converse to test for a right angle,畢氏定理的逆定理,F2,,ms.pythag.apply
+ms.pythag.word,ms,Pythagoras' theorem,Apply Pythagoras' theorem in a real-life or 2-D figure problem,畢氏定理應用題,F2,,ms.pythag.apply
+ms.pythag.3d,ms,Pythagoras' theorem,Apply Pythagoras' theorem in a 3-D solid (diagonal of a cuboid),立體中的畢氏定理,F3,,ms.pythag.apply;ms.solid.identify
+ms.coord.plot,ms,Introduction to coordinates,Plot points and read coordinates in the rectangular system,直角坐標系上描點及讀坐標,F1,,
+ms.coord.polar,ms,Introduction to coordinates,Use polar coordinates and convert to rectangular,極坐標及其轉換,F1,,ms.trig.ratios
+ms.coord.plot-line,ms,Introduction to coordinates,Plot a straight line from its equation by a table of values,由方程列表描繪直線,F2,,ms.coord.plot
+ms.coord.area-on-grid,ms,Introduction to coordinates,Area of a polygon on the coordinate plane,坐標平面上多邊形的面積,F1,,ms.coord.plot;ms.mensur.composite-area
+ms.coord.transform,ms,Introduction to coordinates,Coordinates after translation / reflection / rotation,平移、反射、旋轉後的坐標,F1,,ms.coord.plot
+ms.coordgeo.distance,ms,Coordinate geometry of straight lines,Distance between two points,兩點間距離,F3,,ms.pythag.apply
+ms.coordgeo.midpoint,ms,Coordinate geometry of straight lines,Mid-point of a line segment,線段中點,F3,,ms.coord.plot
+ms.coordgeo.section,ms,Coordinate geometry of straight lines,Point dividing a segment in a given ratio (section formula),分點公式,F3,,ms.coordgeo.midpoint;na.ratio.share
+ms.coordgeo.slope,ms,Coordinate geometry of straight lines,Slope of a line through two points,直線斜率,F3,,
+ms.coordgeo.inclination,ms,Coordinate geometry of straight lines,Relation between slope and inclination,斜率與傾角,F3,,ms.coordgeo.slope;ms.trig.ratios
+ms.coordgeo.parallel-perp,ms,Coordinate geometry of straight lines,Conditions for parallel and perpendicular lines,平行及垂直的斜率條件,F3,,ms.coordgeo.slope
+ms.coordgeo.collinear,ms,Coordinate geometry of straight lines,Test for collinear points,共線點,F3,,ms.coordgeo.slope
+ms.coordgeo.prove-shape,ms,Coordinate geometry of straight lines,Prove a figure is a particular type using distances / slopes,以坐標法證明圖形類型,F3,,ms.coordgeo.distance;ms.coordgeo.parallel-perp
+ms.trig.ratios,ms,Trigonometric ratios,Define sin / cos / tan in a right-angled triangle,直角三角形中的三角比,F2,,ms.pythag.apply
+ms.trig.find-side,ms,Trigonometric ratios,Find a side using a trigonometric ratio,以三角比求邊,F2,,ms.trig.ratios
+ms.trig.find-angle,ms,Trigonometric ratios,Find an angle using an inverse ratio,以三角比求角,F2,,ms.trig.ratios
+ms.trig.special-angles,ms,Trigonometric ratios,Exact values for 30° / 45° / 60°,特殊角的三角比值,F2,,ms.trig.ratios
+ms.trig.identities-basic,ms,Trigonometric ratios,Use tan θ = sin θ / cos θ and sin²θ + cos²θ = 1,基本三角恆等式,F3,,ms.trig.ratios
+ms.trig.complementary,ms,Trigonometric ratios,Use sin(90° − θ) = cos θ and related,餘角關係,F3,,ms.trig.ratios
+ms.trig.gradient,ms,Applications of trigonometry,Gradient of a slope (ratio and angle),斜坡的坡度,F3,,ms.trig.find-angle
+ms.trig.elevation-depression,ms,Applications of trigonometry,Angles of elevation and depression,仰角與俯角,F3,,ms.trig.find-side
+ms.trig.bearing,ms,Applications of trigonometry,Compass bearings and true bearings,羅盤方位角及真方位角,F3,,ms.trig.find-side
+ms.trig.2d-multi,ms,Applications of trigonometry,Multi-step 2-D problems combining two right-angled triangles,兩個直角三角形的組合問題,F3,,ms.trig.elevation-depression
+ms.trig.area-formula,ms,Applications of trigonometry,Area of a triangle = ½ab sin C,三角形面積公式 ½ab sin C,F4,F,ms.trig.ratios
+ms.transform.types,ms,Transformation and symmetry,Recognise translation / reflection / rotation / enlargement,辨認平移、反射、旋轉、放大,F1,,
+ms.transform.symmetry,ms,Transformation and symmetry,Reflectional and rotational symmetry of a figure,反射對稱與旋轉對稱,F1,,
+ms.transform.effect,ms,Transformation and symmetry,Effect of a transformation on a figure (shape / size / orientation),變換對圖形的影響,F1,,ms.transform.types
+ms.solid.identify,ms,3-D figures,Identify prisms / pyramids / cylinders / cones / spheres and their nets,辨認立體及其摺紙圖樣,F1,,
+ms.solid.euler,ms,3-D figures,Vertices / edges / faces of a polyhedron (Euler's formula),多面體的頂點、棱、面(歐拉公式),F1,,ms.solid.identify
+ms.solid.projection,ms,3-D figures,Orthographic projections and cross-sections,正投影圖及截面,F3,,ms.solid.identify
+ms.solid.line-plane-angle,ms,3-D figures,Angle between a line and a plane,直線與平面的交角,F3,,ms.solid.identify;ms.trig.find-angle
+ms.solid.plane-plane-angle,ms,3-D figures,Angle between two planes,兩平面的交角,F3,,ms.solid.line-plane-angle
+# --- Data Handling ----------------------------------------------------------------
+dh.collect.methods,dh,Organisation of data,Methods of collecting data and types of data,收集數據的方法及數據類型,F1,,
+dh.collect.frequency-table,dh,Organisation of data,Construct a frequency distribution table (with class intervals),製作頻數分佈表,F1,,
+dh.collect.class-mark,dh,Organisation of data,Class mark / class boundaries / class width,組中值、組界、組距,F2,,dh.collect.frequency-table
+dh.present.bar-pie,dh,Presentation of data,Construct and read bar charts and pie charts,製作及閱讀棒形圖與圓形圖,F1,,
+dh.present.stem-leaf,dh,Presentation of data,Construct and read a stem-and-leaf diagram,幹葉圖,F1,,
+dh.present.histogram,dh,Presentation of data,Construct and read a histogram,組織圖,F2,,dh.collect.class-mark
+dh.present.frequency-polygon,dh,Presentation of data,Frequency polygon and frequency curve,頻數多邊形及頻數曲線,F2,,dh.present.histogram
+dh.present.cumulative,dh,Presentation of data,Cumulative frequency polygon / curve and reading from it,累積頻數多邊形及曲線,F3,,dh.present.frequency-polygon
+dh.present.broken-line,dh,Presentation of data,Broken line graphs and scatter diagrams,折線圖及散點圖,F1,,
+dh.present.choose,dh,Presentation of data,Choose a suitable diagram for a set of data,選擇合適的統計圖,F2,,dh.present.bar-pie;dh.present.histogram
+dh.present.misleading,dh,Presentation of data,Spot a misleading statistical diagram,識別誤導的統計圖,F2,,dh.present.bar-pie
+dh.central.mean,dh,Measures of central tendency,Mean of ungrouped data,平均數(未分組),F3,,
+dh.central.median,dh,Measures of central tendency,Median of ungrouped data (odd / even n),中位數(未分組),F3,,
+dh.central.mode,dh,Measures of central tendency,Mode and modal class,眾數及眾數組,F3,,
+dh.central.grouped-mean,dh,Measures of central tendency,Mean of grouped data using class marks,分組數據的平均數,F3,,dh.central.mean;dh.collect.class-mark
+dh.central.grouped-median,dh,Measures of central tendency,Median of grouped data from a cumulative frequency curve,由累積頻數曲線求中位數,F3,,dh.present.cumulative
+dh.central.weighted-mean,dh,Measures of central tendency,Weighted mean,加權平均數,F3,,dh.central.mean
+dh.central.compare,dh,Measures of central tendency,Choose and compare mean / median / mode for a data set,比較及選擇集中趨勢量度,F3,,dh.central.mean;dh.central.median;dh.central.mode
+dh.central.effect-change,dh,Measures of central tendency,Effect on mean / median / mode of adding / removing / scaling data,數據改變對平均數、中位數、眾數的影響,F3,,dh.central.compare
+dh.central.unknown-datum,dh,Measures of central tendency,Find an unknown datum from a given mean / median,由已知平均數或中位數求未知數據,F3,,dh.central.mean;na.lineq.solve
+dh.prob.definition,dh,Introduction to probability,Theoretical probability = favourable / total (equally likely outcomes),機率的定義,F2,,
+dh.prob.listing,dh,Introduction to probability,List outcomes by a table or a tree diagram,以表或樹形圖列出結果,F2,,dh.prob.definition
+dh.prob.experimental,dh,Introduction to probability,Experimental probability and relative frequency,實驗機率與相對頻數,F2,,dh.prob.definition
+dh.prob.expected-value,dh,Introduction to probability,Expected value of a discrete outcome,期望值,F3,,dh.prob.definition
+dh.prob.geometric,dh,Introduction to probability,Probability from areas / lengths (geometric probability),幾何機率,F3,,dh.prob.definition;ms.mensur.circle
+#
+# ========================= COMPULSORY PART (F4-F6) ==============================
+# --- Number and Algebra ---------------------------------------------------------
+na.quad.solve-factor,na,Quadratic equations in one unknown,Solve a quadratic equation by factorisation,以因式分解法解二次方程,F4,F,na.factor.complete
+na.quad.solve-formula,na,Quadratic equations in one unknown,Solve by the quadratic formula,以二次公式解方程,F4,F,na.rational.surd-simplify
+na.quad.solve-graph,na,Quadratic equations in one unknown,Solve graphically from y = ax² + bx + c,以圖解法解二次方程,F4,F,na.func.quadratic-graph
+na.quad.complete-square,na,Quadratic equations in one unknown,Solve by completing the square,配方法解方程,F4,F,na.identity.perfect-square
+na.quad.discriminant,na,Quadratic equations in one unknown,Use the discriminant to find the nature of roots,以判別式判斷根的性質,F4,F,na.quad.solve-formula
+na.quad.discriminant-condition,na,Quadratic equations in one unknown,Find a parameter from a condition on the roots (real / equal / no real roots),由根的條件求未知係數,F4,F,na.quad.discriminant;na.lineineq.solve
+na.quad.form-from-roots,na,Quadratic equations in one unknown,Form a quadratic equation from given roots,由根建立二次方程,F4,F,na.identity.expand
+na.quad.sum-product,na,Quadratic equations in one unknown,Sum and product of roots (α + β = −b/a and αβ = c/a),根的和與積,F4,N,na.quad.form-from-roots
+na.quad.symmetric-functions,na,Quadratic equations in one unknown,Evaluate symmetric functions of roots (α² + β² etc.),以根的和與積求對稱式的值,F4,N,na.quad.sum-product;na.identity.perfect-square
+na.quad.equation-with-new-roots,na,Quadratic equations in one unknown,Form an equation whose roots are functions of α and β,建立以 α、β 的函數為根的方程,F4,N,na.quad.symmetric-functions
+na.quad.word,na,Quadratic equations in one unknown,Set up and solve a quadratic equation from a word problem and reject invalid roots,列二次方程解應用題並剔除不合理根,F4,F,na.quad.solve-factor;na.algexp.translate
+na.quad.complex-basic,na,Quadratic equations in one unknown,Write and simplify complex numbers a + bi (i² = −1),複數的基本運算,F4,N,na.rational.surd-operate
+na.quad.complex-roots,na,Quadratic equations in one unknown,Find complex roots of a quadratic with Δ < 0,求 Δ<0 時的複數根,F4,N,na.quad.complex-basic;na.quad.solve-formula
+na.func.concept,na,Functions and graphs,Function notation / domain / co-domain / dependent and independent variables,函數記號、定義域、對應域,F4,F,
+na.func.evaluate,na,Functions and graphs,Evaluate f(a) and f(expression),求函數值 f(a)、f(g(x)) 型代入,F4,F,na.func.concept;na.algexp.substitute
+na.func.quadratic-graph,na,Functions and graphs,Sketch y = ax² + bx + c: direction / intercepts / axis / vertex,二次函數圖像的特徵,F4,F,na.quad.solve-factor
+na.func.vertex-form,na,Functions and graphs,Find max / min by completing the square into a(x − h)² + k,以配方法求最大 / 最小值,F4,F,na.quad.complete-square
+na.func.optimise-word,na,Functions and graphs,Optimise a quantity modelled by a quadratic,二次函數最值應用題,F4,F,na.func.vertex-form
+na.func.transform-translate,na,More about graphs of functions,Translation of graphs y = f(x) + k and y = f(x + h),圖像平移,F5,N,na.func.quadratic-graph
+na.func.transform-reflect,na,More about graphs of functions,Reflection of graphs y = −f(x) and y = f(−x),圖像反射,F5,N,na.func.quadratic-graph
+na.func.transform-dilate,na,More about graphs of functions,Dilation of graphs y = kf(x) and y = f(kx),圖像伸縮,F5,N,na.func.quadratic-graph
+na.func.transform-combined,na,More about graphs of functions,Combined transformations and reading them from two graphs,綜合變換及由圖像辨認變換,F5,N,na.func.transform-translate;na.func.transform-reflect;na.func.transform-dilate
+na.func.graph-features,na,More about graphs of functions,Read features of a graph: intercepts / symmetry / turning points / asymptotes,讀取圖像特徵,F5,F,na.func.quadratic-graph
+na.func.solve-by-graph,na,More about graphs of functions,Solve f(x) = k or f(x) = g(x) by reading intersections,以圖像交點解方程,F5,F,na.func.graph-features
+na.func.ineq-by-graph,na,More about graphs of functions,Solve f(x) > k from a graph,以圖像解不等式,F5,F,na.func.solve-by-graph
+na.exp.rational-indices,na,Exponential and logarithmic functions,Laws of rational indices and radical ↔ index form,有理數指數定律及根式互換,F4,F,na.indices.laws
+na.exp.simplify,na,Exponential and logarithmic functions,Simplify expressions with rational indices,化簡有理指數式,F4,F,na.exp.rational-indices
+na.exp.equation,na,Exponential and logarithmic functions,Solve exponential equations by a common base,以同底解指數方程,F4,F,na.exp.rational-indices
+na.exp.graph,na,Exponential and logarithmic functions,Graph and features of y = aˣ (a > 1 / 0 < a < 1),指數函數圖像,F4,F,na.exp.rational-indices
+na.log.definition,na,Exponential and logarithmic functions,Define log and convert between index and log form,對數定義及與指數式互換,F4,F,na.exp.rational-indices
+na.log.laws,na,Exponential and logarithmic functions,Laws of logarithms (product / quotient / power),對數定律,F4,F,na.log.definition
+na.log.change-base,na,Exponential and logarithmic functions,Change of base,換底公式,F4,F,na.log.laws
+na.log.simplify,na,Exponential and logarithmic functions,Simplify a log expression with the laws,以對數定律化簡,F4,F,na.log.laws
+na.log.equation,na,Exponential and logarithmic functions,Solve logarithmic equations and check domain,解對數方程並檢驗定義域,F4,F,na.log.laws
+na.log.exp-equation,na,Exponential and logarithmic functions,Solve aˣ = b by taking logarithms,取對數解指數方程,F4,F,na.log.laws
+na.log.graph,na,Exponential and logarithmic functions,Graph and features of y = logₐ x and relation to y = aˣ,對數函數圖像及與指數函數的關係,F4,F,na.log.definition;na.exp.graph
+na.log.applications,na,Exponential and logarithmic functions,Applications: Richter scale / decibels / pH / compound growth,對數應用(地震震級、分貝、pH),F4,F,na.log.equation
+na.log.solve-graph,na,Exponential and logarithmic functions,Solve exponential / log equations graphically,以圖解法解指數 / 對數方程,F4,F,na.exp.graph;na.log.graph
+na.log.slide-rule,na,Exponential and logarithmic functions,History of logarithm tables / slide rule (concept only),對數表及計算尺(概念),F4,N,na.log.definition
+na.poly.division,na,More about polynomials,Divide a polynomial by a linear / quadratic divisor (long division),多項式長除法,F4,F,na.algexp.poly-mul
+na.poly.division-identity,na,More about polynomials,Use dividend = divisor × quotient + remainder,除法恆等式,F4,F,na.poly.division
+na.poly.remainder-theorem,na,More about polynomials,Remainder theorem,餘式定理,F4,F,na.poly.division-identity;na.func.evaluate
+na.poly.factor-theorem,na,More about polynomials,Factor theorem and its converse,因式定理,F4,F,na.poly.remainder-theorem
+na.poly.find-coefficient,na,More about polynomials,Find unknown coefficients from a given factor / remainder,由因式或餘式求未知係數,F4,F,na.poly.factor-theorem;na.simeq.choose-method
+na.poly.factorise-cubic,na,More about polynomials,Factorise a cubic by the factor theorem and division,以因式定理分解三次式,F4,F,na.poly.factor-theorem;na.poly.division
+na.poly.solve-cubic,na,More about polynomials,Solve a cubic equation via a known factor,解三次方程,F4,F,na.poly.factorise-cubic;na.quad.solve-factor
+na.poly.hcf-lcm,na,More about polynomials,H.C.F. and L.C.M. of polynomials,多項式的最大公因式與最小公倍式,F4,N,na.factor.complete
+na.poly.rational-functions,na,More about polynomials,Add / subtract / multiply / divide rational functions,有理函數的四則運算,F4,N,na.algfrac.add-sub;na.poly.hcf-lcm
+na.eqn.lin-quad,na,More about equations,Solve a linear and a quadratic equation simultaneously (algebraically),聯立一次及二次方程(代數法),F5,F,na.simeq.substitution;na.quad.solve-factor
+na.eqn.lin-quad-graph,na,More about equations,Solve a linear and a quadratic equation simultaneously (graphically),聯立一次及二次方程(圖解法),F5,F,na.func.quadratic-graph
+na.eqn.line-parabola-intersect,na,More about equations,Number of intersections of a line and a parabola via the discriminant,以判別式判斷直線與拋物線的交點數目,F5,F,na.eqn.lin-quad;na.quad.discriminant
+na.eqn.fractional,na,More about equations,Solve fractional equations reducible to quadratic (check for extraneous roots),解可化為二次的分式方程並檢驗增根,F5,F,na.algfrac.equation;na.quad.solve-factor
+na.eqn.radical,na,More about equations,Solve radical equations by squaring (check for extraneous roots),解根式方程並檢驗增根,F5,F,na.quad.solve-factor;na.rational.surd-operate
+na.eqn.exp-log-type,na,More about equations,Solve equations reducible to quadratic via a substitution (4ˣ − 3·2ˣ + 2 = 0),以代換化為二次方程,F5,F,na.quad.solve-factor;na.exp.equation
+na.eqn.higher-degree-substitution,na,More about equations,Solve x⁴ − 5x² + 4 = 0 type by substitution,以代換解雙二次方程,F5,F,na.quad.solve-factor
+na.eqn.word,na,More about equations,Set up and solve a problem leading to a non-linear equation,列非線性方程解應用題,F5,F,na.eqn.fractional;na.eqn.lin-quad
+na.eqn.numerical-method,na,More about equations,Approximate a root numerically (bisection / method of trial),數值法(如二分法)求近似根,F5,N,na.func.evaluate
+na.var.direct,na,Variations,Direct variation: form the equation and find the constant,正變,F4,F,na.formula.substitute
+na.var.inverse,na,Variations,Inverse variation,反變,F4,F,na.var.direct
+na.var.joint,na,Variations,Joint variation,聯變,F4,F,na.var.direct;na.var.inverse
+na.var.partial,na,Variations,Partial variation (two constants from two conditions),部分變(由兩組條件求兩常數),F4,F,na.var.direct;na.simeq.choose-method
+na.var.percent-change,na,Variations,Percentage change in one variable from a change in another,由一變量的變化求另一變量的百分變化,F4,F,na.var.joint;na.percent.increase-decrease
+na.var.word,na,Variations,Model a real situation with a variation,以變分模型解應用題,F4,F,na.var.partial
+na.seq.as-term,na,Arithmetic and geometric sequences,General term of an arithmetic sequence,等差數列的通項,F5,F,na.algexp.sequence-term
+na.seq.as-mean,na,Arithmetic and geometric sequences,Arithmetic mean(s) between two terms,等差中項,F5,F,na.seq.as-term
+na.seq.as-sum,na,Arithmetic and geometric sequences,Sum of the first n terms of an arithmetic sequence,等差數列前 n 項和,F5,F,na.seq.as-term
+na.seq.gs-term,na,Arithmetic and geometric sequences,General term of a geometric sequence,等比數列的通項,F5,F,na.indices.laws
+na.seq.gs-mean,na,Arithmetic and geometric sequences,Geometric mean(s) between two terms,等比中項,F5,F,na.seq.gs-term
+na.seq.gs-sum,na,Arithmetic and geometric sequences,Sum of the first n terms of a geometric sequence,等比數列前 n 項和,F5,F,na.seq.gs-term
+na.seq.gs-sum-infinity,na,Arithmetic and geometric sequences,Sum to infinity of a geometric sequence (|r| < 1),等比數列的無限項和,F5,N,na.seq.gs-sum
+na.seq.identify,na,Arithmetic and geometric sequences,Decide whether a sequence is arithmetic / geometric / neither,判斷數列類型,F5,F,na.seq.as-term;na.seq.gs-term
+na.seq.find-n,na,Arithmetic and geometric sequences,Find n from a term or a sum condition (may need logs),由項或和的條件求 n,F5,F,na.seq.as-sum;na.seq.gs-sum;na.log.exp-equation
+na.seq.word,na,Arithmetic and geometric sequences,Real-life sequence problems (interest / depreciation / patterns),數列應用題,F5,F,na.seq.find-n
+na.seq.sigma-notation,na,Arithmetic and geometric sequences,Read and write sums in Σ notation,Σ 記號,F5,N,na.seq.as-sum
+na.ineq.compound,na,Inequalities and linear programming,Solve compound linear inequalities (and / or),解複合線性不等式,F5,F,na.lineineq.solve
+na.ineq.quadratic-algebra,na,Inequalities and linear programming,Solve a quadratic inequality by factorising and sign test,以代數法解二次不等式,F5,F,na.quad.solve-factor
+na.ineq.quadratic-graph,na,Inequalities and linear programming,Solve a quadratic inequality from the graph,以圖像解二次不等式,F5,F,na.func.quadratic-graph
+na.ineq.two-var-region,na,Inequalities and linear programming,Represent a linear inequality in two unknowns as a half-plane,以半平面表示二元一次不等式,F5,F,ms.coord.plot-line
+na.ineq.system-region,na,Inequalities and linear programming,Shade the feasible region of a system of inequalities,標示可行區域,F5,F,na.ineq.two-var-region
+na.ineq.formulate-constraints,na,Inequalities and linear programming,Formulate constraints from a word problem,由應用題列出約束條件,F5,F,na.ineq.system-region;na.algexp.translate
+na.ineq.optimise,na,Inequalities and linear programming,Optimise a linear objective function over a feasible region (vertices / sliding line),在可行區域內求線性目標函數的最值,F5,F,na.ineq.system-region
+na.ineq.integer-solutions,na,Inequalities and linear programming,Handle integer-only solutions in linear programming,線性規劃中的整數解,F5,F,na.ineq.optimise
+# --- Measures, Shape and Space ----------------------------------------------------
+ms.circle.chord-perp,ms,Basic properties of circles,Perpendicular from centre bisects chord (and converses),圓心至弦的垂線平分弦(及逆定理),F5,F,ms.pythag.apply
+ms.circle.equal-chords,ms,Basic properties of circles,Equal chords are equidistant from the centre (and converse),等弦與圓心等距,F5,F,ms.circle.chord-perp
+ms.circle.angle-centre,ms,Basic properties of circles,Angle at centre = twice angle at circumference,圓心角是圓周角的兩倍,F5,F,ms.angles.isosceles
+ms.circle.semicircle,ms,Basic properties of circles,Angle in a semicircle is a right angle (and converse),半圓上的圓周角,F5,F,ms.circle.angle-centre
+ms.circle.same-segment,ms,Basic properties of circles,Angles in the same segment are equal (and converse),同弓形內的圓周角,F5,F,ms.circle.angle-centre
+ms.circle.arc-angle,ms,Basic properties of circles,Arcs / chords proportional to angles at centre / circumference,弧、弦與角的關係,F5,F,ms.circle.angle-centre
+ms.circle.cyclic-quad-opp,ms,Basic properties of circles,Opposite angles of a cyclic quadrilateral are supplementary,圓內接四邊形對角互補,F5,F,ms.circle.same-segment
+ms.circle.cyclic-quad-ext,ms,Basic properties of circles,Exterior angle of a cyclic quadrilateral,圓內接四邊形的外角,F5,F,ms.circle.cyclic-quad-opp
+ms.circle.concyclic-test,ms,Basic properties of circles,Tests for concyclic points,共圓點的判定,F5,F,ms.circle.same-segment;ms.circle.cyclic-quad-opp
+ms.circle.tangent-perp,ms,Basic properties of circles,Tangent ⊥ radius at the point of contact (and converse),切線垂直半徑,F5,F,ms.pythag.apply
+ms.circle.tangent-external,ms,Basic properties of circles,Tangents from an external point are equal,由外點作的切線相等,F5,F,ms.circle.tangent-perp;ms.congr.use
+ms.circle.alt-segment,ms,Basic properties of circles,Angle in the alternate segment (tangent-chord angle) and converse,弦切角,F5,F,ms.circle.tangent-perp;ms.circle.same-segment
+ms.circle.angle-chase,ms,Basic properties of circles,Multi-step angle chasing in a circle with reasons,圓內多步求角並寫理由,F5,F,ms.circle.cyclic-quad-opp;ms.circle.alt-segment
+ms.circle.prove,ms,Basic properties of circles,Prove a geometric statement using circle properties,以圓的性質作證明,F5,F,ms.circle.angle-chase;ms.deduct.proof-writing
+ms.circle.incircle-circumcircle,ms,Basic properties of circles,Incircle / circumcircle / inscribed and circumscribed figures,內切圓與外接圓,F5,F,ms.circle.tangent-external;ms.deduct.centres
+ms.locus.describe,ms,Locus,Describe the locus of a point satisfying a condition (in words),用文字描述軌跡,F5,F,
+ms.locus.sketch,ms,Locus,Sketch loci: fixed distance from a point / line / two points / two lines,繪畫常見軌跡,F5,F,ms.locus.describe
+ms.locus.equation,ms,Locus,Find the equation of a locus in the coordinate plane,求軌跡的方程,F5,F,ms.coordgeo.distance;ms.locus.describe
+ms.locus.identify-equation,ms,Locus,Identify the type of locus from its equation (line / circle / parabola),由方程辨認軌跡類型,F5,F,ms.locus.equation;ms.line.circle-general
+ms.line.forms,ms,Equations of straight lines,Point-slope / slope-intercept / two-point / intercept forms,直線方程的各種形式,F4,F,ms.coordgeo.slope
+ms.line.general-form,ms,Equations of straight lines,General form Ax + By + C = 0 and reading slope / intercepts,直線一般式及讀取斜率截距,F4,F,ms.line.forms
+ms.line.special,ms,Equations of straight lines,Horizontal / vertical lines and lines through the origin,水平線、垂直線及過原點的直線,F4,F,ms.line.forms
+ms.line.parallel-perp-equation,ms,Equations of straight lines,Equation of a line parallel / perpendicular to a given line,平行或垂直於已知直線的方程,F4,F,ms.line.forms;ms.coordgeo.parallel-perp
+ms.line.intersection,ms,Equations of straight lines,Intersection of two lines by solving simultaneously,兩直線的交點,F4,F,na.simeq.choose-method
+ms.line.number-of-intersections,ms,Equations of straight lines,Parallel / intersecting / coincident lines from coefficients,由係數判斷兩直線的位置關係,F4,F,ms.line.general-form
+ms.line.perp-bisector,ms,Equations of straight lines,Equation of a perpendicular bisector,垂直平分線的方程,F4,F,ms.line.parallel-perp-equation;ms.coordgeo.midpoint
+ms.line.distance-point-line,ms,Equations of straight lines,Distance from a point to a line (via foot of perpendicular),點到直線的距離,F4,N,ms.line.intersection;ms.coordgeo.distance
+ms.line.circle-standard,ms,Equations of circles,Standard form (x − h)² + (y − k)² = r²,圓的標準式,F5,F,ms.coordgeo.distance
+ms.line.circle-general,ms,Equations of circles,General form x² + y² + Dx + Ey + F = 0: centre and radius,圓的一般式:求圓心及半徑,F5,F,ms.line.circle-standard;na.quad.complete-square
+ms.line.circle-nature,ms,Equations of circles,Real / point / imaginary circle from the radius expression,由半徑判斷圓的性質,F5,F,ms.line.circle-general
+ms.line.circle-from-conditions,ms,Equations of circles,Equation of a circle from three points / diameter endpoints / tangency,由條件求圓的方程,F5,F,ms.line.circle-general;na.simeq.choose-method
+ms.line.point-circle-position,ms,Equations of circles,Position of a point relative to a circle,點與圓的位置關係,F5,F,ms.line.circle-general
+ms.line.line-circle-intersect,ms,Equations of circles,Intersection of a line and a circle (substitution then discriminant),直線與圓的交點,F5,F,na.eqn.lin-quad;na.quad.discriminant
+ms.line.tangent-to-circle,ms,Equations of circles,Equation of a tangent to a circle at a point / from an external point,圓的切線方程,F5,F,ms.line.line-circle-intersect;ms.circle.tangent-perp
+ms.line.chord-properties-coord,ms,Equations of circles,Chord length / mid-point of chord using coordinate methods,以坐標法處理弦,F5,F,ms.line.line-circle-intersect;ms.circle.chord-perp
+ms.trig.unit-circle,ms,More about trigonometry,Trig ratios of any angle via the unit circle / CAST,任意角的三角比(單位圓 / CAST),F4,F,ms.trig.ratios
+ms.trig.related-angles,ms,More about trigonometry,Ratios of 180° ± θ / 360° − θ / 90° ± θ,相關角的三角比,F4,F,ms.trig.unit-circle
+ms.trig.graphs,ms,More about trigonometry,Graphs of sin / cos / tan: period / amplitude / max-min,三角函數圖像:周期、振幅、最值,F4,N,ms.trig.unit-circle
+ms.trig.graph-transform,ms,More about trigonometry,Graphs of a sin(bx) + c type,y = a sin(bx) + c 型圖像,F5,N,ms.trig.graphs;na.func.transform-combined
+ms.trig.equation,ms,More about trigonometry,Solve trig equations in 0° ≤ θ ≤ 360°,解 0°–360° 內的三角方程,F4,F,ms.trig.related-angles
+ms.trig.equation-quadratic,ms,More about trigonometry,Solve trig equations reducible to quadratic,解可化為二次的三角方程,F5,F,ms.trig.equation;na.quad.solve-factor
+ms.trig.identity-prove,ms,More about trigonometry,Prove a trigonometric identity,證明三角恆等式,F5,F,ms.trig.identities-basic;ms.trig.related-angles
+ms.trig.sine-rule,ms,More about trigonometry,Sine rule (incl. the ambiguous case),正弦公式(含兩解情況),F5,F,ms.trig.area-formula
+ms.trig.cosine-rule,ms,More about trigonometry,Cosine rule,餘弦公式,F5,F,ms.trig.ratios
+ms.trig.choose-rule,ms,More about trigonometry,Choose sine rule / cosine rule / area formula for a triangle,選擇正弦、餘弦或面積公式,F5,F,ms.trig.sine-rule;ms.trig.cosine-rule
+ms.trig.heron,ms,More about trigonometry,Heron's formula,海倫公式,F5,F,ms.trig.area-formula
+ms.trig.2d-applications,ms,More about trigonometry,Bearings / heights with the sine and cosine rules,以正弦餘弦公式解二維應用題,F5,F,ms.trig.choose-rule;ms.trig.bearing
+ms.trig.3d-line-plane,ms,More about trigonometry,Angle between a line and a plane in a 3-D problem,三維問題中線與面的交角,F5,N,ms.solid.line-plane-angle;ms.trig.choose-rule
+ms.trig.3d-plane-plane,ms,More about trigonometry,Angle between two planes in a 3-D problem,三維問題中兩平面的交角,F5,N,ms.solid.plane-plane-angle;ms.trig.choose-rule
+ms.trig.3d-distance,ms,More about trigonometry,Distances / shortest distance in a 3-D solid,三維立體中的距離,F5,N,ms.pythag.3d;ms.trig.cosine-rule
+ms.trig.3d-projection,ms,More about trigonometry,Projection of a line on a plane,直線在平面上的投影,F5,N,ms.trig.3d-line-plane
+# --- Data Handling ----------------------------------------------------------------
+dh.perm.counting-principle,dh,Permutation and combination,Addition and multiplication principles of counting,加法及乘法原理,F5,N,dh.prob.listing
+dh.perm.factorial,dh,Permutation and combination,Factorial notation,階乘,F5,N,dh.perm.counting-principle
+dh.perm.permutation,dh,Permutation and combination,Permutations P(n r) of distinct objects,排列,F5,N,dh.perm.factorial
+dh.perm.permutation-restriction,dh,Permutation and combination,Permutations with restrictions (adjacent / not adjacent / fixed positions),有限制條件的排列,F5,N,dh.perm.permutation
+dh.perm.combination,dh,Permutation and combination,Combinations C(n r),組合,F5,N,dh.perm.permutation
+dh.perm.combination-restriction,dh,Permutation and combination,Combinations with restrictions (at least / at most / must include),有限制條件的組合,F5,N,dh.perm.combination
+dh.perm.distinguish,dh,Permutation and combination,Decide whether order matters (P vs C),判斷排列或組合,F5,N,dh.perm.permutation;dh.perm.combination
+dh.prob2.set-notation,dh,More about probability,Sample space / events / complement / union / intersection (set language),樣本空間、事件、補集、並集、交集,F5,F,dh.prob.definition
+dh.prob2.addition-law,dh,More about probability,Addition law P(A ∪ B) = P(A) + P(B) − P(A ∩ B),加法定律,F5,F,dh.prob2.set-notation
+dh.prob2.mutually-exclusive,dh,More about probability,Mutually exclusive events,互斥事件,F5,F,dh.prob2.addition-law
+dh.prob2.complementary,dh,More about probability,Complementary events P(A') = 1 − P(A),互補事件,F5,F,dh.prob2.set-notation
+dh.prob2.multiplication-law,dh,More about probability,Multiplication law for independent events,獨立事件的乘法定律,F5,F,dh.prob2.set-notation
+dh.prob2.independent-test,dh,More about probability,Test whether two events are independent,判斷事件是否獨立,F5,N,dh.prob2.multiplication-law
+dh.prob2.conditional,dh,More about probability,Conditional probability P(A | B),條件機率,F5,N,dh.prob2.multiplication-law
+dh.prob2.tree-with-without-replacement,dh,More about probability,Tree diagrams with / without replacement,放回及不放回的樹形圖,F5,F,dh.prob2.multiplication-law
+dh.prob2.at-least-one,dh,More about probability,At-least-one events via the complement,以互補事件處理「至少一個」,F5,F,dh.prob2.complementary;dh.prob2.multiplication-law
+dh.prob2.with-counting,dh,More about probability,Probability using permutations and combinations,以排列組合計算機率,F5,N,dh.perm.combination;dh.prob.definition
+dh.prob2.expected-value,dh,More about probability,Expected value / fair game,期望值及公平遊戲,F5,F,dh.prob.expected-value
+dh.disp.range,dh,Measures of dispersion,Range,分佈域,F5,F,
+dh.disp.quartiles,dh,Measures of dispersion,Quartiles and inter-quartile range (ungrouped and from a cumulative curve),四分位數及四分位數間距,F5,F,dh.central.median;dh.present.cumulative
+dh.disp.box-plot,dh,Measures of dispersion,Construct and read a box-and-whisker diagram,箱線圖,F5,F,dh.disp.quartiles
+dh.disp.sd-ungrouped,dh,Measures of dispersion,Standard deviation of ungrouped data (formula / calculator),未分組數據的標準差,F5,F,dh.central.mean
+dh.disp.sd-grouped,dh,Measures of dispersion,Standard deviation of grouped data,分組數據的標準差,F5,F,dh.disp.sd-ungrouped;dh.central.grouped-mean
+dh.disp.compare,dh,Measures of dispersion,Compare dispersions of two data sets and choose a measure,比較兩組數據的離差,F5,F,dh.disp.quartiles;dh.disp.sd-ungrouped
+dh.disp.effect-change,dh,Measures of dispersion,Effect on range / IQR / SD of adding a constant / multiplying / adding a datum,數據改變對離差的影響,F5,N,dh.disp.compare
+dh.disp.standard-score,dh,Measures of dispersion,Standard score z = (x − μ)/σ,標準分,F5,F,dh.disp.sd-ungrouped
+dh.disp.normal-basic,dh,Measures of dispersion,Normal distribution: symmetry and the 68 / 95 / 99.7 rule,正態分佈及 68/95/99.7 法則,F5,F,dh.disp.standard-score
+dh.disp.normal-apply,dh,Measures of dispersion,Apply the normal distribution to find proportions / values,以正態分佈求比例或數值,F5,F,dh.disp.normal-basic
+dh.stat.sampling,dh,Uses and abuses of statistics,Sampling methods and bias in data collection,抽樣方法及數據收集的偏差,F6,F,dh.collect.methods
+dh.stat.misuse-central,dh,Uses and abuses of statistics,Misuse of averages (mean vs median vs mode),集中趨勢量度的誤用,F6,F,dh.central.compare
+dh.stat.misuse-dispersion,dh,Uses and abuses of statistics,Misuse of dispersion and of standard scores,離差及標準分的誤用,F6,F,dh.disp.compare
+dh.stat.misleading-graph,dh,Uses and abuses of statistics,Misleading graphs: truncated axes / area distortion / scale,誤導性統計圖,F6,F,dh.present.misleading
+dh.stat.critique,dh,Uses and abuses of statistics,Critique a statistical claim or survey,評論統計結論或調查,F6,F,dh.stat.sampling;dh.stat.misuse-central
+# --- Further Learning Unit --------------------------------------------------------
+fl.apply.multi-topic,fl,Further applications,Solve a problem that combines two or more units (e.g. trig + circle + coordinates),跨課題綜合應用題,F6,F,ms.trig.choose-rule;ms.line.circle-general
+fl.apply.model,fl,Further applications,Build a mathematical model from a real situation and interpret the result,建立數學模型並詮釋結果,F6,F,na.var.word;na.func.optimise-word
+fl.inquiry.investigate,fl,Inquiry and investigation,Investigate a pattern and form a conjecture,探究規律並提出猜想,F6,F,na.algexp.sequence-term
+fl.inquiry.justify,fl,Inquiry and investigation,Justify or refute a conjecture (counter-example / proof),證明或反駁猜想,F6,F,fl.inquiry.investigate;ms.deduct.proof-writing

@@ -1,0 +1,109 @@
+error_id,name_en,name_zh,skills,description
+# Errors a question can expose (RPDICE "E"). One row per pattern. skills: the
+# skill_ids the error belongs to, separated by ";". Analyzer output and student
+# error tagging both reference error_id, so the two can be compared.
+# --- algebra: identities and factorisation ---
+err.dos.as-square-of-difference,Treats a² − b² as (a − b)²,把 a²−b² 當成 (a−b)²,na.factor.dos;na.identity.dos,Confuses the difference of two squares with the square of a difference.
+err.square.missing-cross-term,Expands (a + b)² as a² + b²,展開 (a+b)² 漏 2ab,na.identity.perfect-square,Omits the middle term 2ab.
+err.factor.incomplete,Stops before factorising completely,因式分解未完全,na.factor.complete;na.factor.common,Leaves a common factor or a further difference of two squares inside a bracket.
+err.factor.sign-in-bracket,Wrong sign inside a bracket when taking out a factor,提公因式時括號內符號錯,na.factor.common;na.algexp.expand-bracket,Especially when the factor taken out is negative.
+err.factor.cross-wrong-pair,Wrong pair of factors in the cross method,十字相乘配錯因子,na.factor.cross;na.factor.cross-leading,Product right but sum of cross products wrong or sign wrong.
+err.cancel.terms-not-factors,Cancels terms instead of factors in a fraction,約分時約掉項而非因式,na.algfrac.simplify,"Cancels the x in (x + 2)/x, or the 3 in (3x + 1)/3."
+err.expand.sign-distribution,Fails to distribute a minus sign over a bracket,負號未分配到括號內每項,na.algexp.expand-bracket,"−(a − b) written as −a − b."
+err.like-terms.unlike-combined,Combines unlike terms,合併了不同類項,na.algexp.like-terms,"3x + 2x² written as 5x³ or 5x."
+# --- indices, surds, logarithms ---
+err.index.add-instead-of-multiply,Adds indices when multiplying bases that differ,不同底相乘時加指數,na.indices.laws,"2³ × 3² treated as 6⁵."
+err.index.power-of-sum,Distributes a power over a sum,把乘方分配到和上,na.indices.laws;na.identity.perfect-square,"(a + b)ⁿ written as aⁿ + bⁿ."
+err.index.negative-as-negative,Reads a negative index as a negative number,負指數當作負數,na.indices.zero-negative,"2⁻¹ taken as −2."
+err.index.zero-as-zero,Takes a⁰ as 0,a⁰ 當作 0,na.indices.zero-negative,
+err.surd.root-of-sum,Splits a root over a sum,根號分配到和上,na.rational.surd-operate;ms.pythag.apply,"√(a² + b²) written as a + b."
+err.surd.not-simplified,Leaves a surd unsimplified or the denominator irrational,根式未化簡或分母未有理化,na.rational.surd-simplify;na.rational.rationalise,
+err.log.of-sum,Splits a log over a sum,對數分配到和上,na.log.laws,"log(a + b) written as log a + log b."
+err.log.power-misplaced,Misapplies the power law,錯用對數的乘方定律,na.log.laws,"(log a)² confused with log a² or 2 log a."
+err.log.domain-ignored,Accepts a log equation solution outside the domain,對數方程未檢驗定義域,na.log.equation,Keeps a root that makes the argument of a log non-positive.
+err.log.base-change,Wrong direction in the change-of-base formula,換底公式方向錯,na.log.change-base,
+err.exp.equate-bases-wrong,Equates indices without equal bases,底未相同便比較指數,na.exp.equation;na.indices.equation,
+# --- equations and inequalities ---
+err.eq.sign-transposing,Sign error when transposing a term,移項時符號錯,na.lineq.solve,
+err.eq.divide-by-unknown,Divides both sides by an expression that may be zero and loses a root,兩邊除以含未知數的式子而失根,na.quad.solve-factor;na.eqn.fractional,"x² = 3x solved as x = 3 only."
+err.eq.extraneous-root-kept,Keeps an extraneous root after squaring or clearing fractions,平方或去分母後未剔除增根,na.eqn.radical;na.eqn.fractional,
+err.eq.invalid-root-in-context,Keeps a root that is impossible in context (negative length / non-integer count),保留在情境中不合理的根,na.quad.word;na.eqn.word,
+err.quad.formula-sign,Sign error in the quadratic formula (−b or the discriminant),二次公式中 −b 或判別式符號錯,na.quad.solve-formula,"Uses b instead of −b, or b² + 4ac."
+err.quad.formula-division,Divides only part of the numerator by 2a,二次公式只把部分分子除以 2a,na.quad.solve-formula,
+err.quad.discriminant-condition-reversed,Wrong inequality for the nature of roots,根的性質對應錯判別式條件,na.quad.discriminant;na.quad.discriminant-condition,"Uses Δ > 0 for equal roots, or forgets Δ = 0 in 'real roots'."
+err.quad.sum-product-sign,Sign error in α + β = −b/a,根的和的符號錯,na.quad.sum-product,
+err.quad.vertex-sign,Reads the vertex of a(x − h)² + k as (−h k),頂點 x 坐標符號錯,na.func.vertex-form,
+err.ineq.flip-missing,Does not reverse the inequality when multiplying / dividing by a negative,乘除負數時不等號未變向,na.lineineq.properties;na.lineineq.solve,
+err.ineq.quadratic-region,Chooses the wrong region for a quadratic inequality,二次不等式選錯區間,na.ineq.quadratic-algebra;na.ineq.quadratic-graph,"x² > 4 answered as x > 2 only."
+err.ineq.compound-and-or,Confuses 'and' with 'or' in compound inequalities,複合不等式混淆「及」與「或」,na.ineq.compound,
+err.lp.wrong-half-plane,Shades the wrong side of a boundary line,線性規劃陰影畫錯邊,na.ineq.two-var-region,
+err.lp.boundary-inclusion,Ignores whether the boundary is included (< vs ≤),忽略邊界是否包含,na.ineq.system-region,
+err.lp.non-vertex-optimum,Reads the optimum from a non-vertex point or a non-integer point when integers are required,最值不在頂點或忽略整數要求,na.ineq.optimise;na.ineq.integer-solutions,
+err.simeq.substitution-partial,Substitutes into the same equation it came from,代入回原方程,na.simeq.substitution,
+# --- functions and graphs ---
+err.func.transform-direction,Translates the graph the wrong way for f(x + h),f(x+h) 平移方向錯,na.func.transform-translate,
+err.func.transform-order,Applies combined transformations in the wrong order,綜合變換次序錯,na.func.transform-combined,
+err.func.evaluate-substitution,Substitutes into only part of the expression,代入時只代入部分,na.func.evaluate,"f(x) = x² + x, f(2a) written as 4a² + a."
+# --- sequences ---
+err.seq.n-off-by-one,Off-by-one in the term number n,項數 n 差一,na.seq.as-term;na.seq.gs-term;na.seq.find-n,
+err.seq.sum-vs-term,Confuses the nth term with the sum of n terms,混淆第 n 項與前 n 項和,na.seq.as-sum;na.seq.gs-sum,
+err.seq.ratio-sign,Ignores a negative common ratio,忽略公比為負,na.seq.gs-term,
+err.seq.infinity-condition,Uses the sum to infinity when |r| ≥ 1,|r|≥1 仍用無限項和,na.seq.gs-sum-infinity,
+# --- variations, percentages, ratio ---
+err.var.constant-not-found,Skips finding the variation constant,未求變分常數,na.var.direct;na.var.inverse,
+err.var.partial-as-joint,Treats a partial variation as a joint variation,把部分變當作聯變,na.var.partial;na.var.joint,"y = k₁ + k₂x written as y = kx."
+err.percent.base-wrong,Takes the percentage of the wrong base,百分數的基數錯,na.percent.original-value;na.percent.increase-decrease,"A 20% decrease then 20% increase treated as returning to the original."
+err.percent.successive-added,Adds successive percentage changes,連續百分變化相加,na.percent.successive,
+err.interest.simple-for-compound,Uses simple interest where compound is required,複利誤用單利,na.percent.compound-interest,
+err.interest.period-mismatch,Wrong number of periods for the compounding frequency,計息期數與頻率不符,na.percent.compound-interest,
+err.ratio.order-swapped,Swaps the order of a ratio,比的次序倒轉,na.ratio.simplify;na.ratio.share,
+err.error.absolute-vs-relative,Confuses absolute with relative / percentage error,混淆絕對誤差與相對誤差,na.approx.relative-error;na.approx.percentage-error,
+err.error.bound-direction,Wrong upper / lower limit for a derived quantity,派生量的上下限方向錯,na.approx.bounds,"Uses the upper limit of both numerator and denominator for a maximum quotient."
+# --- geometry ---
+err.geo.reason-missing,States a fact without the reason,寫結論冇理由,ms.angles.multi-step;ms.deduct.proof-writing;ms.circle.angle-chase,
+err.geo.reason-wrong-name,Names the wrong theorem for a step,理由的定理名稱錯,ms.circle.angle-chase;ms.angles.parallel,"'alt. ∠s' for corresponding angles; '∠ in semicircle' where it is '∠ at centre'."
+err.geo.congruence-condition-invalid,Uses SSA or AAA as a congruence condition,以 SSA 或 AAA 判定全等,ms.congr.conditions,
+err.geo.similar-corresponding-sides,Pairs non-corresponding sides in similar triangles,相似三角形對應邊配錯,ms.similar.ratio-length,
+err.geo.similar-ratio-squared,Uses the length ratio for areas or volumes,面積或體積用了長度比,ms.mensur.similar-ratio,
+err.geo.assumes-from-diagram,Assumes a right angle / equal length from the diagram,由圖假定直角或等長,ms.deduct.proof-writing;ms.circle.prove,
+err.circle.centre-circumference-swapped,Doubles the wrong angle in the centre-circumference relation,圓心角與圓周角關係用反,ms.circle.angle-centre,
+err.circle.cyclic-not-verified,Uses cyclic quadrilateral properties without four concyclic points,未確認四點共圓便用性質,ms.circle.cyclic-quad-opp;ms.circle.concyclic-test,
+err.circle.tangent-not-perp,Fails to use tangent ⊥ radius,未用切線垂直半徑,ms.circle.tangent-perp,
+err.circle.alt-segment-wrong-angle,Pairs the tangent-chord angle with the wrong inscribed angle,弦切角配錯圓周角,ms.circle.alt-segment,
+err.mensur.formula-confused,Mixes up volume and surface area formulas,混淆體積與表面積公式,ms.mensur.prism-cylinder;ms.mensur.pyramid-cone;ms.mensur.sphere,
+err.mensur.slant-vs-height,Uses the height where the slant height is needed (or vice versa),高與斜高混淆,ms.mensur.pyramid-cone,
+err.mensur.units-mixed,Mixes units within one calculation,單位混用,ms.mensur.unit-convert,
+err.mensur.arc-angle-fraction,Wrong fraction of the circle for an arc / sector,弧或扇形的圓心角分數錯,ms.mensur.arc-sector,
+err.pythag.wrong-hypotenuse,Puts a leg where the hypotenuse belongs,把直角邊當作斜邊,ms.pythag.apply,"c² = a² − b² with c not the hypotenuse."
+# --- coordinate geometry ---
+err.coord.slope-inverted,Inverts the slope (Δx / Δy),斜率倒轉,ms.coordgeo.slope,
+err.coord.perp-slope-sign,Uses the reciprocal without the sign change for a perpendicular,垂直線斜率漏負號,ms.coordgeo.parallel-perp;ms.line.parallel-perp-equation,
+err.coord.midpoint-vs-distance,Confuses the mid-point and distance formulas,混淆中點與距離公式,ms.coordgeo.midpoint;ms.coordgeo.distance,
+err.coord.circle-centre-sign,Reads the centre of x² + y² + Dx + Ey + F = 0 as (D/2 E/2),圓心符號錯,ms.line.circle-general,
+err.coord.circle-radius-square,Forgets the square root for the radius,半徑漏開方,ms.line.circle-general,
+err.coord.locus-condition-misread,Sets up the locus from the wrong condition,軌跡條件理解錯,ms.locus.equation,
+# --- trigonometry ---
+err.trig.ratio-wrong-sides,Uses the wrong pair of sides for a ratio,三角比配錯邊,ms.trig.ratios;ms.trig.find-side,
+err.trig.calculator-mode,Calculator in the wrong angle mode,計數機角度模式錯,ms.trig.find-angle,
+err.trig.quadrant-sign,Wrong sign of a ratio in a quadrant,象限符號錯,ms.trig.unit-circle;ms.trig.related-angles,
+err.trig.second-solution-missed,Misses the second solution in 0°–360°,漏了 0°–360° 內的第二個解,ms.trig.equation,
+err.trig.ambiguous-case-missed,Misses the ambiguous case of the sine rule,漏了正弦公式的兩解情況,ms.trig.sine-rule,
+err.trig.cosine-rule-sign,Sign error in the cosine rule,餘弦公式符號錯,ms.trig.cosine-rule,
+err.trig.elevation-depression-swapped,Swaps angle of elevation and depression,仰角俯角混淆,ms.trig.elevation-depression,
+err.trig.bearing-reference,Measures a bearing from the wrong reference direction,方位角參考方向錯,ms.trig.bearing,
+err.trig.3d-wrong-plane,Takes the angle in the wrong plane in a 3-D problem,三維問題取錯平面上的角,ms.trig.3d-line-plane;ms.trig.3d-plane-plane,
+err.trig.rounding-early,Rounds an intermediate value too early,中途過早四捨五入,ms.trig.2d-multi;ms.trig.2d-applications,
+# --- statistics and probability ---
+err.stat.median-unsorted,Takes the median of unsorted data,未排序便取中位數,dh.central.median,
+err.stat.grouped-mean-boundaries,Uses class boundaries instead of class marks for a grouped mean,分組平均數用了組界而非組中值,dh.central.grouped-mean,
+err.stat.quartile-position,Wrong position for a quartile,四分位數位置錯,dh.disp.quartiles,
+err.stat.sd-population-sample,Divides by n − 1 or n inconsistently,標準差分母 n 與 n−1 混用,dh.disp.sd-ungrouped,
+err.stat.effect-of-constant,Thinks adding a constant changes the dispersion,以為加常數改變離差,dh.disp.effect-change,
+err.stat.z-score-direction,Sign of the standard score reversed,標準分符號反轉,dh.disp.standard-score,
+err.prob.non-exclusive-added,Adds probabilities of non-mutually-exclusive events,非互斥事件的機率直接相加,dh.prob2.addition-law;dh.prob2.mutually-exclusive,
+err.prob.dependent-multiplied,Multiplies probabilities of dependent events as if independent,非獨立事件當獨立相乘,dh.prob2.multiplication-law;dh.prob2.tree-with-without-replacement,
+err.prob.without-replacement-denominator,Keeps the same denominator after drawing without replacement,不放回後分母未減,dh.prob2.tree-with-without-replacement,
+err.prob.at-least-one-direct,Computes 'at least one' by adding cases and double counts,「至少一個」直接相加而重複計算,dh.prob2.at-least-one,
+err.prob.conditional-reversed,Confuses P(A | B) with P(B | A),條件機率方向反轉,dh.prob2.conditional,
+err.perm.order-confused,Uses P where C is needed or vice versa,排列組合混用,dh.perm.distinguish,
+err.perm.overcount-identical,Overcounts arrangements with identical objects,相同物件的排列重複計算,dh.perm.permutation,

@@ -41,6 +41,10 @@ EXPECTED_COLUMNS = {
                       "diagram_region", "table_regions", "extraction_notes", "images"],
 }
 
+EXPECTED_COLUMNS["skills"] = ["skill_id", "strand", "unit", "name_en", "name_zh", "form",
+                              "foundation", "prerequisites"]
+EXPECTED_COLUMNS["error_patterns"] = ["error_id", "name_en", "name_zh", "skills", "description"]
+
 SCHEMA_FILE = "docs/supabase_schema.sql"
 
 

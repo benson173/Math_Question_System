@@ -209,6 +209,9 @@ pytest
 | `app/paper_meta.py` | 🔵 Python | 年份 / 學期 / 考試類型,由檔名或 sidecar |
 | `app/marking_scheme.py` | 🔵 Python | Marking scheme 配對、抽取、合併 |
 | `app/extraction_io.py` | 🔵 Python | 讀返存低嘅 JSON(所有 script 共用) |
+| `app/taxonomy.py` | 🔵 Python | 讀、驗 `taxonomy/*.csv` |
+| `taxonomy/skills.csv` | 🟡 Config | 359 個 atomic skill(HKDSE 必修 + KS3) |
+| `taxonomy/error_patterns.csv` | 🟡 Config | 95 個 error pattern |
 | `prompts/marking_scheme_v1.txt` | 🟢 Prompt | Gemini 抄 marking scheme 指令 |
 | `app/errors.py` | 🔵 Python | 錯誤類型 |
 | `app/schemas.py` | 🔵 Python | 定義資料格式 |
@@ -237,6 +240,8 @@ pytest
 | `scripts/db_check.py` | 🔴 Test | 驗證 Supabase 連線同 schema |
 | `scripts/db_push.py` | 🔴 Test | 舊 JSON 推上 Supabase,唔使再叫 Gemini |
 | `scripts/attach_marking_scheme.py` | 🔴 Test | 將 marking scheme 合入已抽嘅卷 |
+| `scripts/check_taxonomy.py` | 🔴 Test | 驗 taxonomy CSV |
+| `scripts/db_push_taxonomy.py` | 🔴 Test | Taxonomy 推上 Supabase |
 
 ---
 
@@ -370,6 +375,41 @@ group total 唔會拆。合完係一個**新 run**,舊 run 留返做歷史。Val
 
 Supabase `questions.answer_source` 係 `paper` / `marking_scheme` / null,
 `extraction_runs.marking_scheme_file_name` 記低用咗邊份。
+
+---
+
+## Skills 同 error patterns 受控詞彙表(`taxonomy/`)
+
+Analyzer 之後標 skill、Student Model 計 mastery、學生錯誤同 Analyzer 嘅 E 對數,全部靠
+兩個人手 curate 嘅 CSV。**Gemini 只可以揀,唔可以創**——free text 會令一個 skill 變幾個
+串法,之後乜統計都冇意思。
+
+| 檔 | 內容 | 數量 |
+|---|---|---|
+| `taxonomy/skills.csv` | HKDSE 必修部分(F4–F6)+ KS3(F1–F3),拆到 atomic skill | 359 |
+| `taxonomy/error_patterns.csv` | 題目會暴露嘅錯誤(RPDICE 嘅 E),每個掛返 skill | 95 |
+
+```text
+skill_id                strand  unit             name_en                                 name_zh    form  foundation  prerequisites
+na.factor.dos           na      Factorisation    Factorise a difference of two squares   平方差因式分解  F2                na.factor.recognise-square;na.identity.dos
+na.quad.sum-product     na      Quadratic eq…    Sum and product of roots                根的和與積      F4    N           na.quad.form-from-roots
+```
+
+- `skill_id` = `<strand>.<unit>.<slug>`:`na` Number & Algebra、`ms` Measures Shape & Space、
+  `dh` Data Handling、`fl` Further Learning。改名唔改 id。
+- `form` 係**通常**邊級教。EDB 只定 strand 唔定 form,KS3 嗰啲跟常見教科書次序。
+- `foundation`:`F` Foundation Topic、`N` Non-Foundation(只限必修部分);KS3 留空。
+- `prerequisites` 用 `;` 分隔,唔求齊,求關鍵嗰幾個。
+
+改完一定要行:
+
+```bash
+python3 -m scripts.check_taxonomy       # id 重複 / 唔存在 / form 錯 / 循環 全部會列
+python3 -m scripts.db_push_taxonomy     # upsert 上 Supabase 嘅 skills / error_patterns
+```
+
+> 呢份係由 2017 C&A Guide 同 KS3 補充文件嘅記憶起稿,冇對住官方 PDF 逐條核對
+> (呢個環境連唔到 edb.gov.hk)。Unit 名同 foundation 標記請對返官方文件改。
 
 ---
 
