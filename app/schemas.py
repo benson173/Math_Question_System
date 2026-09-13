@@ -78,6 +78,33 @@ class QuestionExtractionPayload(BaseModel):
 LevelSource = Literal["filename", "paper", "sidecar"]
 
 
+class MarkedAnswer(BaseModel):
+    """One part of a marking scheme, as printed."""
+
+    source_question_id: str
+    answer: Optional[str] = None
+    worked_solution: Optional[str] = None
+    marks: Optional[float] = None
+    extraction_notes: list[str] = Field(default_factory=list)
+
+
+class MarkingSchemePayload(BaseModel):
+    """What Gemini is asked to return for a marking scheme PDF."""
+
+    answers: list[MarkedAnswer]
+
+
+class MarkingScheme(BaseModel):
+    """Which marking scheme was attached to this paper, and how well it fit."""
+
+    file_name: str
+    sha256: str
+    page_count: int
+    matched: list[str] = Field(default_factory=list)
+    unmatched_scheme_ids: list[str] = Field(default_factory=list)
+    questions_without_answer: list[str] = Field(default_factory=list)
+
+
 class PaperMeta(BaseModel):
     """Which paper this is - the context empirical difficulty is grouped by."""
 
@@ -100,6 +127,7 @@ class ExtractedDocument(BaseModel):
     level_source: Optional[LevelSource] = None
     level_text: Optional[str] = None
     paper: Optional[PaperMeta] = None
+    marking_scheme: Optional[MarkingScheme] = None
 
 
 class SourceDocument(BaseModel):

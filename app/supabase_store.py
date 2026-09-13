@@ -87,6 +87,10 @@ def run_row(result: ExtractionResult, document_id: str) -> dict[str, Any]:
         "blocking": bool(blocking_issues(result.issues)),
         "issues": [issue.model_dump() for issue in result.issues],
         "repairs": list(result.repairs),
+        "marking_scheme_file_name": result.document.marking_scheme.file_name
+                                    if result.document.marking_scheme else None,
+        "marking_scheme_sha256": result.document.marking_scheme.sha256
+                                 if result.document.marking_scheme else None,
         "is_current": True,
     }
 
@@ -110,6 +114,15 @@ def _image_row(asset: RenderedImage) -> dict[str, Any]:
     }
 
 
+def _answer_source(question, document) -> str | None:
+    scheme = document.marking_scheme
+    if scheme and question.source_question_id in scheme.matched:
+        return "marking_scheme"
+    if question.answer or question.worked_solution:
+        return "paper"
+    return None
+
+
 def question_rows(result: ExtractionResult, document_id: str, run_id: str) -> list[dict[str, Any]]:
     images = _images_by_question(result)
     rows = []
@@ -130,6 +143,7 @@ def question_rows(result: ExtractionResult, document_id: str, run_id: str) -> li
             "group_marks": q.group_marks,
             "group_marks_scope": q.group_marks_scope,
             "answer": q.answer,
+            "answer_source": _answer_source(q, result.document),
             "worked_solution": q.worked_solution,
             "page_start": q.page_start,
             "page_end": q.page_end,

@@ -27,6 +27,7 @@ import time
 from app.document_loader import calculate_sha256
 from app.extraction_validator import blocking_issues
 from app.paths import EXTRACTED_DIR, FAILED_PDF_DIR, INBOX_PDF_DIR, PROCESSED_PDF_DIR
+from app.marking_scheme import marking_scheme_stem, pair_marking_schemes
 from app.paper_meta import sidecar_path
 from app.pipeline import PdfIngestionPipeline
 from app.repository import Repository
@@ -116,6 +117,38 @@ def prune_empty_directories(root: Path) -> None:
             path.rmdir()
 
 
+# --- a marking scheme whose paper was ingested earlier ----------------------
+
+def attach_orphan_scheme(pipeline, scheme_path: Path, label: str, inbox: Path,
+                         keep: bool) -> Outcome:
+    from scripts.attach_marking_scheme import find_extraction_for, load_result
+
+    json_path = find_extraction_for(scheme_path)
+    if json_path is None:
+        stem = marking_scheme_stem(scheme_path.name) or scheme_path.stem
+        detail = f"no extraction for {stem}; put the paper in the inbox too"
+        print(f"  skipped: {detail}")
+        return Outcome(label, "skipped", detail)
+
+    start = time.monotonic()
+    try:
+        result = pipeline.attach_marking_scheme(load_result(json_path), scheme_path)
+    except Exception as exc:
+        detail = f"{type(exc).__name__}: {exc}"
+        print(f"  failed: {detail}")
+        if not keep:
+            file_away(scheme_path, FAILED_PDF_DIR, inbox)
+        return Outcome(label, "failed", detail, seconds=time.monotonic() - start)
+
+    scheme = result.document.marking_scheme
+    matched = len(scheme.matched) if scheme else 0
+    if not keep:
+        file_away(scheme_path, PROCESSED_PDF_DIR, inbox)
+    detail = f"attached to {json_path.name}: {matched} answers"
+    print(f"  ok: {detail}")
+    return Outcome(label, "ok", detail, questions=matched, seconds=time.monotonic() - start)
+
+
 # --- reporting --------------------------------------------------------------
 
 def format_duration(seconds: float) -> str:
@@ -189,7 +222,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"No PDF files found in {inbox}.")
         return 0
 
-    print(f"Found {len(pdf_files)} PDF(s) in {inbox}")
+    pairing = pair_marking_schemes(pdf_files)
+    pdf_files = pairing.papers
+    print(f"Found {len(pdf_files)} PDF(s) in {inbox}"
+          + (f", {len(pairing.schemes)} with a marking scheme" if pairing.schemes else "")
+          + (f", {len(pairing.orphans)} marking scheme(s) for papers done earlier"
+             if pairing.orphans else ""))
 
     # Built before anything moves, so a missing API key fails immediately
     # rather than after half the inbox has been filed away.
@@ -231,9 +269,11 @@ def main(argv: list[str] | None = None) -> int:
                     file_away(pdf_path, PROCESSED_PDF_DIR, inbox)
                 continue
 
+            scheme_path = pairing.schemes.get(pdf_path)
             start = time.monotonic()
             try:
-                result = pipeline.run_one_pdf(pdf_path)
+                result = (pipeline.run_one_pdf(pdf_path, marking_scheme_path=scheme_path)
+                          if scheme_path else pipeline.run_one_pdf(pdf_path))
             except Exception as exc:
                 seconds = time.monotonic() - start
                 detail = f"{type(exc).__name__}: {exc}"
@@ -250,6 +290,8 @@ def main(argv: list[str] | None = None) -> int:
 
             if not keep:
                 file_away(pdf_path, destination, inbox)
+                if scheme_path:
+                    file_away(scheme_path, destination, inbox)
 
             outcomes.append(Outcome(
                 name=label,
@@ -261,6 +303,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {'failed' if failed else 'ok'}: "
                   f"{len(result.document.questions)} questions in {format_duration(seconds)}"
                   + (f" ({detail})" if detail else ""))
+
+        for scheme_path in pairing.orphans:
+            label = str(scheme_path.relative_to(inbox))
+            print("=" * 70)
+            print(f"[marking scheme] {label}")
+            outcome = attach_orphan_scheme(pipeline, scheme_path, label, inbox, keep)
+            outcomes.append(outcome)
 
     except KeyboardInterrupt:
         print("\nInterrupted. Reporting what finished; the rest stayed in the inbox.")

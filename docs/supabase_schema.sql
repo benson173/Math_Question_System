@@ -53,6 +53,8 @@ create table if not exists extraction_runs (
   blocking                 boolean not null default false,
   issues                   jsonb not null default '[]'::jsonb,
   repairs                  jsonb not null default '[]'::jsonb,
+  marking_scheme_file_name text,
+  marking_scheme_sha256    text,
   is_current               boolean not null default true,
   created_at               timestamptz not null default now()
 );
@@ -73,6 +75,7 @@ create table if not exists questions (
   group_marks          numeric,
   group_marks_scope    text,
   answer               text,
+  answer_source        text,                -- paper | marking_scheme | null
   worked_solution      text,
   page_start           integer,
   page_end             integer,
@@ -145,6 +148,8 @@ begin
       ('extraction_runs',  'blocking',                'boolean default false'),
       ('extraction_runs',  'issues',                  'jsonb default ''[]''::jsonb'),
       ('extraction_runs',  'repairs',                 'jsonb default ''[]''::jsonb'),
+      ('extraction_runs',  'marking_scheme_file_name', 'text'),
+      ('extraction_runs',  'marking_scheme_sha256',   'text'),
       ('extraction_runs',  'is_current',              'boolean default true'),
       ('extraction_runs',  'created_at',              'timestamptz default now()'),
       ('questions',        'extraction_run_id',       run_id_type),
@@ -161,6 +166,7 @@ begin
       ('questions',        'group_marks',             'numeric'),
       ('questions',        'group_marks_scope',       'text'),
       ('questions',        'answer',                  'text'),
+      ('questions',        'answer_source',           'text'),
       ('questions',        'worked_solution',         'text'),
       ('questions',        'page_start',              'integer'),
       ('questions',        'page_end',                'integer'),

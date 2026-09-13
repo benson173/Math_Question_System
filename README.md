@@ -205,6 +205,10 @@ pytest
 | `app/config.py` | 🔵 Python | 讀設定（有 cache） |
 | `app/paths.py` | 🔵 Python | 所有路徑錨住 repo root |
 | `app/level.py` | 🔵 Python | 中四 / S.4 / Form 4 → `F4` |
+| `app/question_key.py` | 🔵 Python | 重抽都唔變嘅題目 id |
+| `app/paper_meta.py` | 🔵 Python | 年份 / 學期 / 考試類型,由檔名或 sidecar |
+| `app/marking_scheme.py` | 🔵 Python | Marking scheme 配對、抽取、合併 |
+| `prompts/marking_scheme_v1.txt` | 🟢 Prompt | Gemini 抄 marking scheme 指令 |
 | `app/errors.py` | 🔵 Python | 錯誤類型 |
 | `app/schemas.py` | 🔵 Python | 定義資料格式 |
 | `app/document_loader.py` | 🔵 Python | 讀 PDF 基本資料 |
@@ -231,6 +235,7 @@ pytest
 | `scripts/analyse_extractions.py` | 🔴 Test | 按題型分析多份卷 |
 | `scripts/db_check.py` | 🔴 Test | 驗證 Supabase 連線同 schema |
 | `scripts/db_push.py` | 🔴 Test | 舊 JSON 推上 Supabase,唔使再叫 Gemini |
+| `scripts/attach_marking_scheme.py` | 🔴 Test | 將 marking scheme 合入已抽嘅卷 |
 
 ---
 
@@ -283,11 +288,97 @@ select * from current_questions where level = 'F4';
 
 ---
 
+## 每條題目嘅身份、依賴、同份卷嘅背景
+
+呢三樣係為後面嘅 Analyzer / Student Model 而存嘅(見 `docs/system_spec.md`)。
+
+### `question_key` —— 重抽都唔會變嘅 id
+
+```text
+b584940bfebb:17(a)        <卷 sha256 頭 12 位>:<印住嘅題號>
+```
+
+`questions.id` 每次 run 都新;`question_key` 只靠份 PDF 嘅內容同題號,所以重抽幾多次都
+係同一個。將來 RPDICE 分析、學生作答,全部掛呢個 key,唔掛 run 嘅 id。JSON 每條題目都有
+(export 嗰陣計出嚟,唔係問 Gemini),Supabase `questions.question_key` 都有。
+
+### `depends_on` —— 小題靠邊條小題
+
+```json
+{ "source_question_id": "17(b)", "depends_on": ["17(a)"] }
+```
+
+「利用 (a) 的結果」「由此」「Hence」呢啲字原文就有,prompt 叫 Gemini 照抄;佢漏咗嘅話,
+code 會由同一啲字補返(記入 `extraction_notes`)。Validator 會報:
+
+| Code | Severity | 意思 |
+|---|---|---|
+| `DEPENDENCY_UNKNOWN` | medium | 指住一條唔存在嘅小題 |
+| `DEPENDENCY_SELF` | medium | 指住自己 |
+| `DEPENDENCY_UNMARKED` | low | 文字有「由此 / Hence」但 `depends_on` 係空 |
+
+### 份卷嘅背景 —— 年份、學期、考試類型、Paper、學校、課題
+
+學生實際難度要按群體分(中四上學期測驗同 DSE mock 唔同班),所以呢啲要喺抽題嗰陣記低。
+兩個來源,sidecar 優先,檔名補其餘:
+
+```text
+inbox/pdf/2526_1st_S4MATH1.pdf          → year 2025-26, term 1st, paper 1
+inbox/pdf/2526_1st_S4MATH1.meta.txt     → 你想講嘅任何嘢
+```
+
+```text
+# 2526_1st_S4MATH1.meta.txt
+year: 2025-26
+term: 1st
+exam: test              # test | exam | mock | dse | quiz | homework
+paper: 1
+school: ABC College
+topics: factorisation, quadratic equations
+form: F4                # 寫咗就凌駕檔名同封面
+```
+
+Sidecar 會跟住份 PDF 一齊搬去 `processed/`。JSON `document.paper`、Supabase
+`source_documents.year / term / exam_type / paper_number / school / topics`。
+
+### Marking scheme —— 答案係另一份 PDF
+
+大部分卷唔印答案。Marking scheme 用 **`<卷名>-ms.pdf`** 放埋一齊:
+
+```text
+inbox/pdf/S4-2024-mock.pdf
+inbox/pdf/S4-2024-mock-ms.pdf           # 或者 -marking-scheme / -answers / -solutions
+```
+
+`ingest_pdfs` 會先抽卷,再抽 marking scheme,按題號將 `answer` / `worked_solution`
+合埋。卷早已抽咗、marking scheme 遲啲先到都得:
+
+```bash
+python3 -m scripts.ingest_pdfs                              # inbox 得個 -ms.pdf 都識
+python3 -m scripts.attach_marking_scheme S4-2024-mock-ms.pdf   # 或者手動
+```
+
+合併規則:marking scheme 嘅答案優先(卷印咗唔同答案會留 note);分數只補卷冇印嘅,
+group total 唔會拆。合完係一個**新 run**,舊 run 留返做歷史。Validator:
+
+| Code | Severity | 意思 |
+|---|---|---|
+| `MARKING_SCHEME_UNMATCHED` | low | scheme 有某題,份卷冇 |
+| `ANSWER_NOT_IN_MARKING_SCHEME` | low | 合完呢條題仍然冇答案 |
+| `MARKING_SCHEME_UNUSED` | medium | 一條都對唔上 —— 係咪攞錯份 |
+
+Supabase `questions.answer_source` 係 `paper` / `marking_scheme` / null,
+`extraction_runs.marking_scheme_file_name` 記低用咗邊份。
+
+---
+
 ## Question Object
 
 ```json
 {
   "source_question_id": "1(a)",
+  "question_key": "b584940bfebb:1(a)",
+  "depends_on": [],
   "level": "F4",
   "page_start": 1,
   "page_end": 1,

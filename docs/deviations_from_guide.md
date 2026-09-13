@@ -771,3 +771,44 @@ query 完 database 見到零行才發現。呢一行就係要令呢個情況冇�
   三種 dash 嘅卷。
 - `test_batch_ingest` 嗰個 fake Repository 係 `lambda verbose=True: None`,加咗
   `describe_target()` 之後即刻 AttributeError。Test double 太薄,補返個 interface。
+
+## 34. 為後面嘅層而加嘅四樣嘢(system_review 第 1 步)
+
+Guide 嘅 Question Object 係為「抽準」而設。`system_spec.md` 定義咗之後嘅層要乜,
+`system_review.md` 指出四樣「而家唔存,將來補唔返」。呢個 commit 補晒。
+
+### `question_key`:身份唔可以係 run 嘅 id
+
+`<sha256 頭 12 位>:<題號>`。唔用 `questions.id`(每 run 新)、唔用檔名(會改)、唔用
+題目文字嘅 hash(重抽會有一個字唔同)。份 PDF 嘅內容 + 印住嘅題號係唯一兩樣重抽都唔
+變嘅嘢。Export 嗰陣計,唔問 Gemini —— 佢係 derived,唔係 extracted。
+
+### `depends_on`:由字抄,唔由理解推
+
+Prompt 叫 Gemini 只喺原文有「利用 (a)」「由此」「Hence」先填。冇填嘅話,code 用同一
+啲 cue 補返 —— 同 §27 嘅 LaTeX 包返一樣道理:定義清楚嘅嘢,code 做比 prompt 做穩定。
+「Hence」冇指明邊條就當上一條小題;第一條小題出現「Hence」就唔補(冇嘢可以指)。
+
+### Paper metadata:sidecar 優先
+
+檔名讀到年份 / 學期 / 類型 / paper 就用,但學校同課題檔名冇可能載,所以加
+`<stem>.meta.txt`。用 `key: value` 而唔用 YAML,係因為唔想為咗五行嘢多一個
+dependency。Sidecar 可以寫 `form: F4`,凌駕檔名同封面 —— 人明確講嘅嘢最大。
+
+### Marking scheme:合併係新 run
+
+答案係 Solver / Critic 嘅標準,但通常喺另一份 PDF。用 `<stem>-ms.pdf` 配對
+(同一個 folder、唔分大細楷),另一個 prompt 淨係抄答案同步驟,再按題號合入。
+
+合完點解係**新 run** 而唔係改舊 run:`extraction_runs` 一行代表「呢批題目喺呢一刻
+嘅樣」。加咗答案就唔係同一個樣。舊 run 留返,可以 diff 返合併前後;`run_id` 嘅
+unique index 亦唔容許同一個 run 寫兩次。
+
+Unique index 由 `(run, source_question_id)` 改做 `(run, position)`:`DUPLICATE_QUESTION_ID`
+係 medium、唔 blocking,但舊 index 會令成個 run insert 爆 —— validator 話「處理到」而
+database 話「唔收」係自相矛盾。
+
+### 驗證
+
+603 tests。Schema 喺 Postgres 16 上由三個起點升級(空 / table editor / 上一版
+schema 檔),全部收到有重複題號嘅 run,`current_questions` 有 `question_key`。

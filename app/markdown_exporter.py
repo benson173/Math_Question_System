@@ -68,6 +68,9 @@ def _summary_table(result: ExtractionResult) -> list[str]:
         ("Level", f"{document.level} (from {document.level_source})"
                   if document.level else "unknown"),
         ("Paper", _paper_label(document.paper)),
+        ("Marking scheme", f"{document.marking_scheme.file_name} "
+                           f"({len(document.marking_scheme.matched)} answers attached)"
+                           if document.marking_scheme else "none"),
         ("Questions", str(len(document.questions))),
     ]
     if source:

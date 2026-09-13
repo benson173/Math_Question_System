@@ -221,6 +221,27 @@ def find_dependency_issues(document: ExtractedDocument) -> list[tuple[str, Sever
     return issues
 
 
+def find_marking_scheme_issues(document: ExtractedDocument) -> list[tuple[str, Severity, str, str | None]]:
+    """Did the marking scheme fit the paper it was attached to?"""
+    scheme = document.marking_scheme
+    if scheme is None:
+        return []
+    issues: list[tuple[str, Severity, str, str | None]] = []
+    for qid in scheme.unmatched_scheme_ids:
+        issues.append(("MARKING_SCHEME_UNMATCHED", "low",
+                       f"The marking scheme {scheme.file_name} has an entry for {qid}, "
+                       f"which is not a question in this paper.", None))
+    for qid in scheme.questions_without_answer:
+        issues.append(("ANSWER_NOT_IN_MARKING_SCHEME", "low",
+                       f"Question {qid} has no answer even after attaching "
+                       f"{scheme.file_name}.", qid))
+    if not scheme.matched:
+        issues.append(("MARKING_SCHEME_UNUSED", "medium",
+                       f"Nothing in {scheme.file_name} matched a question number in "
+                       f"this paper. Is it the right paper's scheme?", None))
+    return issues
+
+
 def find_level_issues(document: ExtractedDocument) -> list[tuple[str, Severity, str]]:
     """Is the paper's form known, and do its two sources agree?"""
     from_name = level_from_filename(document.file_name)
@@ -273,6 +294,9 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
         report(code, severity, message)
 
     for code, severity, message, qid in find_dependency_issues(document):
+        report(code, severity, message, qid)
+
+    for code, severity, message, qid in find_marking_scheme_issues(document):
         report(code, severity, message, qid)
 
     seen_ids: set[str] = set()
