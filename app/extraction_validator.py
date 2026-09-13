@@ -9,7 +9,8 @@ from __future__ import annotations
 import re
 
 from app.diagram_geometry import is_usable_region
-from app.extraction_repair import find_control_characters, find_stem_contamination
+from app.extraction_repair import (find_control_characters, find_stem_contamination,
+                                   parent_id, referenced_parts, says_hence)
 from app.level import level_from_filename, level_from_paper
 from app.schemas import ExtractedDocument, Severity, ValidationIssue
 
@@ -192,6 +193,34 @@ def count_dashes(text: str) -> dict[str, int]:
             for character in DASHES if character in prose}
 
 
+def find_dependency_issues(document: ExtractedDocument) -> list[tuple[str, Severity, str, str]]:
+    """Do depends_on lists point at real parts, and are stated ones recorded?"""
+    ids = [q.source_question_id for q in document.questions]
+    known = set(ids)
+
+    def exists(target: str) -> bool:
+        # A reference to "18(a)" is fine when 18(a) is split into (i)/(ii).
+        return target in known or any(parent_id(i) == target for i in ids)
+
+    issues = []
+    for q in document.questions:
+        qid = q.source_question_id
+        for target in q.depends_on:
+            if target == qid:
+                issues.append(("DEPENDENCY_SELF", "medium",
+                               f"Question {qid} lists itself in depends_on.", qid))
+            elif not exists(target):
+                issues.append(("DEPENDENCY_UNKNOWN", "medium",
+                               f"Question {qid} depends on {target}, which is not in "
+                               f"this paper.", qid))
+        if not q.depends_on and (referenced_parts(q.question_text, qid) or
+                                 says_hence(q.question_text)):
+            issues.append(("DEPENDENCY_UNMARKED", "low",
+                           f"Question {qid} refers to an earlier part in its text but "
+                           f"depends_on is empty.", qid))
+    return issues
+
+
 def find_level_issues(document: ExtractedDocument) -> list[tuple[str, Severity, str]]:
     """Is the paper's form known, and do its two sources agree?"""
     from_name = level_from_filename(document.file_name)
@@ -242,6 +271,9 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
 
     for code, severity, message in find_level_issues(document):
         report(code, severity, message)
+
+    for code, severity, message, qid in find_dependency_issues(document):
+        report(code, severity, message, qid)
 
     seen_ids: set[str] = set()
 

@@ -266,3 +266,91 @@ def repair_shared_stems(document: ExtractedDocument) -> list[StemRepair]:
             )
 
     return repairs
+
+
+# --- dependencies between parts --------------------------------------------
+#
+# "Hence", "由此", "利用 (a) 的結果": the printed words say a part builds on an
+# earlier one. The prompt asks for depends_on, but a list the model leaves
+# empty is indistinguishable from "no dependency", so the same cue words are
+# read here and the list filled in when it is empty. Every fill is noted.
+
+_ROMAN = re.compile(r"^[ivx]{1,4}$")
+_CUE_WORDS = (r"利用|根據|使用|承|參考|按|由|[Uu]sing|[Ff]rom|[Bb]y|[Ii]n|"
+              r"results?\s+of|[Pp]arts?")
+_EXPLICIT_REFERENCE = re.compile(
+    r"(?:" + _CUE_WORDS + r")\s*(?:the\s+)?(?:results?\s+(?:of|in)\s+)?(?:parts?\s+)?"
+    r"\(([a-z]{1,2}|[ivx]{1,4})\)")
+_HENCE = re.compile(r"(?<![A-Za-z])Hence(?![A-Za-z])|由此")
+
+
+@dataclass
+class DependencyRepair:
+    source_question_id: str
+    depends_on: list[str]
+    reason: str
+
+
+def _root_number(source_question_id: str) -> str:
+    return source_question_id.split("(", 1)[0].strip()
+
+
+def referenced_parts(text: str, source_question_id: str) -> list[str]:
+    """Full ids of parts the text names with a cue word: "利用 (a)" -> "17(a")."""
+    found: list[str] = []
+    for match in _EXPLICIT_REFERENCE.finditer(text):
+        token = match.group(1)
+        if _ROMAN.match(token) and parent_id(source_question_id) \
+                and "(" in (parent_id(source_question_id) or ""):
+            target = f"{parent_id(source_question_id)}({token})"     # 18(a)(ii) -> 18(a)(i)
+        else:
+            target = f"{_root_number(source_question_id)}({token})"  # 17(b)     -> 17(a)
+        if target != source_question_id and target not in found:
+            found.append(target)
+    return found
+
+
+def says_hence(text: str) -> bool:
+    return bool(_HENCE.search(text))
+
+
+def previous_sibling(question: ExtractedQuestion, questions: list[ExtractedQuestion]) -> str | None:
+    """The part printed just before this one under the same parent."""
+    parent = parent_id(question.source_question_id)
+    if parent is None:
+        return None
+    before: str | None = None
+    for other in questions:
+        if other is question:
+            return before
+        if parent_id(other.source_question_id) == parent:
+            before = other.source_question_id
+    return None
+
+
+def repair_dependencies(document: ExtractedDocument) -> list[DependencyRepair]:
+    """Fill an empty depends_on from the words that state it."""
+    repairs: list[DependencyRepair] = []
+    ids = {q.source_question_id for q in document.questions}
+
+    for question in document.questions:
+        if question.depends_on:
+            continue
+        explicit = [p for p in referenced_parts(question.question_text, question.source_question_id)
+                    if p in ids]
+        if explicit:
+            question.depends_on = explicit
+            reason = "named in the text"
+        elif says_hence(question.question_text):
+            before = previous_sibling(question, document.questions)
+            if not before:
+                continue
+            question.depends_on = [before]
+            reason = "'Hence' / '由此' refers to the part before"
+        else:
+            continue
+        question.extraction_notes.append(
+            f"depends_on filled from the text ({reason}): {', '.join(question.depends_on)}")
+        repairs.append(DependencyRepair(question.source_question_id,
+                                        list(question.depends_on), reason))
+    return repairs

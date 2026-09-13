@@ -48,6 +48,18 @@ def _relative_link(image_path: str, report_path: Path) -> str:
     return quote(relative.replace(os.sep, "/"), safe="/.-_~")
 
 
+def _paper_label(paper) -> str:
+    if paper is None:
+        return "unknown"
+    bits = [paper.year, paper.term and f"{paper.term} term", paper.exam_type,
+            paper.paper_number and f"paper {paper.paper_number}", paper.school]
+    bits = [b for b in bits if b]
+    label = ", ".join(bits) if bits else "unknown"
+    if paper.topics:
+        label += f" · {', '.join(paper.topics)}"
+    return label + (f" (from {paper.source})" if paper.source and bits else "")
+
+
 def _summary_table(result: ExtractionResult) -> list[str]:
     document, source, run = result.document, result.source, result.run
     rows = [
@@ -55,6 +67,7 @@ def _summary_table(result: ExtractionResult) -> list[str]:
         ("Pages", str(document.page_count)),
         ("Level", f"{document.level} (from {document.level_source})"
                   if document.level else "unknown"),
+        ("Paper", _paper_label(document.paper)),
         ("Questions", str(len(document.questions))),
     ]
     if source:
@@ -116,6 +129,8 @@ def _question_section(
                       if question.options else "MC")
     if question.diagram_required:
         labels.append("diagram")
+    if question.depends_on:
+        labels.append("depends on " + ", ".join(question.depends_on))
 
     lines = [f"## {question.source_question_id}", ""]
     meta = _pages(question)

@@ -27,6 +27,7 @@ import time
 from app.document_loader import calculate_sha256
 from app.extraction_validator import blocking_issues
 from app.paths import EXTRACTED_DIR, FAILED_PDF_DIR, INBOX_PDF_DIR, PROCESSED_PDF_DIR
+from app.paper_meta import sidecar_path
 from app.pipeline import PdfIngestionPipeline
 from app.repository import Repository
 
@@ -101,6 +102,11 @@ def file_away(pdf_path: Path, directory: Path, inbox: Path) -> Path:
     target_dir.mkdir(parents=True, exist_ok=True)
     destination = unique_destination(target_dir, pdf_path.name)
     shutil.move(str(pdf_path), str(destination))
+
+    # A <stem>.meta.txt sidecar belongs to its PDF and goes where it goes.
+    sidecar = sidecar_path(pdf_path)
+    if sidecar.exists():
+        shutil.move(str(sidecar), str(sidecar_path(destination)))
     return destination
 
 

@@ -167,3 +167,14 @@ def test_a_file_name_with_no_form_stays_null(tmp_path, wired):
 
     assert db_push.main([str(tmp_path / "x.json")]) == 0
     assert wired.rows["source_documents"][0]["level"] is None
+
+
+def test_an_old_extraction_gets_its_paper_context_from_the_file_name(tmp_path, wired):
+    result = make_result(run_id="run-meta")
+    result.document.file_name = "2526_1st_S4MATH1.pdf"
+    result.document.paper = None
+    export_extraction_json(result, tmp_path / "meta.json")
+
+    assert db_push.main([str(tmp_path / "meta.json")]) == 0
+    doc = wired.rows["source_documents"][0]
+    assert (doc["year"], doc["term"], doc["paper_number"]) == ("2025-26", "1st", 1)

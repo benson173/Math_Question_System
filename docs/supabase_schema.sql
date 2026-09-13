@@ -31,6 +31,12 @@ create table if not exists source_documents (
   page_count     integer not null,
   byte_size      bigint not null,
   level          text,                      -- F1-F6, null if unknown
+  year           text,                      -- "2025" or "2025-26"
+  term           text,                      -- 1st | 2nd | mid | final
+  exam_type      text,                      -- test | exam | mock | dse | quiz | homework
+  paper_number   integer,
+  school         text,
+  topics         jsonb not null default '[]'::jsonb,
   first_seen_at  timestamptz not null default now()
 );
 
@@ -56,6 +62,8 @@ create table if not exists questions (
   extraction_run_id    uuid,
   source_document_id   uuid,
   source_question_id   text not null,
+  question_key         text,                -- <sha12>:<source_question_id>; stable across runs
+  depends_on           jsonb not null default '[]'::jsonb,
   level                text,                -- F1-F6, copied from the document
   position             integer not null,
   question_type        text not null default 'open',
@@ -119,6 +127,12 @@ begin
       ('source_documents', 'page_count',              'integer'),
       ('source_documents', 'byte_size',               'bigint'),
       ('source_documents', 'level',                   'text'),
+      ('source_documents', 'year',                    'text'),
+      ('source_documents', 'term',                    'text'),
+      ('source_documents', 'exam_type',               'text'),
+      ('source_documents', 'paper_number',            'integer'),
+      ('source_documents', 'school',                  'text'),
+      ('source_documents', 'topics',                  'jsonb default ''[]''::jsonb'),
       ('source_documents', 'first_seen_at',           'timestamptz default now()'),
       ('extraction_runs',  'run_id',                  'text'),
       ('extraction_runs',  'source_document_id',      doc_id_type),
@@ -136,6 +150,8 @@ begin
       ('questions',        'extraction_run_id',       run_id_type),
       ('questions',        'source_document_id',      doc_id_type),
       ('questions',        'source_question_id',      'text'),
+      ('questions',        'question_key',            'text'),
+      ('questions',        'depends_on',              'jsonb default ''[]''::jsonb'),
       ('questions',        'level',                   'text'),
       ('questions',        'position',                'integer'),
       ('questions',        'question_type',           'text default ''open'''),
@@ -169,7 +185,12 @@ end $$;
 
 create unique index if not exists source_documents_sha256_key on source_documents (sha256);
 create unique index if not exists extraction_runs_run_id_key  on extraction_runs (run_id);
-create unique index if not exists questions_run_question_key  on questions (extraction_run_id, source_question_id);
+-- Unique on position, not on the printed number: a paper that prints "17"
+-- twice is a DUPLICATE_QUESTION_ID issue to look at, not a reason to lose the
+-- whole run at insert time.
+drop index if exists questions_run_question_key;
+create unique index if not exists questions_run_position_key  on questions (extraction_run_id, position);
+create index        if not exists questions_key_idx           on questions (question_key);
 
 create index if not exists questions_document_idx  on questions (source_document_id);
 create index if not exists questions_type_idx      on questions (question_type);

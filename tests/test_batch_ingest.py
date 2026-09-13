@@ -212,3 +212,11 @@ def test_prune_empty_directories(tmp_path):
     batch.prune_empty_directories(tmp_path)
     assert not (tmp_path / "a").exists()
     assert (tmp_path / "keep" / "f.txt").exists()
+
+
+def test_a_sidecar_moves_with_its_pdf(inbox, fake_pipeline):
+    write(inbox, "S4-mock.pdf", b"AAA")
+    (inbox["inbox"] / "S4-mock.meta.txt").write_text("school: ABC\n", encoding="utf-8")
+    batch.main([])
+    assert (inbox["processed"] / "S4-mock.meta.txt").read_text(encoding="utf-8") == "school: ABC\n"
+    assert not (inbox["inbox"] / "S4-mock.meta.txt").exists()

@@ -23,6 +23,7 @@ from pathlib import Path
 
 from app.config import load_settings
 from app.level import resolve_level
+from app.paper_meta import meta_from_filename
 from app.paths import EXTRACTED_DIR
 from app.schemas import ExtractionResult
 from app.supabase_store import TABLE_RUNS, StoreError, SupabaseStore, connect
@@ -54,6 +55,17 @@ def fill_in_level(result: ExtractionResult) -> str | None:
     result.document.level = resolved.level
     result.document.level_source = resolved.source
     return resolved.level
+
+
+def fill_in_paper(result: ExtractionResult) -> bool:
+    """Read the paper's year/term/type off the file name for a JSON without it."""
+    if result.document.paper is not None:
+        return False
+    meta = meta_from_filename(result.document.file_name)
+    if not any(v for k, v in meta.model_dump().items() if k != "source"):
+        return False
+    result.document.paper = meta
+    return True
 
 
 def already_pushed(client, run_id: str) -> bool:
@@ -99,6 +111,8 @@ def main(argv: list[str] | None = None) -> int:
         added_level = fill_in_level(result)
         if added_level:
             print(f"  level    {name}  read {added_level} off the file name")
+        if fill_in_paper(result):
+            print(f"  paper    {name}  read year/term/type off the file name")
 
         try:
             if not force and already_pushed(store.client, run_id):

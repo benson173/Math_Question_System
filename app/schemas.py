@@ -54,6 +54,10 @@ class ExtractedQuestion(BaseModel):
     # what a person checks it against, and what survives a layout Markdown
     # cannot express.
     table_regions: list[PageRegion] = Field(default_factory=list)
+    # Parts this part builds on, as full ids: 17(b) that says "利用 (a) 的結果"
+    # or "Hence" lists ["17(a)"]. Copied from the printed words, never
+    # inferred. A later stage cannot serve 17(b) alone without knowing this.
+    depends_on: list[str] = Field(default_factory=list)
     extraction_notes: list[str] = Field(default_factory=list)
 
 
@@ -71,7 +75,19 @@ class QuestionExtractionPayload(BaseModel):
     level_text: Optional[str] = None
 
 
-LevelSource = Literal["filename", "paper"]
+LevelSource = Literal["filename", "paper", "sidecar"]
+
+
+class PaperMeta(BaseModel):
+    """Which paper this is - the context empirical difficulty is grouped by."""
+
+    year: Optional[str] = None              # "2025" or "2025-26"
+    term: Optional[str] = None              # "1st" | "2nd" | "mid" | "final"
+    exam_type: Optional[str] = None         # "test" | "exam" | "mock" | "dse" | "quiz" | "homework"
+    paper_number: Optional[int] = None
+    school: Optional[str] = None
+    topics: list[str] = Field(default_factory=list)
+    source: Optional[Literal["filename", "sidecar"]] = None
 
 
 class ExtractedDocument(BaseModel):
@@ -83,6 +99,7 @@ class ExtractedDocument(BaseModel):
     level: Optional[str] = None
     level_source: Optional[LevelSource] = None
     level_text: Optional[str] = None
+    paper: Optional[PaperMeta] = None
 
 
 class SourceDocument(BaseModel):

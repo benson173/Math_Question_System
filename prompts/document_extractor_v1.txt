@@ -34,6 +34,14 @@ QUESTION NUMBERING
   own question into another part, and never repeat the same sentence twice
   inside one question_text.
 
+DEPENDENCIES BETWEEN PARTS
+- If a part's printed words refer to an earlier part's result - "利用 (a) 的結
+  果", "由此", "Hence", "Using the result of (a)", "From (b)" - list that part
+  in depends_on as a full id: 17(b) that says "Hence" gets ["17(a)"].
+- "Hence" or "由此" with no part named means the part immediately before.
+- Only what the words say. A part that merely shares the stem with (a) does
+  not depend on (a). Leave depends_on empty when nothing is referenced.
+
 PAGE NUMBERS
 - page_start and page_end are 1-based: the first page of the PDF is page 1.
 - If a question does not span pages, set page_end equal to page_start.

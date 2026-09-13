@@ -284,3 +284,31 @@ def test_repository_with_a_store_writes_and_reports(capsys):
     assert outcome.questions == 2
     assert "Supabase:" in capsys.readouterr().out
     assert len(client.rows["questions"]) == 2
+
+
+# --- what the later layers need on every row --------------------------------
+
+def test_question_rows_carry_key_and_dependencies():
+    result = make_result()
+    result.document.questions[1].depends_on = ["1"]
+    rows = question_rows(result, "d", "r")
+    assert rows[0]["question_key"] == "aaaaaaaaaaaa:1"
+    assert rows[1]["depends_on"] == ["1"]
+    assert rows[0]["depends_on"] == []
+
+
+def test_document_row_carries_the_paper_context():
+    from app.schemas import PaperMeta
+    result = make_result()
+    result.document.paper = PaperMeta(year="2025-26", term="1st", exam_type="test",
+                                      paper_number=1, school="ABC", topics=["algebra"],
+                                      source="sidecar")
+    row = document_row(result)
+    assert row["year"] == "2025-26" and row["term"] == "1st"
+    assert row["exam_type"] == "test" and row["paper_number"] == 1
+    assert row["school"] == "ABC" and row["topics"] == ["algebra"]
+
+
+def test_a_document_without_paper_context_writes_no_paper_columns():
+    row = document_row(make_result())
+    assert "year" not in row

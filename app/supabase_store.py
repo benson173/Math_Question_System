@@ -22,6 +22,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.extraction_validator import blocking_issues
+from app.question_key import question_key
 from app.schemas import ExtractionResult, RenderedImage
 
 
@@ -53,6 +54,21 @@ def document_row(result: ExtractionResult) -> dict[str, Any]:
         "page_count": result.source.page_count,
         "byte_size": result.source.byte_size,
         "level": result.document.level,
+        **_paper_columns(result),
+    }
+
+
+def _paper_columns(result: ExtractionResult) -> dict[str, Any]:
+    paper = result.document.paper
+    if paper is None:
+        return {}
+    return {
+        "year": paper.year,
+        "term": paper.term,
+        "exam_type": paper.exam_type,
+        "paper_number": paper.paper_number,
+        "school": paper.school,
+        "topics": list(paper.topics),
     }
 
 
@@ -102,6 +118,9 @@ def question_rows(result: ExtractionResult, document_id: str, run_id: str) -> li
             "extraction_run_id": run_id,
             "source_document_id": document_id,
             "source_question_id": q.source_question_id,
+            "question_key": question_key(result.source.sha256, q.source_question_id)
+                            if result.source and q.source_question_id.strip() else None,
+            "depends_on": list(q.depends_on),
             "level": result.document.level,
             "position": position,
             "question_type": q.question_type,

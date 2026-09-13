@@ -26,12 +26,13 @@ from app.supabase_store import (
 
 
 EXPECTED_COLUMNS = {
-    TABLE_DOCUMENTS: ["id", "sha256", "file_name", "page_count", "byte_size", "level"],
+    TABLE_DOCUMENTS: ["id", "sha256", "file_name", "page_count", "byte_size", "level",
+                      "year", "term", "exam_type", "paper_number", "school", "topics"],
     TABLE_RUNS: ["id", "run_id", "source_document_id", "extracted_at", "extraction_version",
                  "question_object_version", "model", "question_count", "issue_count",
                  "blocking", "issues", "repairs", "is_current"],
     TABLE_QUESTIONS: ["id", "extraction_run_id", "source_document_id", "source_question_id",
-                      "level", "position", "question_type", "question_text", "options",
+                      "question_key", "depends_on", "level", "position", "question_type", "question_text", "options",
                       "marks", "group_marks", "group_marks_scope", "answer",
                       "worked_solution", "page_start", "page_end", "diagram_required",
                       "diagram_region", "table_regions", "extraction_notes", "images"],

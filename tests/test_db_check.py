@@ -81,7 +81,9 @@ def test_every_missing_column_is_listed_not_just_the_first():
     result = probe_table(FakeClient(schema), "source_documents",
                          EXPECTED_COLUMNS["source_documents"])
     assert result["exists"] is True
-    assert result["missing"] == ["sha256", "file_name", "page_count", "byte_size", "level"]
+    assert result["missing"] == [c for c in EXPECTED_COLUMNS["source_documents"]
+                                 if c not in ("id",)]
+    assert result["missing"][:4] == ["sha256", "file_name", "page_count", "byte_size"]
 
 
 def test_a_table_that_is_not_there_is_told_apart_from_missing_columns():

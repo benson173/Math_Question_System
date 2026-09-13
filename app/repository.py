@@ -69,6 +69,11 @@ class Repository:
         print("Pages:", document.page_count)
         print("Level:", f"{document.level} (from {document.level_source})"
                         if document.level else "unknown")
+        if document.paper and document.paper.source:
+            paper = document.paper
+            print("Paper:", ", ".join(str(v) for v in (paper.year, paper.term, paper.exam_type,
+                  paper.paper_number and f"paper {paper.paper_number}", paper.school) if v)
+                  or "unknown")
         print("Questions:", len(document.questions))
         if result.source:
             print("SHA256:", result.source.sha256)

@@ -6,6 +6,7 @@ from pathlib import Path
 import json
 
 from app.paths import DIAGRAMS_DIR, EXTRACTED_DIR, HISTORY_DIR, safe_stem
+from app.question_key import question_key
 from app.schemas import ExtractionResult
 
 
@@ -45,10 +46,19 @@ def export_extraction_json(
     # Every field of the result, so the JSON can be read back into an
     # ExtractionResult and pushed to the database without re-calling Gemini.
     # Leaving tables and repairs out made the archive quietly lossy.
+    document = result.document.model_dump()
+    if result.source:
+        # The key is derived, not extracted, so it is added here rather than
+        # asked of the model. Pydantic ignores it when the file is read back.
+        for question in document["questions"]:
+            if question.get("source_question_id", "").strip():
+                question["question_key"] = question_key(result.source.sha256,
+                                                        question["source_question_id"])
+
     output = {
         "source": result.source.model_dump() if result.source else None,
         "run": result.run.model_dump() if result.run else None,
-        "document": result.document.model_dump(),
+        "document": document,
         "issues": [issue.model_dump() for issue in result.issues],
         "diagrams": [asset.model_dump() for asset in result.diagrams],
         "tables": [asset.model_dump() for asset in result.tables],

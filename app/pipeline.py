@@ -13,6 +13,7 @@ from app.config import load_settings
 from app.diagram_renderer import render_question_images
 from app.document_extractor import DocumentExtractor
 from app.extraction_repair import (repair_control_characters,
+                                   repair_dependencies,
                                    repair_shared_stems,
                                    repair_undelimited_latex)
 from app.extraction_validator import blocking_issues, validate_extraction
@@ -43,6 +44,7 @@ class PdfIngestionPipeline:
             stem_repairs = repair_shared_stems(result.document)
             control_repairs = repair_control_characters(result.document)
             latex_repairs = repair_undelimited_latex(result.document)
+            dependency_repairs = repair_dependencies(result.document)
 
             for repair in stem_repairs:
                 print(f"Repaired {repair.parent}: removed {repair.removed!r} from the "
@@ -53,6 +55,9 @@ class PdfIngestionPipeline:
             for repair in latex_repairs:
                 print(f"Repaired {repair.source_question_id}: delimited formula "
                       f"{repair.line[:48]!r}")
+            for repair in dependency_repairs:
+                print(f"Repaired {repair.source_question_id}: depends on "
+                      f"{', '.join(repair.depends_on)} ({repair.reason})")
 
             result.repairs = [
                 f"{r.parent}: removed {r.removed!r} from the shared stem "
@@ -63,6 +68,9 @@ class PdfIngestionPipeline:
             ] + [
                 f"{r.source_question_id}: delimited formula {r.line[:48]!r}"
                 for r in latex_repairs
+            ] + [
+                f"{r.source_question_id}: depends_on {r.depends_on} ({r.reason})"
+                for r in dependency_repairs
             ]
 
         print("Step 2: Validate extraction")
