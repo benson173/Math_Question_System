@@ -153,6 +153,7 @@ ms.coordgeo.inclination,ms,Coordinate geometry of straight lines,Relation betwee
 ms.coordgeo.parallel-perp,ms,Coordinate geometry of straight lines,Conditions for parallel and perpendicular lines,平行及垂直的斜率條件,F3,,ms.coordgeo.slope
 ms.coordgeo.collinear,ms,Coordinate geometry of straight lines,Test for collinear points,共線點,F3,,ms.coordgeo.slope
 ms.coordgeo.prove-shape,ms,Coordinate geometry of straight lines,Prove a figure is a particular type using distances / slopes,以坐標法證明圖形類型,F3,,ms.coordgeo.distance;ms.coordgeo.parallel-perp
+ms.coordgeo.centres,ms,Coordinate geometry of straight lines,Find the orthocentre / circumcentre / centroid by coordinate methods,以坐標法求垂心、外心、重心,F4,F,ms.line.parallel-perp-equation;ms.line.intersection;ms.deduct.centres
 ms.trig.ratios,ms,Trigonometric ratios,Define sin / cos / tan in a right-angled triangle,直角三角形中的三角比,F2,,ms.pythag.apply
 ms.trig.find-side,ms,Trigonometric ratios,Find a side using a trigonometric ratio,以三角比求邊,F2,,ms.trig.ratios
 ms.trig.find-angle,ms,Trigonometric ratios,Find an angle using an inverse ratio,以三角比求角,F2,,ms.trig.ratios
@@ -213,6 +214,8 @@ na.quad.symmetric-functions,na,Quadratic equations in one unknown,Evaluate symme
 na.quad.equation-with-new-roots,na,Quadratic equations in one unknown,Form an equation whose roots are functions of α and β,建立以 α、β 的函數為根的方程,F4,N,na.quad.symmetric-functions
 na.quad.word,na,Quadratic equations in one unknown,Set up and solve a quadratic equation from a word problem and reject invalid roots,列二次方程解應用題並剔除不合理根,F4,F,na.quad.solve-factor;na.algexp.translate
 na.quad.complex-basic,na,Quadratic equations in one unknown,Write and simplify complex numbers a + bi (i² = −1),複數的基本運算,F4,N,na.rational.surd-operate
+na.quad.i-powers,na,Quadratic equations in one unknown,Simplify powers of i using i⁴ = 1,化簡 i 的高次冪,F4,N,na.quad.complex-basic
+na.quad.complex-divide,na,Quadratic equations in one unknown,Divide complex numbers by the conjugate and read real / imaginary parts,複數除法(乘共軛)及讀取實部虛部,F4,N,na.quad.complex-basic
 na.quad.complex-roots,na,Quadratic equations in one unknown,Find complex roots of a quadratic with Δ < 0,求 Δ<0 時的複數根,F4,N,na.quad.complex-basic;na.quad.solve-formula
 na.func.concept,na,Functions and graphs,Function notation / domain / co-domain / dependent and independent variables,函數記號、定義域、對應域,F4,F,
 na.func.evaluate,na,Functions and graphs,Evaluate f(a) and f(expression),求函數值 f(a)、f(g(x)) 型代入,F4,F,na.func.concept;na.algexp.substitute
@@ -238,6 +241,7 @@ na.log.equation,na,Exponential and logarithmic functions,Solve logarithmic equat
 na.log.exp-equation,na,Exponential and logarithmic functions,Solve aˣ = b by taking logarithms,取對數解指數方程,F4,F,na.log.laws
 na.log.graph,na,Exponential and logarithmic functions,Graph and features of y = logₐ x and relation to y = aˣ,對數函數圖像及與指數函數的關係,F4,F,na.log.definition;na.exp.graph
 na.log.applications,na,Exponential and logarithmic functions,Applications: Richter scale / decibels / pH / compound growth,對數應用(地震震級、分貝、pH),F4,F,na.log.equation
+na.log.linear-relation,na,Exponential and logarithmic functions,Read y = kxⁿ from a linear relation between log y and log x,由 log y 對 log x 的線性關係得出 y = kxⁿ,F4,F,na.log.laws;ms.line.forms
 na.log.solve-graph,na,Exponential and logarithmic functions,Solve exponential / log equations graphically,以圖解法解指數 / 對數方程,F4,F,na.exp.graph;na.log.graph
 na.log.slide-rule,na,Exponential and logarithmic functions,History of logarithm tables / slide rule (concept only),對數表及計算尺(概念),F4,N,na.log.definition
 na.poly.division,na,More about polynomials,Divide a polynomial by a linear / quadratic divisor (long division),多項式長除法,F4,F,na.algexp.poly-mul
@@ -245,6 +249,7 @@ na.poly.division-identity,na,More about polynomials,Use dividend = divisor × qu
 na.poly.remainder-theorem,na,More about polynomials,Remainder theorem,餘式定理,F4,F,na.poly.division-identity;na.func.evaluate
 na.poly.factor-theorem,na,More about polynomials,Factor theorem and its converse,因式定理,F4,F,na.poly.remainder-theorem
 na.poly.find-coefficient,na,More about polynomials,Find unknown coefficients from a given factor / remainder,由因式或餘式求未知係數,F4,F,na.poly.factor-theorem;na.simeq.choose-method
+na.poly.remainder-quadratic-divisor,na,More about polynomials,Find the remainder on division by a quadratic from two linear remainders,由兩個一次餘數求除以二次式的餘式,F4,F,na.poly.remainder-theorem;na.simeq.choose-method
 na.poly.factorise-cubic,na,More about polynomials,Factorise a cubic by the factor theorem and division,以因式定理分解三次式,F4,F,na.poly.factor-theorem;na.poly.division
 na.poly.solve-cubic,na,More about polynomials,Solve a cubic equation via a known factor,解三次方程,F4,F,na.poly.factorise-cubic;na.quad.solve-factor
 na.poly.hcf-lcm,na,More about polynomials,H.C.F. and L.C.M. of polynomials,多項式的最大公因式與最小公倍式,F4,N,na.factor.complete
@@ -272,6 +277,7 @@ na.seq.gs-mean,na,Arithmetic and geometric sequences,Geometric mean(s) between t
 na.seq.gs-sum,na,Arithmetic and geometric sequences,Sum of the first n terms of a geometric sequence,等比數列前 n 項和,F5,F,na.seq.gs-term
 na.seq.gs-sum-infinity,na,Arithmetic and geometric sequences,Sum to infinity of a geometric sequence (|r| < 1),等比數列的無限項和,F5,N,na.seq.gs-sum
 na.seq.identify,na,Arithmetic and geometric sequences,Decide whether a sequence is arithmetic / geometric / neither,判斷數列類型,F5,F,na.seq.as-term;na.seq.gs-term
+na.seq.recurrence,na,Arithmetic and geometric sequences,Work with a sequence defined by a recurrence relation (aₙ₊₂ = aₙ₊₁ + aₙ),由遞歸關係求數列的項,F5,F,na.simeq.choose-method
 na.seq.find-n,na,Arithmetic and geometric sequences,Find n from a term or a sum condition (may need logs),由項或和的條件求 n,F5,F,na.seq.as-sum;na.seq.gs-sum;na.log.exp-equation
 na.seq.word,na,Arithmetic and geometric sequences,Real-life sequence problems (interest / depreciation / patterns),數列應用題,F5,F,na.seq.find-n
 na.seq.sigma-notation,na,Arithmetic and geometric sequences,Read and write sums in Σ notation,Σ 記號,F5,N,na.seq.as-sum
@@ -296,6 +302,7 @@ ms.circle.concyclic-test,ms,Basic properties of circles,Tests for concyclic poin
 ms.circle.tangent-perp,ms,Basic properties of circles,Tangent ⊥ radius at the point of contact (and converse),切線垂直半徑,F5,F,ms.pythag.apply
 ms.circle.tangent-external,ms,Basic properties of circles,Tangents from an external point are equal,由外點作的切線相等,F5,F,ms.circle.tangent-perp;ms.congr.use
 ms.circle.alt-segment,ms,Basic properties of circles,Angle in the alternate segment (tangent-chord angle) and converse,弦切角,F5,F,ms.circle.tangent-perp;ms.circle.same-segment
+ms.circle.tangent-secant,ms,Basic properties of circles,Tangent-secant relation CD² = AD × BD via similar triangles,以相似三角形得出切割線關係 CD² = AD·BD,F5,F,ms.circle.alt-segment;ms.similar.ratio-length
 ms.circle.angle-chase,ms,Basic properties of circles,Multi-step angle chasing in a circle with reasons,圓內多步求角並寫理由,F5,F,ms.circle.cyclic-quad-opp;ms.circle.alt-segment
 ms.circle.prove,ms,Basic properties of circles,Prove a geometric statement using circle properties,以圓的性質作證明,F5,F,ms.circle.angle-chase;ms.deduct.proof-writing
 ms.circle.incircle-circumcircle,ms,Basic properties of circles,Incircle / circumcircle / inscribed and circumscribed figures,內切圓與外接圓,F5,F,ms.circle.tangent-external;ms.deduct.centres
@@ -354,10 +361,13 @@ dh.prob2.tree-with-without-replacement,dh,More about probability,Tree diagrams w
 dh.prob2.at-least-one,dh,More about probability,At-least-one events via the complement,以互補事件處理「至少一個」,F5,F,dh.prob2.complementary;dh.prob2.multiplication-law
 dh.prob2.with-counting,dh,More about probability,Probability using permutations and combinations,以排列組合計算機率,F5,N,dh.perm.combination;dh.prob.definition
 dh.prob2.expected-value,dh,More about probability,Expected value / fair game,期望值及公平遊戲,F5,F,dh.prob.expected-value
+dh.prob2.turns-until,dh,More about probability,Probability of a player winning in a turn-taking game that continues until a result,輪流進行直至出現結果的機率(無限等比),F5,N,dh.prob2.multiplication-law;na.seq.gs-sum-infinity
+dh.prob2.without-replacement-sequence,dh,More about probability,Probability that a result first appears on or after a given draw without replacement,不放回抽取中結果首次在第 n 次出現的機率,F5,F,dh.prob2.tree-with-without-replacement
 dh.disp.range,dh,Measures of dispersion,Range,分佈域,F5,F,
 dh.disp.quartiles,dh,Measures of dispersion,Quartiles and inter-quartile range (ungrouped and from a cumulative curve),四分位數及四分位數間距,F5,F,dh.central.median;dh.present.cumulative
 dh.disp.box-plot,dh,Measures of dispersion,Construct and read a box-and-whisker diagram,箱線圖,F5,F,dh.disp.quartiles
 dh.disp.sd-ungrouped,dh,Measures of dispersion,Standard deviation of ungrouped data (formula / calculator),未分組數據的標準差,F5,F,dh.central.mean
+dh.disp.variance,dh,Measures of dispersion,Variance and its relation to the standard deviation,方差及其與標準差的關係,F5,F,dh.disp.sd-ungrouped
 dh.disp.sd-grouped,dh,Measures of dispersion,Standard deviation of grouped data,分組數據的標準差,F5,F,dh.disp.sd-ungrouped;dh.central.grouped-mean
 dh.disp.compare,dh,Measures of dispersion,Compare dispersions of two data sets and choose a measure,比較兩組數據的離差,F5,F,dh.disp.quartiles;dh.disp.sd-ungrouped
 dh.disp.effect-change,dh,Measures of dispersion,Effect on range / IQR / SD of adding a constant / multiplying / adding a datum,數據改變對離差的影響,F5,N,dh.disp.compare

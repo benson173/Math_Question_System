@@ -210,8 +210,8 @@ pytest
 | `app/marking_scheme.py` | 🔵 Python | Marking scheme 配對、抽取、合併 |
 | `app/extraction_io.py` | 🔵 Python | 讀返存低嘅 JSON(所有 script 共用) |
 | `app/taxonomy.py` | 🔵 Python | 讀、驗 `taxonomy/*.csv` |
-| `taxonomy/skills.csv` | 🟡 Config | 359 個 atomic skill(HKDSE 必修 + KS3) |
-| `taxonomy/error_patterns.csv` | 🟡 Config | 95 個 error pattern |
+| `taxonomy/skills.csv` | 🟡 Config | 369 個 atomic skill(HKDSE 必修 + KS3) |
+| `taxonomy/error_patterns.csv` | 🟡 Config | 99 個 error pattern |
 | `prompts/marking_scheme_v1.txt` | 🟢 Prompt | Gemini 抄 marking scheme 指令 |
 | `app/errors.py` | 🔵 Python | 錯誤類型 |
 | `app/schemas.py` | 🔵 Python | 定義資料格式 |
@@ -386,8 +386,8 @@ Analyzer 之後標 skill、Student Model 計 mastery、學生錯誤同 Analyzer 
 
 | 檔 | 內容 | 數量 |
 |---|---|---|
-| `taxonomy/skills.csv` | HKDSE 必修部分(F4–F6)+ KS3(F1–F3),拆到 atomic skill | 359 |
-| `taxonomy/error_patterns.csv` | 題目會暴露嘅錯誤(RPDICE 嘅 E),每個掛返 skill | 95 |
+| `taxonomy/skills.csv` | HKDSE 必修部分(F4–F6)+ KS3(F1–F3),拆到 atomic skill | 369 |
+| `taxonomy/error_patterns.csv` | 題目會暴露嘅錯誤(RPDICE 嘅 E),每個掛返 skill | 99 |
 
 ```text
 skill_id                strand  unit             name_en                                 name_zh    form  foundation  prerequisites

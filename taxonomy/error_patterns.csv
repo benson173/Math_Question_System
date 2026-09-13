@@ -107,3 +107,7 @@ err.prob.at-least-one-direct,Computes 'at least one' by adding cases and double 
 err.prob.conditional-reversed,Confuses P(A | B) with P(B | A),條件機率方向反轉,dh.prob2.conditional,
 err.perm.order-confused,Uses P where C is needed or vice versa,排列組合混用,dh.perm.distinguish,
 err.perm.overcount-identical,Overcounts arrangements with identical objects,相同物件的排列重複計算,dh.perm.permutation,
+err.complex.conjugate-sign,Wrong sign in the conjugate when dividing,複數除法共軛符號錯,na.quad.complex-divide,
+err.complex.i-cycle,Reduces a power of i with the wrong cycle,i 的冪次循環用錯,na.quad.i-powers,"i¹⁰²⁹ taken as i or −1 by dividing by 2."
+err.seq.recurrence-direction,Runs a recurrence the wrong way to reach an earlier term,遞歸關係方向用錯,na.seq.recurrence,
+err.prob.turns-first-only,Counts only the first round of a turn-taking game,只計第一輪的機率,dh.prob2.turns-until,

@@ -858,7 +858,7 @@ source of truth。
 `Factorise 1 − 225x²` 嗰條,spec 嘅 worked example 就對得上 `na.factor.recognise-square`
 → `na.factor.dos`,R 同 P 分得開。
 
-359 個 skill:KS3 187、必修部分 172(138 foundation、34 non-foundation)。
+369 個 skill:KS3 187、必修部分 182(145 foundation、37 non-foundation)。
 95 個 error pattern,117 個 skill 有至少一個。
 
 ### Validator 先行,然後先信
