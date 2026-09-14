@@ -143,3 +143,8 @@ def test_a_missing_form_never_blocks_ingestion():
     issues = validate_extraction(document(file_name="paper.pdf", level=None,
                                           level_source=None))
     assert has_blocking_issues(issues) is False
+
+
+@pytest.mark.parametrize("text", ["當中一個", "集中一點", "其中一項"])
+def test_phrases_that_merely_contain_zhong_yi_are_not_form_one(text):
+    assert parse_level(text) is None

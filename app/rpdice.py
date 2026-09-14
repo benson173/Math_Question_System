@@ -182,8 +182,8 @@ def drivers_of(levels: dict[str, int]) -> list[str]:
 
 # --- checking an analysis ---------------------------------------------------
 
-def validate_analysis(analysis: QuestionAnalysis, question_text: str, taxonomy,
-                      question_units: Optional[dict[str, str]] = None) -> list[ValidationIssue]:
+def validate_analysis(analysis: QuestionAnalysis, question_text: str,
+                      taxonomy) -> list[ValidationIssue]:
     """Everything that makes an analysis unusable or suspect.
 
     `taxonomy` is an app.taxonomy.Taxonomy. Unknown skills are only an error

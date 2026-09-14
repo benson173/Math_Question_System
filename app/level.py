@@ -31,7 +31,7 @@ _WORD = re.compile(_EDGE + r"(?:form|secondary|sec)\.?\s?([1-6])" + _END, re.I)
 # as well as "S4". The edge guard is what keeps "maths4" from matching.
 _LETTER = re.compile(_EDGE + r"[SF]\.?\s?([1-6])" + _END, re.I)
 # 其中一個 ("one of them") is not 中一. 中一至中三 names two, so nothing is chosen.
-_CHINESE = re.compile(r"(?<!其)中([一二三四五六])(?:年級|級)?")
+_CHINESE = re.compile(r"(?<![其當集])中([一二三四五六])(?:年級|級)?")
 # US grades: Grade 7 is Form 1.
 _GRADE = re.compile(_EDGE + r"grade\s?(7|8|9|1[0-2])" + _END, re.I)
 

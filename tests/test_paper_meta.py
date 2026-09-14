@@ -98,3 +98,9 @@ def test_a_level_in_the_sidecar_is_read_separately(tmp_path):
     sidecar_path(pdf).write_text("form: F6\n", encoding="utf-8")
     assert sidecar_level(pdf) == "F6"
     assert sidecar_level(tmp_path / "other.pdf") is None
+
+
+def test_a_year_suffix_must_be_the_following_year():
+    assert meta_from_filename("F4-2024-12-paper1.pdf").year == "2024"     # 12 is a month
+    assert meta_from_filename("2024-25-mock.pdf").year == "2024-25"
+    assert meta_from_filename("2099-00-mock.pdf").year == "2099-00"

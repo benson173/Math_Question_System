@@ -1,5 +1,9 @@
 # 成個系統嘅複查（2026-09-13）
 
+> **狀態(2026-09-14)**:「而家要做嘅」1–8 全部做咗(§34–§37 deviations),Analyzer 嘅
+> prompt / schema / validator / 黃金集起咗(§37)。未做:Solver / Critic、學生數據 table、
+> Calibration、Adaptive。
+
 對住 `system_spec.md` 逐層睇:而家有乜、缺乜、邊啲而家唔做將來補唔返。
 Ingestion 嗰層嘅 15 個 bug(pipeline 次序、blocking run 蓋過好 run 等)已經另外列咗,
 呢度唔重複,只講**成個系統**嘅設計。

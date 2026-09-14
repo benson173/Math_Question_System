@@ -146,7 +146,7 @@ def attach_orphan_scheme(pipeline, scheme_path: Path, label: str, inbox: Path,
         file_away(scheme_path, PROCESSED_PDF_DIR, inbox)
     detail = f"attached to {json_path.name}: {matched} answers"
     print(f"  ok: {detail}")
-    return Outcome(label, "ok", detail, questions=matched, seconds=time.monotonic() - start)
+    return Outcome(label, "ok", detail, seconds=time.monotonic() - start)
 
 
 # --- reporting --------------------------------------------------------------
@@ -237,6 +237,7 @@ def main(argv: list[str] | None = None) -> int:
 
     outcomes: list[Outcome] = []
     seen: dict[str, str] = {}
+    later: list[Path] = []          # schemes whose paper was not run this batch
     started = time.monotonic()
 
     try:
@@ -252,12 +253,16 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  unreadable: {exc}")
                 continue
 
+            scheme_path = pairing.schemes.get(pdf_path)
+
             if sha256 in seen:
                 outcomes.append(Outcome(label, "duplicate",
                                         f"same content as {seen[sha256]}"))
                 print(f"  duplicate of {seen[sha256]}, skipping")
                 if not keep:
                     file_away(pdf_path, PROCESSED_PDF_DIR, inbox)
+                if scheme_path:
+                    later.append(scheme_path)       # attach to the copy that was done
                 continue
             seen[sha256] = label
 
@@ -267,9 +272,10 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  already ingested ({done.name}), skipping - use --redo to force")
                 if not keep:
                     file_away(pdf_path, PROCESSED_PDF_DIR, inbox)
+                if scheme_path:
+                    later.append(scheme_path)       # the paper is done; its scheme is not
                 continue
 
-            scheme_path = pairing.schemes.get(pdf_path)
             start = time.monotonic()
             try:
                 result = (pipeline.run_one_pdf(pdf_path, marking_scheme_path=scheme_path)
@@ -280,6 +286,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  failed: {detail}")
                 if not keep:
                     file_away(pdf_path, FAILED_PDF_DIR, inbox)
+                    if scheme_path:
+                        file_away(scheme_path, FAILED_PDF_DIR, inbox)
                 outcomes.append(Outcome(label, "failed", detail, seconds=seconds))
                 continue
 
@@ -306,7 +314,7 @@ def main(argv: list[str] | None = None) -> int:
                   f"{len(result.document.questions)} questions in {format_duration(seconds)}"
                   + (f" ({detail})" if detail else ""))
 
-        for scheme_path in pairing.orphans:
+        for scheme_path in pairing.orphans + later:
             label = str(scheme_path.relative_to(inbox))
             print("=" * 70)
             print(f"[marking scheme] {label}")

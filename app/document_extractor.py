@@ -27,9 +27,10 @@ from app.schemas import (
 
 
 class DocumentExtractor:
-    def __init__(self):
+    def __init__(self, gemini=None):
         self.settings = load_settings()
-        self.gemini = GeminiClient()
+        # Injectable so the whole extract() path runs in tests without a key.
+        self.gemini = gemini or GeminiClient()
 
     def extract(self, pdf_path: str | Path) -> ExtractionResult:
         """Return the questions plus the provenance needed to store them.
@@ -62,6 +63,15 @@ class DocumentExtractor:
             issues=[],
             source=self._describe_source(loaded),
             run=self._describe_run(),
+        )
+
+    @staticmethod
+    def _describe_source(loaded: LoadedDocument) -> SourceDocument:
+        return SourceDocument(
+            file_name=loaded.file_name,
+            sha256=loaded.sha256,
+            page_count=loaded.page_count,
+            byte_size=loaded.byte_size,
         )
 
     def _describe_run(self) -> ExtractionRun:

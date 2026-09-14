@@ -9,7 +9,6 @@ standard before it is kept.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-import hashlib
 import json
 from pathlib import Path
 from typing import Optional

@@ -26,7 +26,7 @@ from app.diagram_geometry import (
     safe_asset_name,
 )
 from app.paths import project_relative
-from app.schemas import ExtractedDocument, PageRegion, RenderedImage
+from app.schemas import ExtractedDocument, RenderedImage
 
 
 def asset_file_name(source_question_id: str, kind: str, index: int) -> str:

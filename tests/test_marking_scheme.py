@@ -380,3 +380,70 @@ def test_answer_source_tells_a_scheme_answer_from_a_printed_one():
     assert rows[0]["answer_source"] == "paper"
     assert rows[1]["answer_source"] == "marking_scheme"
     assert run_row(result, "d")["marking_scheme_file_name"] == "p-ms.pdf"
+
+
+def test_a_scheme_for_a_paper_already_ingested_is_still_attached(inbox, monkeypatch):
+    attached = []
+
+    class FakePipeline:
+        def __init__(self, *a, **k): pass
+        def run_one_pdf(self, path, marking_scheme_path=None):
+            raise AssertionError("the paper is already done; it must not be re-extracted")
+        def attach_marking_scheme(self, result, scheme_path):
+            attached.append(scheme_path.name)
+            result.document.marking_scheme = MarkingScheme(
+                file_name=scheme_path.name, sha256="e" * 64, page_count=1, matched=["1"])
+            return result
+
+    class FakeRepository:
+        def __init__(self, verbose=True): pass
+        def describe_target(self): return "test"
+
+    monkeypatch.setattr(batch, "PdfIngestionPipeline", FakePipeline)
+    monkeypatch.setattr(batch, "Repository", FakeRepository)
+    monkeypatch.setattr(attach_script, "EXTRACTED_DIR", inbox["extracted"])
+
+    from app.json_exporter import export_extraction_json
+    from app.document_loader import calculate_sha256
+    paper = inbox["inbox"] / "S4-mock.pdf"
+    paper.write_bytes(b"AAA")
+    sha = calculate_sha256(paper)
+    earlier = make_result(sha=sha)
+    earlier.document.file_name = "S4-mock.pdf"
+    export_extraction_json(earlier, inbox["extracted"] / f"S4-mock-{sha[:12]}.json")
+    (inbox["inbox"] / "S4-mock-ms.pdf").write_bytes(b"BBB")
+
+    assert batch.main([]) == 0
+    assert attached == ["S4-mock-ms.pdf"]
+    assert {p.name for p in inbox["processed"].iterdir()} == {"S4-mock.pdf", "S4-mock-ms.pdf"}
+
+
+def test_a_scheme_follows_a_failed_paper_to_failed(inbox, monkeypatch):
+    class FakePipeline:
+        def __init__(self, *a, **k): pass
+        def run_one_pdf(self, path, marking_scheme_path=None):
+            raise RuntimeError("Gemini exploded")
+
+    class FakeRepository:
+        def __init__(self, verbose=True): pass
+        def describe_target(self): return "test"
+
+    monkeypatch.setattr(batch, "PdfIngestionPipeline", FakePipeline)
+    monkeypatch.setattr(batch, "Repository", FakeRepository)
+    (inbox["inbox"] / "S4-mock.pdf").write_bytes(b"AAA")
+    (inbox["inbox"] / "S4-mock-ms.pdf").write_bytes(b"BBB")
+
+    batch.main([])
+    assert {p.name for p in inbox["failed"].iterdir()} == {"S4-mock.pdf", "S4-mock-ms.pdf"}
+    assert not list(inbox["inbox"].iterdir())
+
+
+def test_find_extraction_does_not_match_a_longer_stem(tmp_path, monkeypatch):
+    extracted = tmp_path / "extracted"
+    extracted.mkdir()
+    (extracted / "S4-mock-2-bbbbbbbbbbbb.json").write_text("{}")     # a different paper
+    (extracted / "S4-mock-notes.json").write_text("{}")             # not an extraction name
+    monkeypatch.setattr(attach_script, "EXTRACTED_DIR", extracted)
+    assert attach_script.find_extraction_for(Path("S4-mock-ms.pdf")) is None
+    (extracted / "S4-mock-aaaaaaaaaaaa.json").write_text("{}")
+    assert attach_script.find_extraction_for(Path("S4-mock-ms.pdf")).name == "S4-mock-aaaaaaaaaaaa.json"

@@ -59,7 +59,9 @@ def _year(text: str) -> Optional[str]:
     full = _FULL_YEAR.search(text)
     if full:
         start, end = full.group(1), full.group(2)
-        return f"{start}-{end}" if end else start
+        if end and int(end) == (int(start) + 1) % 100:
+            return f"{start}-{end}"
+        return start
     compact = _COMPACT_YEAR.search(text)
     if compact:
         first, second = int(compact.group(1)), int(compact.group(2))

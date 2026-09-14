@@ -15,6 +15,7 @@ inbox, whether or not its paper is in the same batch.
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import sys
 
 from app.extraction_io import load_extraction
@@ -30,7 +31,8 @@ def find_extraction_for(scheme_path: Path) -> Path | None:
     stem = marking_scheme_stem(scheme_path.name)
     if stem is None:
         return None
-    candidates = sorted(EXTRACTED_DIR.glob(f"{safe_stem(stem + '.pdf')}-*.json"),
+    wanted = re.compile(rf"^{re.escape(safe_stem(stem + '.pdf'))}-[0-9a-f]{{12}}\.json$")
+    candidates = sorted((p for p in EXTRACTED_DIR.glob("*.json") if wanted.match(p.name)),
                         key=lambda p: p.stat().st_mtime, reverse=True)
     return candidates[0] if candidates else None
 

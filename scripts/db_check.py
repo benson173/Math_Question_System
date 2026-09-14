@@ -12,7 +12,6 @@ Exit codes: 0 everything matches, 1 the schema differs, 2 not configured.
 
 from __future__ import annotations
 
-import sys
 from typing import Any
 
 from app.config import load_settings
