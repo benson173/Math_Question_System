@@ -13,7 +13,6 @@ by its vector and by which dimensions drive it.
 
 from __future__ import annotations
 
-from collections import Counter
 import csv
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -455,7 +454,3 @@ def rubric_text() -> str:
 def profile_summary(levels: dict[str, int]) -> str:
     """R1 P2 D0 I1 C2 E2 - the compact form used in reports."""
     return " ".join(f"{d}{levels.get(d, 0)}" for d in DIMENSIONS)
-
-
-def count_levels(analyses: list[QuestionAnalysis]) -> dict[str, Counter]:
-    return {d: Counter(a.levels().get(d, 0) for a in analyses) for d in DIMENSIONS}

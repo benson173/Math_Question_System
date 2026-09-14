@@ -32,11 +32,12 @@ def matches(question_id: str, wanted: str) -> bool:
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
 
-    path = newest_extraction()
     if "--file" in args:
         index = args.index("--file")
         path = Path(args[index + 1])
         del args[index:index + 2]
+    else:
+        path = newest_extraction()
     wanted = args[0] if args else None
 
     data = json.loads(path.read_text(encoding="utf-8"))

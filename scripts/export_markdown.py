@@ -9,13 +9,12 @@ deleted. Does not call Gemini.
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
+from app.extraction_io import load_extraction
 from app.markdown_exporter import export_extraction_markdown, markdown_output_path
 from app.paths import EXTRACTED_DIR
-from app.schemas import ExtractionResult
 
 
 def newest_json() -> Path:
@@ -29,8 +28,7 @@ def main(argv: list[str] | None = None) -> int:
     args = sys.argv[1:] if argv is None else argv
     json_path = Path(args[0]) if args else newest_json()
 
-    data = json.loads(json_path.read_text(encoding="utf-8"))
-    result = ExtractionResult.model_validate(data)
+    result = load_extraction(json_path)
 
     report_path = export_extraction_markdown(result, markdown_output_path(json_path))
     print("Wrote:", report_path)
