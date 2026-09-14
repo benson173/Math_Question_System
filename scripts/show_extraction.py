@@ -70,6 +70,8 @@ def main(argv: list[str] | None = None) -> int:
                           f"{q.get('group_marks_scope') or 'the group'}")
         if q.get("diagram_required"):
             labels.append("diagram")
+        if q.get("depends_on"):
+            labels.append("depends on " + ", ".join(q["depends_on"]))
         suffix = f"  [{', '.join(labels)}]" if labels else ""
         print(f"{q['source_question_id']}  "
               f"p{q['page_start']}-{q['page_end']}{suffix}  "

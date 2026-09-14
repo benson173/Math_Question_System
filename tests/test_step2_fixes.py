@@ -48,7 +48,6 @@ def test_a_database_failure_does_not_lose_the_extraction(isolated, capsys):
 
 
 def test_a_database_failure_is_not_a_failed_paper(isolated, monkeypatch, tmp_path, capsys):
-    from tests.test_batch_ingest import inbox as _inbox  # noqa: F401
     paths = {name: tmp_path / name for name in ("inbox", "processed", "failed")}
     for p in paths.values():
         p.mkdir()

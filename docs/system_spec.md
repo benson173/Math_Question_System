@@ -152,41 +152,45 @@ Analyzer output Structural Analysis,**唔** output empirical difficulty。
 
 ```json
 {
-  "skill_family": "Difference of Two Squares",
-  "atomic_skills": [
-    "recognise perfect square",
-    "recognise difference of two squares",
-    "apply DOS identity"
-  ],
-  "strategies": [
-    {
-      "strategy_name": "Apply difference of two squares",
-      "steps": [
-        "Recognise 1 as 1²",
-        "Recognise 225x² as (15x)²",
-        "Apply a²-b²=(a+b)(a-b)"
-      ],
-      "rpdice": {
-        "R": ["hidden perfect square recognition"],
-        "P": ["apply identity"],
-        "D": ["method selection if no cue"],
-        "I": ["single skill family"],
-        "C": ["short sequential reasoning"],
-        "E": ["identity confusion", "sign error"]
-      }
-    }
-  ],
+  "source_question_id": "4(a)",
+  "skill_family": "Factorisation",
+  "atomic_skills": ["na.factor.recognise-square", "na.factor.dos"],
   "method_cues": [],
   "representation_features": ["algebraic"],
-  "difficulty_drivers": ["recognition"],
-  "possible_errors": ["identity confusion", "sign error"],
-  "structural_depth_notes": [
-    "Difficulty mainly comes from recognition, not procedure."
+  "strategies": [
+    {
+      "strategy_name": "Difference of two squares",
+      "steps": [
+        "See 1 as 1²",
+        "See 225x² as (15x)²",
+        "Apply a² − b² = (a + b)(a − b)"
+      ],
+      "skills": ["na.factor.recognise-square", "na.factor.dos"],
+      "rpdice": {
+        "R": {"level": 2, "evidence": ["225x² must be seen as (15x)²; nothing cues it"]},
+        "P": {"level": 1, "evidence": ["one identity applied once"]},
+        "D": {"level": 1, "evidence": ["factorisation is the section; DOS is the obvious fit"]},
+        "I": {"level": 1, "evidence": ["two skills, both in Factorisation"]},
+        "C": {"level": 1, "evidence": ["two forward steps"]},
+        "E": {"level": 2, "evidence": ["a² − b² read as (a − b)² is a catalogued misconception"]}
+      },
+      "is_primary": true
+    }
   ],
-  "confidence": 0.8,
+  "possible_errors": ["err.dos.as-square-of-difference", "err.factor.incomplete"],
+  "difficulty_drivers": ["R", "E"],
+  "structural_depth_notes": ["Demand comes from recognition, not procedure."],
+  "proposed_skills": [],
+  "proposed_errors": [],
+  "confidence": 0.9,
   "empirical_difficulty": null
 }
 ```
+
+- `atomic_skills`、`strategies[].skills` 係 `taxonomy/skills.csv` 嘅 id;`possible_errors`
+  係 `taxonomy/error_patterns.csv` 嘅 id。搵唔到就放 `proposed_*`。
+- 每個維度係 `{level: 0–3, evidence: [...]}`,level > 0 一定要 evidence。
+- `difficulty_drivers` 係 level ≥ 2 嘅字母,由 code 計,唔係 model 決定。
 
 `empirical_difficulty` 永遠係 `null`,由 Analyzer 寫出嚟。呢個唔係漏,係規則。
 

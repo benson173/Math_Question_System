@@ -125,6 +125,13 @@ MATHEMATICAL NOTATION
 - Inside \( \), use the ordinary ASCII hyphen (-) for minus, as LaTeX expects;
   U+2212 does not belong inside a formula.
 
+ANSWERS PRINTED IN THE PAPER
+- If the paper prints a final answer for a part, copy it into answer.
+- If the paper prints working or a model solution, copy it into
+  worked_solution, step by step in printed order.
+- Most papers print neither: leave both null. Never solve the question to
+  fill them in. A separate marking scheme, if there is one, is attached later.
+
 MARKS
 - If the mark is printed for this individual part, put it in marks.
 - If one mark total is printed for a group of parts, leave marks null, put the

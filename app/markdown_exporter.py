@@ -126,6 +126,7 @@ def _question_section(
     asset: RenderedImage | None,
     report_path: Path,
     tables: list[RenderedImage] | None = None,
+    scheme_matched: bool = False,
 ) -> list[str]:
     labels = []
     if question.marks is not None:
@@ -141,6 +142,7 @@ def _question_section(
     if question.depends_on:
         labels.append("depends on " + ", ".join(question.depends_on))
 
+    answer_origin = (" (marking scheme)" if scheme_matched else "")
     lines = [f"## {question.source_question_id}", ""]
     meta = _pages(question)
     if labels:
@@ -163,7 +165,7 @@ def _question_section(
         lines += _image_lines(table, label, report_path)
 
     if question.answer:
-        lines += [f"**Answer:** {question.answer}", ""]
+        lines += [f"**Answer{answer_origin}:** {question.answer}", ""]
     if question.worked_solution:
         lines += ["**Worked solution:**", "", question.worked_solution, ""]
     for note in question.extraction_notes:
@@ -185,12 +187,14 @@ def render_markdown(result: ExtractionResult, report_path: Path) -> str:
     lines += _summary_table(result)
     lines += ["", _issue_summary(result.issues), "", "---", ""]
 
+    matched = set(document.marking_scheme.matched) if document.marking_scheme else set()
     for question in document.questions:
         lines += _question_section(
             question,
             assets.get(question.source_question_id),
             report_path,
             tables.get(question.source_question_id),
+            scheme_matched=question.source_question_id in matched,
         )
         lines += ["---", ""]
 

@@ -172,3 +172,15 @@ def test_export_ends_with_exactly_one_newline(make_result, tmp_path):
     path = export_extraction_markdown(make_result(), tmp_path / "r.md")
     text = path.read_text(encoding="utf-8")
     assert text.endswith("\n") and not text.endswith("\n\n")
+
+
+def test_an_answer_from_the_marking_scheme_is_labelled(make_result, make_document, make_question, report_path):
+    from app.schemas import MarkingScheme
+    document = make_document([make_question(source_question_id="1", answer="x = 3"),
+                              make_question(source_question_id="2", answer="printed")])
+    document.marking_scheme = MarkingScheme(file_name="p-ms.pdf", sha256="c" * 64,
+                                            page_count=1, matched=["1"])
+    text = render_markdown(make_result(document=document), report_path)
+    assert "**Answer (marking scheme):** x = 3" in text
+    assert "**Answer:** printed" in text
+    assert "p-ms.pdf (1 answers attached)" in text
