@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from scripts.db_check import EXPECTED_COLUMNS, advise, probe_table, report
 

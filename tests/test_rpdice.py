@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+
 
 import pytest
 
@@ -12,7 +12,7 @@ from app.analyzer import (AnalysisPayload, AnalysisResult, AnalysisRun, build_pr
                           render_analysis_markdown, repair_drivers)
 from app.analysis_store import analysis_rows, push_analysis
 from app.paths import RPDICE_GOLD_CSV
-from app.rpdice import (DIMENSIONS, LEVELS, MAX_LEVEL, Dimension, GoldRating,
+from app.rpdice import (DIMENSIONS, LEVELS, Dimension, GoldRating,
                         QuestionAnalysis, RpdiceProfile, Strategy, drivers_of,
                         method_cues_in, profile_summary, read_gold, render_scorecard,
                         rubric_text, score_against_gold, validate_analysis, validate_gold)
