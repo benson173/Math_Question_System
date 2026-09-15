@@ -45,6 +45,24 @@ FOUNDATION = {"": None, "F": "foundation", "N": "non-foundation"}
 _SKILL_ID = re.compile(r"^(na|ms|dh|fl|m1|m2)\.[a-z0-9-]+\.[a-z0-9-]+$")
 _ERROR_ID = re.compile(r"^err\.[a-z0-9-]+\.[a-z0-9-]+$")
 
+# An error's skills column may also hold "*" (any skill: rounding too early,
+# a sign slip) or "<strand>.*" (any skill of that strand: assuming a right
+# angle from the diagram is a fault of geometry in general, not of one unit).
+_WILDCARD = re.compile(r"^(\*|(na|ms|dh|fl|m1|m2)\.\*)$")
+
+
+def is_wildcard(entry: str) -> bool:
+    return bool(_WILDCARD.match(entry))
+
+
+def skill_matches(entry: str, skill_id: str) -> bool:
+    """Does a skills-column entry (an id or a wildcard) cover this skill?"""
+    if entry == "*":
+        return True
+    if entry.endswith(".*"):
+        return skill_id.startswith(entry[:-1])
+    return entry == skill_id
+
 
 @dataclass(frozen=True)
 class Skill:
@@ -65,6 +83,14 @@ class ErrorPattern:
     name_zh: str
     skills: tuple[str, ...]
     description: str = ""
+
+    def applies_to(self, skill_id: str) -> bool:
+        return any(skill_matches(entry, skill_id) for entry in self.skills)
+
+    @property
+    def is_general(self) -> bool:
+        """Belongs to a strand or to everything rather than to named skills."""
+        return any(is_wildcard(entry) for entry in self.skills)
 
 
 @dataclass
@@ -92,7 +118,38 @@ class Taxonomy:
         return [s for s in self.skills.values() if s.strand in wanted]
 
     def errors_for_skill(self, skill_id: str) -> list[ErrorPattern]:
-        return [e for e in self.errors.values() if skill_id in e.skills]
+        return [e for e in self.errors.values() if e.applies_to(skill_id)]
+
+    def error_fits(self, error_id: str, skill_ids: Iterable[str]) -> bool:
+        """Can a question using these skills expose this error?
+
+        Yes if the error belongs to one of the skills or to a skill any of
+        them rests on: a simultaneous-equations question still exposes a
+        transposing sign error, because solving a linear equation is a
+        prerequisite of it.
+        """
+        pattern = self.errors[error_id]
+        for skill_id in skill_ids:
+            if pattern.applies_to(skill_id):
+                return True
+            if skill_id in self.skills and any(pattern.applies_to(pre) for pre in
+                                               self.prerequisites_closure(skill_id)):
+                return True
+        return False
+
+    def unique_skill_for(self, wrong_id: str) -> Optional[str]:
+        """The one known skill whose unit and slug match a wrong id, if any.
+
+        The Analyzer's commonest slip is the strand prefix (ms.lineq.solve for
+        na.lineq.solve). When exactly one skill shares the rest of the id the
+        intent is unambiguous and the id can be corrected rather than rejected.
+        """
+        parts = wrong_id.split(".")
+        if len(parts) != 3 or wrong_id in self.skills:
+            return None
+        tail = "." + ".".join(parts[1:])
+        matches = [s for s in self.skills if s.endswith(tail)]
+        return matches[0] if len(matches) == 1 else None
 
     def prerequisites_closure(self, skill_id: str) -> list[str]:
         """Every skill this one rests on, nearest first, without repeats."""
@@ -199,7 +256,7 @@ def validate(skills: Iterable[Skill], errors: Iterable[ErrorPattern]) -> list[st
         if not e.skills:
             problems.append(f"error {e.error_id} belongs to no skill")
         for skill_id in e.skills:
-            if skill_id not in known:
+            if skill_id not in known and not is_wildcard(skill_id):
                 problems.append(f"error {e.error_id} refers to {skill_id}, which does not exist")
         if not e.name_en or not e.name_zh:
             problems.append(f"error {e.error_id} is missing an English or Chinese name")

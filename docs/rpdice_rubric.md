@@ -90,8 +90,8 @@
 |---|---|
 | `RPDICE_LEVEL_OUT_OF_RANGE` | 唔係 0–3 |
 | `RPDICE_EVIDENCE_MISSING` | 級數 > 0 但冇 evidence |
-| `SKILL_UNKNOWN` / `ERROR_UNKNOWN` | 唔喺 taxonomy;應該放 `proposed_*` |
-| `ERROR_NOT_OF_SKILL` | error 唔屬於任何一個列出嘅 skill |
+| `SKILL_UNKNOWN` / `ERROR_UNKNOWN` | 唔喺 taxonomy;應該放 `proposed_*`(只係 strand 前綴錯、其餘部分獨一無二嘅 id,runner 會先自動改正並記喺 `repairs`) |
+| `ERROR_NOT_OF_SKILL` | error 唔屬於任何一個列出嘅 skill,亦唔屬於佢哋嘅 prerequisite(`*` / `ms.*` 嗰啲通用 error 唔會報) |
 | `METHOD_CUE_NOT_IN_TEXT` | cue 唔係原文 |
 | `DECISION_IGNORES_CUE` | 題目有 cue 但 D > 1 |
 | `DRIVERS_MISMATCH` | drivers 同 levels 對唔上(runner 會自動重算) |

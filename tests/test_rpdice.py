@@ -122,6 +122,44 @@ def test_an_error_must_belong_to_a_listed_skill():
     assert "ERROR_UNKNOWN" in codes(analysis(errors=("err.nope.nope",)))
 
 
+def test_an_error_of_a_prerequisite_or_a_general_error_is_accepted():
+    # err.pythag.wrong-hypotenuse belongs to ms.pythag.apply, which the converse rests on
+    converse = analysis(skills=("ms.pythag.converse",), errors=("err.pythag.wrong-hypotenuse",),
+                        levels=dict(R=1, P=2, D=1, I=1, C=1, E=1))
+    assert codes(converse) == []
+    simul = analysis(skills=("na.simeq.word", "na.simeq.elimination"),
+                     errors=("err.eq.sign-transposing",),
+                     levels=dict(R=1, P=2, D=1, I=1, C=1, E=1))
+    assert codes(simul) == []
+    parallel = analysis(skills=("ms.angles.parallel-prove",),
+                        errors=("err.geo.assumes-from-diagram", "err.trig.rounding-early"),
+                        levels=dict(R=2, P=1, D=1, I=1, C=2, E=2))
+    assert "ERROR_NOT_OF_SKILL" not in codes(parallel)
+
+
+def test_each_unknown_skill_is_reported_once_even_when_listed_twice():
+    a = analysis(skills=("na.made.up",), errors=())     # in atomic_skills and the strategy
+    assert codes(a).count("SKILL_UNKNOWN") == 1
+
+
+def test_a_wrong_strand_prefix_is_repaired_before_validation():
+    a = analysis(skills=("ms.mensur.prism-cylinder", "ms.lineq.solve"), errors=(),
+                 levels=dict(R=1, P=2, D=1, I=1, C=1, E=1))
+    payload = AnalysisPayload(analyses=[a])
+    from app.analyzer import repair_skill_ids
+    assert repair_skill_ids(payload, TAX) == ["18: skill ms.lineq.solve -> na.lineq.solve"
+                                              .replace("18", a.source_question_id)]
+    assert a.atomic_skills == ["ms.mensur.prism-cylinder", "na.lineq.solve"]
+    assert a.strategies[0].skills == ["ms.mensur.prism-cylinder", "na.lineq.solve"]
+    assert "SKILL_UNKNOWN" not in codes(a)
+    # a repair that lands on a skill already listed does not duplicate it
+    b = analysis(skills=("na.lineq.solve", "ms.lineq.solve"), errors=())
+    repair_skill_ids(AnalysisPayload(analyses=[b]), TAX)
+    assert b.atomic_skills == ["na.lineq.solve"]
+    # nothing to repair, nothing reported
+    assert repair_skill_ids(AnalysisPayload(analyses=[analysis()]), TAX) == []
+
+
 def test_a_cue_caps_decision_at_one():
     a = analysis(levels=dict(R=1, P=1, D=2, I=1, C=1, E=2))
     assert "DECISION_IGNORES_CUE" in codes(a, "利用二次公式解 5x² − 9x − 2 = 0。")
@@ -231,6 +269,17 @@ def test_an_analysis_round_trips_through_json(tmp_path):
 def test_the_report_shows_each_profile():
     text = render_analysis_markdown(make_analysis_result(), TAX)
     assert "`R2 P1 D1 I1 C1 E2`" in text and "Factorise a difference of two squares" in text
+    assert "## Repairs" not in text
+    fixed = make_analysis_result(repairs=["18: skill ms.lineq.solve -> na.lineq.solve"])
+    assert "## Repairs\n\n- 18: skill ms.lineq.solve -> na.lineq.solve" in render_analysis_markdown(fixed, TAX)
+
+
+def test_the_prompt_explains_general_errors_and_the_strand_prefix():
+    prompt = build_prompt(make_result(), TAX)
+    assert '"*" means any skill' in prompt
+    assert "err.trig.rounding-early | * |" in prompt
+    assert "err.geo.assumes-from-diagram | ms.* |" in prompt
+    assert "copy it, never infer it" in prompt
 
 
 def test_rows_hang_off_the_question_key_and_supersede_older_runs():

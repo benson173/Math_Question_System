@@ -1,7 +1,8 @@
 error_id,name_en,name_zh,skills,description
 # Errors a question can expose (RPDICE "E"). One row per pattern. skills: the
-# skill_ids the error belongs to, separated by ";". Analyzer output and student
-# error tagging both reference error_id, so the two can be compared.
+# skill_ids the error belongs to, separated by ";"; "*" means any skill and
+# "<strand>.*" any skill of that strand. Analyzer output and student error
+# tagging both reference error_id, so the two can be compared.
 # --- algebra: identities and factorisation ---
 err.dos.as-square-of-difference,Treats a² − b² as (a − b)²,把 a²−b² 當成 (a−b)²,na.factor.dos;na.identity.dos,Confuses the difference of two squares with the square of a difference.
 err.square.missing-cross-term,Expands (a + b)² as a² + b²,展開 (a+b)² 漏 2ab,na.identity.perfect-square,Omits the middle term 2ab.
@@ -9,8 +10,9 @@ err.factor.incomplete,Stops before factorising completely,因式分解未完全,
 err.factor.sign-in-bracket,Wrong sign inside a bracket when taking out a factor,提公因式時括號內符號錯,na.factor.common;na.algexp.expand-bracket,Especially when the factor taken out is negative.
 err.factor.cross-wrong-pair,Wrong pair of factors in the cross method,十字相乘配錯因子,na.factor.cross;na.factor.cross-leading,Product right but sum of cross products wrong or sign wrong.
 err.cancel.terms-not-factors,Cancels terms instead of factors in a fraction,約分時約掉項而非因式,na.algfrac.simplify,"Cancels the x in (x + 2)/x, or the 3 in (3x + 1)/3."
+err.algfrac.subtract-denominators,Adds or subtracts the denominators along with the numerators,分母也相加減,na.algfrac.add-sub,"1/x − 1/y written as 0/(x − y); 2/3 + 1/4 as 3/7."
 err.expand.sign-distribution,Fails to distribute a minus sign over a bracket,負號未分配到括號內每項,na.algexp.expand-bracket,"−(a − b) written as −a − b."
-err.like-terms.unlike-combined,Combines unlike terms,合併了不同類項,na.algexp.like-terms,"3x + 2x² written as 5x³ or 5x."
+err.like-terms.unlike-combined,Combines unlike terms,合併了不同類項,na.*,"3x + 2x² written as 5x³ or 5x."
 # --- indices, surds, logarithms ---
 err.index.add-instead-of-multiply,Adds indices when multiplying bases that differ,不同底相乘時加指數,na.indices.laws,"2³ × 3² treated as 6⁵."
 err.index.power-of-sum,Distributes a power over a sum,把乘方分配到和上,na.indices.laws;na.identity.perfect-square,"(a + b)ⁿ written as aⁿ + bⁿ."
@@ -24,7 +26,7 @@ err.log.domain-ignored,Accepts a log equation solution outside the domain,對數
 err.log.base-change,Wrong direction in the change-of-base formula,換底公式方向錯,na.log.change-base,
 err.exp.equate-bases-wrong,Equates indices without equal bases,底未相同便比較指數,na.exp.equation;na.indices.equation,
 # --- equations and inequalities ---
-err.eq.sign-transposing,Sign error when transposing a term,移項時符號錯,na.lineq.solve,
+err.eq.sign-transposing,Sign error when transposing a term,移項時符號錯,*,"Any equation solved for an unknown, in algebra or in a geometry / mensuration question."
 err.eq.divide-by-unknown,Divides both sides by an expression that may be zero and loses a root,兩邊除以含未知數的式子而失根,na.quad.solve-factor;na.eqn.fractional,"x² = 3x solved as x = 3 only."
 err.eq.extraneous-root-kept,Keeps an extraneous root after squaring or clearing fractions,平方或去分母後未剔除增根,na.eqn.radical;na.eqn.fractional,
 err.eq.invalid-root-in-context,Keeps a root that is impossible in context (negative length / non-integer count),保留在情境中不合理的根,na.quad.word;na.eqn.word,
@@ -43,7 +45,7 @@ err.simeq.substitution-partial,Substitutes into the same equation it came from,�
 # --- functions and graphs ---
 err.func.transform-direction,Translates the graph the wrong way for f(x + h),f(x+h) 平移方向錯,na.func.transform-translate,
 err.func.transform-order,Applies combined transformations in the wrong order,綜合變換次序錯,na.func.transform-combined,
-err.func.evaluate-substitution,Substitutes into only part of the expression,代入時只代入部分,na.func.evaluate,"f(x) = x² + x, f(2a) written as 4a² + a."
+err.func.evaluate-substitution,Substitutes into only part of the expression,代入時只代入部分,na.func.evaluate;na.formula.substitute;na.algexp.substitute,"f(x) = x² + x, f(2a) written as 4a² + a."
 # --- sequences ---
 err.seq.n-off-by-one,Off-by-one in the term number n,項數 n 差一,na.seq.as-term;na.seq.gs-term;na.seq.find-n,
 err.seq.sum-vs-term,Confuses the nth term with the sum of n terms,混淆第 n 項與前 n 項和,na.seq.as-sum;na.seq.gs-sum,
@@ -64,8 +66,9 @@ err.geo.reason-missing,States a fact without the reason,寫結論冇理由,ms.an
 err.geo.reason-wrong-name,Names the wrong theorem for a step,理由的定理名稱錯,ms.circle.angle-chase;ms.angles.parallel,"'alt. ∠s' for corresponding angles; '∠ in semicircle' where it is '∠ at centre'."
 err.geo.congruence-condition-invalid,Uses SSA or AAA as a congruence condition,以 SSA 或 AAA 判定全等,ms.congr.conditions,
 err.geo.similar-corresponding-sides,Pairs non-corresponding sides in similar triangles,相似三角形對應邊配錯,ms.similar.ratio-length,
+err.geo.similar-corresponding-angles,Pairs non-corresponding angles in similar triangles (reads the diagram instead of the vertex order),相似三角形對應角配錯(睇圖而非頂點次序),ms.similar.corresponding-angles,"△ABC ~ △ADB: ∠B paired with ∠B instead of ∠ADB."
 err.geo.similar-ratio-squared,Uses the length ratio for areas or volumes,面積或體積用了長度比,ms.mensur.similar-ratio,
-err.geo.assumes-from-diagram,Assumes a right angle / equal length from the diagram,由圖假定直角或等長,ms.deduct.proof-writing;ms.circle.prove,
+err.geo.assumes-from-diagram,Assumes a right angle / equal length / parallel from the diagram,由圖假定直角、等長或平行,ms.*,"Any figure question: the property must come from the given data or a theorem, not from how the diagram looks."
 err.circle.centre-circumference-swapped,Doubles the wrong angle in the centre-circumference relation,圓心角與圓周角關係用反,ms.circle.angle-centre,
 err.circle.cyclic-not-verified,Uses cyclic quadrilateral properties without four concyclic points,未確認四點共圓便用性質,ms.circle.cyclic-quad-opp;ms.circle.concyclic-test,
 err.circle.tangent-not-perp,Fails to use tangent ⊥ radius,未用切線垂直半徑,ms.circle.tangent-perp,
@@ -74,6 +77,7 @@ err.mensur.formula-confused,Mixes up volume and surface area formulas,混淆體�
 err.mensur.slant-vs-height,Uses the height where the slant height is needed (or vice versa),高與斜高混淆,ms.mensur.pyramid-cone,
 err.mensur.units-mixed,Mixes units within one calculation,單位混用,ms.mensur.unit-convert,
 err.mensur.arc-angle-fraction,Wrong fraction of the circle for an arc / sector,弧或扇形的圓心角分數錯,ms.mensur.arc-sector,
+err.mensur.radius-vs-diameter,Uses the radius where the diameter is asked (or vice versa),半徑與直徑混淆,ms.mensur.circle;ms.mensur.arc-sector;ms.mensur.prism-cylinder;ms.mensur.sphere,"Answers r after the question asked for the diameter; puts the diameter into πr²."
 err.pythag.wrong-hypotenuse,Puts a leg where the hypotenuse belongs,把直角邊當作斜邊,ms.pythag.apply,"c² = a² − b² with c not the hypotenuse."
 # --- coordinate geometry ---
 err.coord.slope-inverted,Inverts the slope (Δx / Δy),斜率倒轉,ms.coordgeo.slope,
@@ -92,7 +96,7 @@ err.trig.cosine-rule-sign,Sign error in the cosine rule,餘弦公式符號錯,ms
 err.trig.elevation-depression-swapped,Swaps angle of elevation and depression,仰角俯角混淆,ms.trig.elevation-depression,
 err.trig.bearing-reference,Measures a bearing from the wrong reference direction,方位角參考方向錯,ms.trig.bearing,
 err.trig.3d-wrong-plane,Takes the angle in the wrong plane in a 3-D problem,三維問題取錯平面上的角,ms.trig.3d-line-plane;ms.trig.3d-plane-plane,
-err.trig.rounding-early,Rounds an intermediate value too early,中途過早四捨五入,ms.trig.2d-multi;ms.trig.2d-applications,
+err.trig.rounding-early,Rounds an intermediate value too early,中途過早四捨五入,*,"Any multi-step numerical calculation, not only trigonometry."
 # --- statistics and probability ---
 err.stat.median-unsorted,Takes the median of unsorted data,未排序便取中位數,dh.central.median,
 err.stat.grouped-mean-boundaries,Uses class boundaries instead of class marks for a grouped mean,分組平均數用了組界而非組中值,dh.central.grouped-mean,

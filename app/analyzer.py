@@ -50,6 +50,7 @@ class AnalysisResult(BaseModel):
     run: AnalysisRun
     analyses: list[QuestionAnalysis]
     issues: list[ValidationIssue] = Field(default_factory=list)
+    repairs: list[str] = Field(default_factory=list)      # deterministic fixes applied
 
     def by_key(self) -> dict[str, QuestionAnalysis]:
         return {question_key(self.sha256, a.source_question_id): a for a in self.analyses}
@@ -72,11 +73,16 @@ def skills_block(taxonomy: Taxonomy, module: Optional[str] = None) -> str:
 
 
 def errors_block(taxonomy: Taxonomy, module: Optional[str] = None) -> str:
-    """The error patterns of exactly those skills."""
-    allowed = {s.skill_id for s in taxonomy.skills_for_module(module)}
-    lines = ["ERRORS (error_id | skills | name)"]
+    """The error patterns of exactly those skills, plus the general ones.
+
+    In the skills column "*" means any skill and "ms.*" any skill of that
+    strand; the prompt says so once above the list.
+    """
+    allowed = [s.skill_id for s in taxonomy.skills_for_module(module)]
+    lines = ["ERRORS (error_id | skills | name)",
+             'In skills, "*" means any skill and "<strand>.*" any skill of that strand.']
     for e in taxonomy.errors.values():
-        if allowed & set(e.skills):
+        if any(e.applies_to(skill_id) for skill_id in allowed):
             lines.append(f"{e.error_id} | {';'.join(e.skills)} | {e.name_en}")
     return "\n".join(lines)
 
@@ -144,6 +150,41 @@ def check_payload(payload: AnalysisPayload, result: ExtractionResult,
     return issues
 
 
+def repair_skill_ids(payload: AnalysisPayload, taxonomy: Taxonomy) -> list[str]:
+    """Correct a skill id that is wrong only in its strand prefix.
+
+    "ms.lineq.solve" can only mean na.lineq.solve, so it is rewritten (in
+    atomic_skills and in every strategy) and the rewrite is recorded, one
+    line per question and id. An id that matches nothing, or more than one
+    skill, is left for SKILL_UNKNOWN to report.
+    """
+    notes: list[str] = []
+    for analysis in payload.analyses:
+        mapping: dict[str, str] = {}
+        lists = [analysis.atomic_skills] + [s.skills for s in analysis.strategies]
+        for skill_id in {s for lst in lists for s in lst}:
+            fixed = taxonomy.unique_skill_for(skill_id)
+            if fixed:
+                mapping[skill_id] = fixed
+        if not mapping:
+            continue
+        analysis.atomic_skills = _mapped(analysis.atomic_skills, mapping)
+        for strategy in analysis.strategies:
+            strategy.skills = _mapped(strategy.skills, mapping)
+        for wrong, right in sorted(mapping.items()):
+            notes.append(f"{analysis.source_question_id}: skill {wrong} -> {right}")
+    return notes
+
+
+def _mapped(skills: list[str], mapping: dict[str, str]) -> list[str]:
+    out: list[str] = []
+    for skill_id in skills:
+        skill_id = mapping.get(skill_id, skill_id)
+        if skill_id not in out:
+            out.append(skill_id)
+    return out
+
+
 def repair_drivers(payload: AnalysisPayload) -> int:
     """difficulty_drivers is derivable, so a wrong list is recomputed, not argued about."""
     fixed = 0
@@ -169,7 +210,10 @@ class RpdiceAnalyzer:
     def analyse(self, result: ExtractionResult) -> AnalysisResult:
         prompt = build_prompt(result, self.taxonomy)
         payload: AnalysisPayload = self.gemini.generate_json(prompt, AnalysisPayload)
-        repair_drivers(payload)
+        repairs = repair_skill_ids(payload, self.taxonomy)
+        fixed = repair_drivers(payload)
+        if fixed:
+            repairs.append(f"difficulty_drivers recomputed for {fixed} question(s)")
         issues = check_payload(payload, result, self.taxonomy)
         usage = getattr(self.gemini, "last_usage", {}) or {}
         return AnalysisResult(
@@ -189,6 +233,7 @@ class RpdiceAnalyzer:
             ),
             analyses=list(payload.analyses),
             issues=issues,
+            repairs=repairs,
         )
 
 
@@ -246,6 +291,8 @@ def render_analysis_markdown(result: AnalysisResult, taxonomy: Taxonomy) -> str:
             lines += [f"> {note}", ""]
         if a.proposed_skills or a.proposed_errors:
             lines += ["Proposed: " + ", ".join(a.proposed_skills + a.proposed_errors), ""]
+    if result.repairs:
+        lines += ["## Repairs", ""] + [f"- {note}" for note in result.repairs] + [""]
     if result.issues:
         lines += ["## Issues", "", "| Severity | Code | Q | Message |", "|---|---|---|---|"]
         for i in result.issues:

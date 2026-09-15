@@ -217,8 +217,8 @@ pytest
 | `prompts/analyzer_v1.txt` | 🟢 Prompt | RPDICE Analyzer 指令(rubric 由 code 注入) |
 | `taxonomy/golden/rpdice_gold.csv` | 🟡 Config | 人手評分黃金集 |
 | `docs/rpdice_rubric.md` | 📄 Doc | 評分標準(人讀版) |
-| `taxonomy/skills.csv` | 🟡 Config | 537 個 atomic skill(必修 + KS3 + M1 + M2) |
-| `taxonomy/error_patterns.csv` | 🟡 Config | 136 個 error pattern |
+| `taxonomy/skills.csv` | 🟡 Config | 538 個 atomic skill(必修 + KS3 + M1 + M2) |
+| `taxonomy/error_patterns.csv` | 🟡 Config | 139 個 error pattern |
 | `prompts/marking_scheme_v1.txt` | 🟢 Prompt | Gemini 抄 marking scheme 指令 |
 | `app/errors.py` | 🔵 Python | 錯誤類型 |
 | `app/schemas.py` | 🔵 Python | 定義資料格式 |
@@ -395,8 +395,8 @@ Analyzer 之後標 skill、Student Model 計 mastery、學生錯誤同 Analyzer 
 
 | 檔 | 內容 | 數量 |
 |---|---|---|
-| `taxonomy/skills.csv` | 必修部分 + KS3 + M1 + M2,拆到 atomic skill | 537 |
-| `taxonomy/error_patterns.csv` | 題目會暴露嘅錯誤(RPDICE 嘅 E),每個掛返 skill | 136 |
+| `taxonomy/skills.csv` | 必修部分 + KS3 + M1 + M2,拆到 atomic skill | 538 |
+| `taxonomy/error_patterns.csv` | 題目會暴露嘅錯誤(RPDICE 嘅 E),每個掛返 skill | 139 |
 
 ```text
 skill_id                strand  unit             name_en                                 name_zh    form  foundation  prerequisites
@@ -409,6 +409,8 @@ na.quad.sum-product     na      Quadratic eq…    Sum and product of roots     
 - `form` 係**通常**邊級教。EDB 只定 strand 唔定 form,KS3 嗰啲跟常見教科書次序。
 - `foundation`:`F` Foundation Topic、`N` Non-Foundation(只限必修部分);KS3 留空。
 - `prerequisites` 用 `;` 分隔,唔求齊,求關鍵嗰幾個。
+- `error_patterns.csv` 嘅 `skills` 欄:一個或多個 skill_id(`;` 分隔),或者 `*`(任何 skill)、
+  `ms.*`(成個 strand)。validator 接受 error 掛喺列出嘅 skill **或者佢嘅 prerequisite** 上。
 
 改完一定要行:
 

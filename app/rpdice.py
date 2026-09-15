@@ -181,6 +181,15 @@ def drivers_of(levels: dict[str, int]) -> list[str]:
 
 # --- checking an analysis ---------------------------------------------------
 
+def _unique(items) -> list:
+    """First occurrence of each, in order: one issue per skill, not per mention."""
+    seen: list = []
+    for item in items:
+        if item not in seen:
+            seen.append(item)
+    return seen
+
+
 def validate_analysis(analysis: QuestionAnalysis, question_text: str, taxonomy,
                       module: Optional[str] = None) -> list[ValidationIssue]:
     """Everything that makes an analysis unusable or suspect.
@@ -221,7 +230,8 @@ def validate_analysis(analysis: QuestionAnalysis, question_text: str, taxonomy,
                    f"{qid}: strategy {strategy.strategy_name!r} has no steps.")
 
     known_skills = set(taxonomy.skills)
-    all_skills = list(analysis.atomic_skills) + [s for st in analysis.strategies for s in st.skills]
+    all_skills = _unique(list(analysis.atomic_skills)
+                         + [s for st in analysis.strategies for s in st.skills])
     for skill in all_skills:
         if skill not in known_skills:
             report("SKILL_UNKNOWN", "high",
@@ -239,17 +249,17 @@ def validate_analysis(analysis: QuestionAnalysis, question_text: str, taxonomy,
                        f"{taxonomy.skills[skill].strand.upper()}, but this paper is "
                        f"{module}.")
 
-    listed = set(analysis.atomic_skills)
-    for error in analysis.possible_errors:
+    listed = [s for s in analysis.atomic_skills if s in known_skills]
+    for error in _unique(analysis.possible_errors):
         pattern = taxonomy.errors.get(error)
         if pattern is None:
             report("ERROR_UNKNOWN", "high",
                    f"{qid}: error {error!r} is not in taxonomy/error_patterns.csv. New errors "
                    f"go in proposed_errors.")
-        elif listed and not (set(pattern.skills) & listed):
+        elif listed and not taxonomy.error_fits(error, listed):
             report("ERROR_NOT_OF_SKILL", "low",
-                   f"{qid}: error {error} belongs to {', '.join(pattern.skills)}, none of "
-                   f"which is in atomic_skills.")
+                   f"{qid}: error {error} belongs to {', '.join(pattern.skills)}; none of "
+                   f"atomic_skills or their prerequisites is one of them.")
 
     for cue in analysis.method_cues:
         if cue and cue not in (question_text or ""):

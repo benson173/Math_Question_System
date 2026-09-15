@@ -27,10 +27,14 @@ RULES
   different profiles; mark exactly one strategy is_primary: the one a
   Form {FORM} student is expected to use.
 - atomic_skills and every strategy's skills must be skill_ids from the SKILLS
-  list below, exactly as written. If no listed skill fits, put a short
-  description in proposed_skills instead. Never invent a skill_id.
+  list below, exactly as written, including the first segment (na, ms, dh,
+  fl, m1, m2): it is the strand the skill is filed under, not the topic of
+  the question, so copy it, never infer it. If no listed skill fits, put a
+  short description in proposed_skills instead. Never invent a skill_id.
 - possible_errors must be error_ids from the ERRORS list below. Each must
-  belong to one of the skills you listed. A new error goes in proposed_errors.
+  belong to one of the skills you listed, to a skill that one rests on, or
+  be general ("*" or "<strand>.*" in its skills). A new error goes in
+  proposed_errors.
 - method_cues are copied verbatim from the question text: the exact printed
   words that state a method ("利用二次公式", "Hence", "利用 (a) 的結果").
   When a cue is present, D for the primary strategy is at most 1.
@@ -41,7 +45,10 @@ RULES
 - difficulty_drivers are the letters whose primary-strategy level is 2 or 3.
 - A part that depends on an earlier part (depends_on) is rated for the work
   of that part alone, taking the earlier result as given; say so in evidence.
-- confidence is 0-1: how sure you are of the primary profile.
+- confidence is 0-1: how sure you are of the primary profile. Use the range:
+  0.9 or above only when no level could reasonably be argued a step either
+  way; 0.6-0.8 when a second strategy is as natural as the primary, when a
+  level sits on a boundary, or when the question text is incomplete.
 - Keep the printed question order and one analysis per source_question_id.
 
 EXAMPLE

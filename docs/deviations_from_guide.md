@@ -897,7 +897,10 @@ model 讀嘅 prompt 唔會漂移。
   查佢真係喺題目度(`METHOD_CUE_NOT_IN_TEXT`)、查 D 冇超(`DECISION_IGNORES_CUE`)。
 - **Skill / error 只可以揀。** 唔喺 taxonomy 就係 `SKILL_UNKNOWN` (high);想加新嘅放
   `proposed_skills`。呢個係 §36 講嘅「受控詞彙」真正生效嘅位。
-- **Error 要屬於列出嘅 skill。** 否則 `ERROR_NOT_OF_SKILL`。
+- **Error 要屬於列出嘅 skill,或者佢哋嘅 prerequisite。** 否則 `ERROR_NOT_OF_SKILL`。
+  聯立方程題會暴露「移項符號錯」,因為解一元一次方程係佢嘅 prerequisite;呢類唔算錯。
+  `error_patterns.csv` 嘅 skills 欄可以寫 `*`(任何 skill)或 `ms.*`(成個 strand),
+  畀「中途四捨五入」「由圖假定直角」呢啲唔屬於某一個 unit 嘅錯誤(§43)。
 - **I 對返 unit 數目。** I ≥ 2 但所有 skill 同一 unit,或者 I = 0 但有幾個 skill,報
   `INTEGRATION_INCONSISTENT`。
 - **`difficulty_drivers` 係 derived。** 由 levels 計出嚟,model 寫錯就重算(同 §27 一樣
@@ -1068,3 +1071,40 @@ validator 而家分開兩條規則檢查(必修 F4–F6 必須有、M1/M2 必須
 M1/M2 嘅 unit 名、form 分配、同埋幾樣我唔肯定嘅課題(M1 有冇 normal approximation to
 binomial、M2 有冇 scalar triple product)全部憑記憶,冇對過官方 C&A Guide —— 同 §36
 一樣要你核對。`scripts.check_taxonomy` 只驗結構,唔驗課程內容。
+
+## 43. 第一批真 Analyzer 結果:12 個 issue 點分類、點修
+
+`2526_3rd_S2MATH2`(F2,20 條 MC)第一次真 run 出咗 12 個 issue。逐個睇完,三類:
+
+### validator 太窄(9 個 `ERROR_NOT_OF_SKILL`,全部 low)
+
+- 聯立方程題列 `err.eq.sign-transposing`(掛 `na.lineq.solve`),不等式題都係。解一元一次
+  方程係佢哋嘅 prerequisite —— error 明明啱,validator 淨係對住 `atomic_skills` 本身。
+  改:`Taxonomy.error_fits()` 沿 `prerequisites_closure` 搵,搵到就通過。
+- `err.geo.assumes-from-diagram` 掛住 proof-writing / circle.prove,但 F2 平行線題、
+  角度題一樣會由圖假定;`err.trig.rounding-early` 掛住 trig,但畢氏定理面積題一樣會中途
+  四捨五入。呢啲係 strand 級或者通用嘅錯,唔應該綁死 unit。改:`skills` 欄支援 `*` 同
+  `<strand>.*`;`errors_for_skill`、prompt 嘅 ERRORS 列表、validator 一齊識。
+- `err.func.evaluate-substitution` 淨係掛 `na.func.evaluate`(F4),但 F2 代入直線方程
+  一樣會犯;加埋 `na.formula.substitute;na.algexp.substitute`。
+
+### Gemini 真錯,但 code 可以修(2 個 `SKILL_UNKNOWN`,high)
+
+Q18 寫 `ms.lineq.solve`:題目係 mensuration,佢就將前綴當 `ms`。`unit.slug` 部分喺
+taxonomy 獨一無二,意思冇歧義。改:`repair_skill_ids()` 喺 validate 之前將佢改成
+`na.lineq.solve`(atomic_skills 同每個 strategy 都改),記入 `AnalysisResult.repairs`
+同 markdown 嘅 Repairs 段。對唔到或者對到多過一個,照報 `SKILL_UNKNOWN`。同一個 id 喺
+atomic_skills 同 strategy 出現兩次,以前報兩次,而家一次。Prompt 亦加咗一句:前綴係
+skill 歸檔嘅 strand,唔係題目嘅 topic,照抄唔好推。
+
+### validator 啱,留低(1 個 `INTEGRATION_INCONSISTENT`)
+
+Q20 三個 skill 全部 Mensuration 但 I = 2。Rubric I2 係「跨 unit」,一個 unit 內嘅圓周
+連圓柱係 I1。呢個 flag 係要人睇嘅,唔改。
+
+### 順手
+
+- Model 提議嘅三樣都合理,入咗 taxonomy:skill `ms.similar.corresponding-angles`,error
+  `err.algfrac.subtract-denominators`、`err.mensur.radius-vs-diameter`、
+  `err.geo.similar-corresponding-angles`。
+- 20 條全部 confidence 0.9,冇資訊。Prompt 加咗用返成個 range 嘅規則。

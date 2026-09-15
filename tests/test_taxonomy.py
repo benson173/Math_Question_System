@@ -57,6 +57,36 @@ def test_lookups_by_form_unit_and_skill():
     assert taxonomy.errors_for_skill("na.log.laws")
 
 
+def test_general_errors_belong_to_every_skill_of_their_scope():
+    taxonomy = load_taxonomy()
+    for_parallel = {e.error_id for e in taxonomy.errors_for_skill("ms.angles.parallel-prove")}
+    assert "err.geo.assumes-from-diagram" in for_parallel      # ms.*
+    assert "err.trig.rounding-early" in for_parallel           # *
+    for_log = {e.error_id for e in taxonomy.errors_for_skill("na.log.laws")}
+    assert "err.geo.assumes-from-diagram" not in for_log
+    assert taxonomy.errors["err.geo.assumes-from-diagram"].is_general
+
+
+def test_an_error_fits_a_listed_skill_or_one_it_rests_on():
+    taxonomy = load_taxonomy()
+    # the converse of Pythagoras rests on Pythagoras' theorem itself
+    assert taxonomy.error_fits("err.pythag.wrong-hypotenuse", ["ms.pythag.converse"])
+    assert not taxonomy.error_fits("err.pythag.wrong-hypotenuse", ["ms.angles.basic"])
+    # a general error fits anything
+    assert taxonomy.error_fits("err.eq.sign-transposing", ["na.simeq.elimination"])
+    assert taxonomy.error_fits("err.eq.sign-transposing", ["ms.angles.basic"])
+    assert not taxonomy.error_fits("err.trig.calculator-mode", ["na.factor.dos"])
+    assert not taxonomy.error_fits("err.trig.calculator-mode", ["na.made.up"])
+
+
+def test_a_wrong_strand_prefix_maps_to_the_one_skill_it_can_mean():
+    taxonomy = load_taxonomy()
+    assert taxonomy.unique_skill_for("ms.lineq.solve") == "na.lineq.solve"
+    assert taxonomy.unique_skill_for("na.lineq.solve") is None       # already right
+    assert taxonomy.unique_skill_for("na.made.up") is None
+    assert taxonomy.unique_skill_for("lineq.solve") is None
+
+
 # --- what the validator catches ---------------------------------------------
 
 def skill(skill_id="na.x.y", form="F4", foundation="foundation", prerequisites=(), **kw):
@@ -73,6 +103,13 @@ def error(error_id="err.x.y", skills=("na.x.y",)):
 
 def test_a_clean_pair_has_no_problems():
     assert validate([skill()], [error()]) == []
+
+
+def test_wildcard_error_scopes_are_valid_but_only_for_real_strands():
+    assert validate([skill()], [error(skills=("*",))]) == []
+    assert validate([skill()], [error(skills=("na.*",))]) == []
+    assert any("does not exist" in p for p in validate([skill()], [error(skills=("xx.*",))]))
+    assert any("does not exist" in p for p in validate([skill()], [error(skills=("na.x.*",))]))
 
 
 @pytest.mark.parametrize("bad,expected", [

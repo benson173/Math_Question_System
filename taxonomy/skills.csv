@@ -127,6 +127,7 @@ ms.congr.use,ms,Congruence and similarity,Deduce equal sides / angles from congr
 ms.similar.conditions,ms,Congruence and similarity,Recognise AAA / three sides proportional / ratio of two sides and included angle,相似三角形的判定條件,F2,,
 ms.similar.prove,ms,Congruence and similarity,Prove two triangles similar,證明三角形相似,F2,,ms.similar.conditions
 ms.similar.ratio-length,ms,Congruence and similarity,Find lengths from corresponding sides of similar triangles,由相似三角形求邊長,F2,,ms.similar.prove;na.ratio.equation
+ms.similar.corresponding-angles,ms,Congruence and similarity,Find angles from corresponding angles of similar triangles (by vertex order),由相似三角形的對應角求角(按頂點次序),F2,,ms.similar.conditions
 ms.similar.hidden,ms,Congruence and similarity,Identify similar triangles in an overlapping / nested figure,在重疊圖形中認出相似三角形,F3,,ms.similar.prove
 ms.deduct.triangle-centres,ms,Deductive geometry,Properties of medians / altitudes / angle bisectors / perpendicular bisectors,三角形的中線、高、角平分線、垂直平分線,F3,,ms.congr.use
 ms.deduct.centres,ms,Deductive geometry,Centroid / orthocentre / incentre / circumcentre,重心、垂心、內心、外心,F3,,ms.deduct.triangle-centres
