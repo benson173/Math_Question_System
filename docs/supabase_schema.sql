@@ -142,11 +142,6 @@ create table if not exists question_analyses (
   unique (analysis_run_id, question_key)
 );
 
-create index if not exists analyses_key_idx     on question_analyses (question_key);
-create index if not exists analyses_current_idx on question_analyses (question_key) where is_current;
-
-create index if not exists skills_form_idx   on skills (form);
-create index if not exists skills_unit_idx   on skills (unit);
 
 
 -- ------------------------------------------------- tables that already existed
@@ -164,9 +159,11 @@ declare
   run_id_type  text;
   target       record;
 begin
-  -- Every table needs an id the pipeline can read back after an insert.
+  -- Every row-keyed table needs an id the pipeline can read back after an
+  -- insert. skills and error_patterns key on skill_id / error_id instead.
   for target in
-    select unnest(array['source_documents', 'extraction_runs', 'questions']) as name
+    select unnest(array['source_documents', 'extraction_runs', 'questions',
+                        'question_analyses']) as name
   loop
     if not exists (select 1 from pg_attribute
                     where attrelid = target.name::regclass
@@ -239,7 +236,43 @@ begin
       ('questions',        'diagram_region',          'jsonb'),
       ('questions',        'table_regions',           'jsonb default ''[]''::jsonb'),
       ('questions',        'extraction_notes',        'jsonb default ''[]''::jsonb'),
-      ('questions',        'images',                  'jsonb default ''[]''::jsonb')
+      ('questions',        'images',                  'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'question_key',           'text'),
+      ('question_analyses', 'source_sha256',          'text'),
+      ('question_analyses', 'source_question_id',     'text'),
+      ('question_analyses', 'analysis_run_id',        'text'),
+      ('question_analyses', 'analyzer_version',       'text'),
+      ('question_analyses', 'prompt_sha256',          'text'),
+      ('question_analyses', 'model',                  'text'),
+      ('question_analyses', 'level',                  'text'),
+      ('question_analyses', 'skill_family',           'text'),
+      ('question_analyses', 'atomic_skills',          'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'method_cues',            'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'strategies',             'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'rpdice',                 'jsonb default ''{}''::jsonb'),
+      ('question_analyses', 'difficulty_drivers',     'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'possible_errors',        'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'proposed_skills',        'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'proposed_errors',        'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'confidence',             'numeric'),
+      ('question_analyses', 'issues',                 'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'is_current',             'boolean default true'),
+      ('question_analyses', 'created_at',             'timestamptz default now()'),
+      ('skills',           'skill_id',                'text'),
+      ('skills',           'strand',                  'text'),
+      ('skills',           'unit',                    'text'),
+      ('skills',           'name_en',                 'text'),
+      ('skills',           'name_zh',                 'text'),
+      ('skills',           'form',                    'text'),
+      ('skills',           'foundation',              'text'),
+      ('skills',           'prerequisites',           'jsonb default ''[]''::jsonb'),
+      ('skills',           'updated_at',              'timestamptz default now()'),
+      ('error_patterns',   'error_id',                'text'),
+      ('error_patterns',   'name_en',                 'text'),
+      ('error_patterns',   'name_zh',                 'text'),
+      ('error_patterns',   'skills',                  'jsonb default ''[]''::jsonb'),
+      ('error_patterns',   'description',             'text'),
+      ('error_patterns',   'updated_at',              'timestamptz default now()')
     ) as columns(table_name, column_name, column_type)
   loop
     execute format('alter table %I add column if not exists %I %s',
@@ -268,6 +301,16 @@ create index if not exists questions_type_idx      on questions (question_type);
 create index if not exists questions_level_idx     on questions (level);
 create index if not exists runs_document_idx        on extraction_runs (source_document_id);
 create index if not exists runs_current_idx         on extraction_runs (source_document_id) where is_current;
+
+-- The taxonomy upserts conflict on these; the analysis insert is unique per run.
+create unique index if not exists skills_skill_id_key         on skills (skill_id);
+create unique index if not exists error_patterns_error_id_key on error_patterns (error_id);
+create unique index if not exists analyses_run_key            on question_analyses (analysis_run_id, question_key);
+create index if not exists analyses_key_idx     on question_analyses (question_key);
+create index if not exists analyses_current_idx on question_analyses (question_key) where is_current;
+
+create index if not exists skills_form_idx   on skills (form);
+create index if not exists skills_unit_idx   on skills (unit);
 
 
 -- ----------------------------------------------------------------------- view

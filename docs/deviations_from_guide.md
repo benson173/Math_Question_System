@@ -920,3 +920,19 @@ Analyzer 本身要 Gemini,呢度跑唔到。Prompt、schema、validator、scorer
 test(695 passed),但「Gemini 對住呢份 rubric 評得幾準」要你跑
 `scripts.analyse_rpdice` 再 `scripts.score_rpdice` 先知。第一個要睇嘅數係 within-1
 agreement:低過 80% 就係 rubric 或者 prompt 未夠清楚,唔係 model 唔夠叻。
+
+## 38. Schema 補 column 嗰段要覆蓋晒六個 table
+
+真 Supabase 第二次行 schema 檔:`column "question_key" does not exist`。原因同 §32 一模
+一樣,只係換咗 table:`question_analyses` 已經用 table editor 開咗(得 `id` +
+`created_at`),`create table if not exists` 跳過,但補 column 嘅 DO block 只寫咗原本
+三個 table。之後建 index 就搵唔到 column。
+
+修法:DO block 覆蓋六個 table;`skills` / `error_patterns` 唔加 `id`(佢哋 key 係
+`skill_id` / `error_id`),但補 unique index 令 upsert 嘅 `on_conflict` 有嘢可以撞;
+`question_analyses` 補 `(analysis_run_id, question_key)` unique index。所有 index 語句
+一律放喺 DO block 之後 —— 呢次就係 index 走咗去 DO block 前面先爆。
+
+Postgres 16 測四種形態:空 / 六個 table 全部 table editor 預設(即你嘅情況)/ 上一版
+schema / 第一版 schema。全部升級到,taxonomy upsert、analysis 寫入、舊 run 轉
+`is_current=false`、`current_questions` 都正常。
