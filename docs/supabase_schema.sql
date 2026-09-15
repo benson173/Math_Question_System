@@ -155,9 +155,10 @@ create table if not exists question_analyses (
 
 do $$
 declare
-  doc_id_type  text;
-  run_id_type  text;
-  target       record;
+  doc_id_type    text;
+  run_id_type    text;
+  existing_type  text;
+  target         record;
 begin
   -- Every row-keyed table needs an id the pipeline can read back after an
   -- insert. skills and error_patterns key on skill_id / error_id instead.
@@ -277,6 +278,22 @@ begin
   loop
     execute format('alter table %I add column if not exists %I %s',
                    target.table_name, target.column_name, target.column_type);
+
+    -- A key column the table editor typed as uuid (skill_id, question_key...)
+    -- cannot hold "na.factor.dos". Where this file says text and the column is
+    -- not, convert it in place; a uuid casts to text without losing anything.
+    if target.column_type like 'text%' then
+      select format_type(atttypid, atttypmod) into existing_type
+        from pg_attribute
+       where attrelid = target.table_name::regclass and attname = target.column_name
+         and attnum > 0 and not attisdropped;
+      if existing_type is distinct from 'text' then
+        execute format('alter table %I alter column %I drop default',
+                       target.table_name, target.column_name);
+        execute format('alter table %I alter column %I type text using %I::text',
+                       target.table_name, target.column_name, target.column_name);
+      end if;
+    end if;
   end loop;
 end $$;
 

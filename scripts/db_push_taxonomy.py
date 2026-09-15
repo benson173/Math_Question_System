@@ -49,8 +49,16 @@ def main() -> int:
         print(exc)
         return 2
 
-    client.table(TABLE_SKILLS).upsert(skill_rows(taxonomy), on_conflict="skill_id").execute()
-    client.table(TABLE_ERRORS).upsert(error_rows(taxonomy), on_conflict="error_id").execute()
+    try:
+        client.table(TABLE_SKILLS).upsert(skill_rows(taxonomy), on_conflict="skill_id").execute()
+        client.table(TABLE_ERRORS).upsert(error_rows(taxonomy), on_conflict="error_id").execute()
+    except Exception as exc:
+        message = " ".join(str(getattr(exc, "message", exc)).split())
+        print(f"FAILED: {type(exc).__name__}: {message}")
+        print("A type or constraint error here usually means a table was made in the table "
+              "editor with a different column type. Run docs/supabase_schema.sql again: it "
+              "converts key columns to text and creates the unique indexes the upsert needs.")
+        return 1
     print(f"Pushed {len(taxonomy.skills)} skills and {len(taxonomy.errors)} error patterns "
           f"to {url}")
     return 0

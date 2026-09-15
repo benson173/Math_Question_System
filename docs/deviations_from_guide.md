@@ -936,3 +936,16 @@ agreement:低過 80% 就係 rubric 或者 prompt 未夠清楚,唔係 model 唔�
 Postgres 16 測四種形態:空 / 六個 table 全部 table editor 預設(即你嘅情況)/ 上一版
 schema / 第一版 schema。全部升級到,taxonomy upsert、analysis 寫入、舊 run 轉
 `is_current=false`、`current_questions` 都正常。
+
+## 39. 補 column 唔夠,仲要改類型
+
+`db_push_taxonomy` 第一次真跑:`invalid input syntax for type uuid: "na.directed.order"`。
+`skills` table 有 `skill_id`,但係 table editor 設咗做 uuid。§32 / §38 嘅 DO block 只補
+「冇嘅 column」,對「有但類型錯」冇反應。
+
+而家 DO block 對所有應該係 text 嘅 column 多一步:現有類型唔係 text 就
+`drop default` 再 `alter column ... type text using col::text`。uuid 轉 text 唔會蝕
+資料(舊 row 嘅 uuid 變成一串字留低)。Postgres 測:`skill_id uuid primary key` 加一行舊
+row → 轉完 upsert `na.directed.order` 成功,舊 row 仍在。
+
+`db_push_taxonomy` 而家會 catch 呢類 error 並指返去 schema 檔,唔會淨係 traceback。
