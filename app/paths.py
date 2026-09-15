@@ -55,6 +55,8 @@ PROMPTS_DIR = PROJECT_ROOT / "prompts"
 PROMPT_DOCUMENT_EXTRACTOR_V1 = PROMPTS_DIR / "document_extractor_v1.txt"
 PROMPT_MARKING_SCHEME_V1 = PROMPTS_DIR / "marking_scheme_v1.txt"
 PROMPT_ANALYZER_V1 = PROMPTS_DIR / "analyzer_v1.txt"
+PROMPT_SOLVER_V1 = PROMPTS_DIR / "solver_v1.txt"
+PROMPT_CRITIC_V1 = PROMPTS_DIR / "critic_v1.txt"
 
 DATA_DIR = PROJECT_ROOT / "data"
 EXTRACTED_DIR = DATA_DIR / "extracted"

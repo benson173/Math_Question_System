@@ -98,6 +98,23 @@
 | `INTEGRATION_INCONSISTENT` | I 同 skill 嘅 unit 數目對唔上 |
 | `PRIMARY_STRATEGY_COUNT` | 唔係恰好一個 primary |
 | `EMPIRICAL_NOT_NULL` | Analyzer 估咗答對率 |
+| `DUPLICATE_STRATEGY` | 兩個 strategy 同名同 skills(同一個 `strategy_id`) |
+| `STRATEGY_FIELDS_INVALID` | `source` / `status` 唔係認可值 |
+
+## Solver / Critic 會報嘅(`critic_issues`)
+
+| Code | 邊個報 | 意思 |
+|---|---|---|
+| `STRATEGY_DOES_NOT_SOLVE` | code / Critic | 照 steps 行解唔到答案 → strategy `rejected` |
+| `ANSWER_MISMATCH` | code | Solver 答案同 marking scheme 唔同 |
+| `STRATEGIES_DISAGREE` | code | 同一題唔同 strategy 解出唔同答案 |
+| `SOLUTION_MISSING` | code | Solver 冇交某個 strategy 嘅解 |
+| `STRATEGY_STEPS_WRONG` / `STRATEGY_MISSING` / `PRIMARY_NOT_TYPICAL` | Critic | steps 數學上錯 / 漏咗明顯方法 / primary 揀錯 |
+| `LEVEL_OVERRATED` / `LEVEL_UNDERRATED` | Critic | 某個字母唔跟 rubric(message 講邊個 strategy、邊個字母、應該幾多) |
+| `EVIDENCE_NOT_IN_QUESTION` | Critic | evidence 講嘅嘢題目冇 |
+| `SKILL_MISSING` / `SKILL_IRRELEVANT` | Critic | 漏 skill / 列咗冇用嘅 skill |
+| `ERROR_NOT_TRIGGERED` / `ERROR_MISSING` | Critic | 列咗唔會發生嘅 error / 漏咗明顯陷阱 |
+| `CRITIC_OTHER` | — | Critic 用咗清單外嘅 code |
 | `QUESTION_NOT_ANALYSED` / `ANALYSIS_FOR_UNKNOWN_QUESTION` / `DUPLICATE_ANALYSIS` | 同份卷對唔上 |
 
 ## 黃金集同計分

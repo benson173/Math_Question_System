@@ -21,6 +21,7 @@ DEFAULT_RENDER_TABLES = True
 class Settings:
     gemini_api_key: str
     gemini_extractor_model: str
+    gemini_critic_model: str            # the Critic's model; the extractor's when unset
     supabase_url: str
     supabase_secret_key: str
     extraction_version: str
@@ -67,6 +68,8 @@ def load_settings() -> Settings:
     return Settings(
         gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
         gemini_extractor_model=os.getenv("GEMINI_EXTRACTOR_MODEL", ""),
+        gemini_critic_model=os.getenv("GEMINI_CRITIC_MODEL", "").strip()
+        or os.getenv("GEMINI_EXTRACTOR_MODEL", ""),
         supabase_url=os.getenv("SUPABASE_URL", ""),
         supabase_secret_key=os.getenv("SUPABASE_SECRET_KEY", ""),
         extraction_version=os.getenv("EXTRACTION_VERSION", "QEE_v1"),

@@ -1147,3 +1147,41 @@ PDF 只有 FlateDecode 同 ToUnicode,夠用。兩個細節值得記低:
 objective 冇 skill——而家係 0 條。
 
 **Guide 答唔到嘅**:KS3 邊級教(補充文件只分 unit),`form` 照跟教科書。
+
+## 45. Solver / Critic,同 strategy 嘅身份
+
+### 點解先做 strategy_id
+
+你問:學生用另一種方法答題會點?答案係要有嘢畀學生嘅 response 指住。Analyzer 嘅
+`strategies[]` 一直有,但冇 id。而家每個 strategy 有 `strategy_id`(名 + skills 嘅 sha256
+前 12 位,串法空格唔影響,skills 影響)、`source`(analyzer / student / teacher)、`status`
+(proposed / confirmed / rejected)。三樣都係 pipeline 填,model 寫乜都蓋過。同一題兩個
+strategy 撞 id 報 `DUPLICATE_STRATEGY`。`question_analyses.strategies` 照舊係 jsonb 陣列,
+將來 `student_responses.strategy_id` nullable 指返嚟,唔使 migrate。
+
+### Solver 係驗證,唔係答案機
+
+Spec 第 2 層:Solver 照 Analyzer 每個 strategy 嘅 steps 解一次。要守嘅係「唔可以評分、唔可以
+改題」,所以 prompt 淨係問:行唔行得通、答案係乜、邊步要偏離、真係遇到邊幾個 error。每 8 條題
+一個 call(worked solution 長)。
+
+三樣嘢 **code 做,唔靠 model 話**:Solver 答案同 marking scheme 對(`answers_match`:MC 字母、
+數字、分數、`x =` 前綴全部歸一)、strategy 解唔到、同一題幾個 strategy 答案唔同。
+
+### Critic 獨立
+
+另一個 prompt,可以另一個 model(`GEMINI_CRITIC_MODEL`)。輸入係原題 + analysis + Solver 結果;
+輸出只係 issues,固定 code 清單,清單外變 `CRITIC_OTHER`,question id 唔存在就掉,severity 唔
+認得當 medium。「唔可以重寫 analysis」寫入 prompt,亦冇 schema 位置畀佢寫。
+
+### Status 點定
+
+Solver 解到 + 答案啱(或者冇 reference)+ Critic 冇 high issue 指住呢個 strategy → `confirmed`;
+Solver 解唔到 → `rejected`;其餘(冇跑 Solver、有 high issue)→ `proposed`。Markdown 每個
+strategy 下面一行「Solver: reached **x**」,尾段 Critic 表。
+
+### 流程
+
+`analyse_rpdice` 而家係 Analyzer → Solver → Critic,`--skip-critique` 只跑 Analyzer;
+`critique_rpdice` 對已有 analysis 補跑(同名 extraction 喺 `data/extracted`)。重 push 同一個
+run 會先刪返自己嗰批 rows 再 insert,所以 critique 完再 push 唔會重複。

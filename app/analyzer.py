@@ -20,8 +20,9 @@ from app.config import load_settings
 from app.gemini_client import GeminiClient, prompt_sha256
 from app.paths import ANALYSES_DIR, PROMPT_ANALYZER_V1, safe_stem
 from app.question_key import question_key
-from app.rpdice import (AnalysisPayload, QuestionAnalysis, drivers_of, profile_summary,
-                        rubric_text, validate_analysis)
+from app.rpdice import (AnalysisPayload, CriticRun, QuestionAnalysis, StrategySolution,
+                        drivers_of, profile_summary, rubric_text, strategy_id_for,
+                        validate_analysis)
 from app.schemas import ExtractionResult, ValidationIssue
 from app.taxonomy import Taxonomy, load_taxonomy
 
@@ -51,6 +52,18 @@ class AnalysisResult(BaseModel):
     analyses: list[QuestionAnalysis]
     issues: list[ValidationIssue] = Field(default_factory=list)
     repairs: list[str] = Field(default_factory=list)      # deterministic fixes applied
+    # Filled by the Solver / Critic stage (app.critic), empty until it has run.
+    solutions: list[StrategySolution] = Field(default_factory=list)
+    critic: Optional[CriticRun] = None
+    critic_issues: list[ValidationIssue] = Field(default_factory=list)
+
+    def strategy(self, qid: str, strategy_id: str):
+        for a in self.analyses:
+            if a.source_question_id == qid:
+                for s in a.strategies:
+                    if s.strategy_id == strategy_id:
+                        return s
+        return None
 
     def by_key(self) -> dict[str, QuestionAnalysis]:
         return {question_key(self.sha256, a.source_question_id): a for a in self.analyses}
@@ -185,6 +198,21 @@ def _mapped(skills: list[str], mapping: dict[str, str]) -> list[str]:
     return out
 
 
+def assign_strategy_ids(payload: AnalysisPayload) -> None:
+    """Every strategy gets its stable id and is marked as the Analyzer's own.
+
+    Whatever the model wrote in strategy_id / source / status is overwritten:
+    ids are computed, and a fresh analysis has only proposed Analyzer
+    strategies. Confirmation comes from the Solver, other sources from later
+    layers.
+    """
+    for analysis in payload.analyses:
+        for strategy in analysis.strategies:
+            strategy.strategy_id = strategy_id_for(strategy.strategy_name, strategy.skills)
+            strategy.source = "analyzer"
+            strategy.status = "proposed"
+
+
 def repair_drivers(payload: AnalysisPayload) -> int:
     """difficulty_drivers is derivable, so a wrong list is recomputed, not argued about."""
     fixed = 0
@@ -211,6 +239,7 @@ class RpdiceAnalyzer:
         prompt = build_prompt(result, self.taxonomy)
         payload: AnalysisPayload = self.gemini.generate_json(prompt, AnalysisPayload)
         repairs = repair_skill_ids(payload, self.taxonomy)
+        assign_strategy_ids(payload)
         fixed = repair_drivers(payload)
         if fixed:
             repairs.append(f"difficulty_drivers recomputed for {fixed} question(s)")
@@ -272,12 +301,23 @@ def render_analysis_markdown(result: AnalysisResult, taxonomy: Taxonomy) -> str:
         lines.append(f"| {a.source_question_id} | `{profile_summary(a.levels())}` | "
                      f"{''.join(a.difficulty_drivers)} | {names} | {a.confidence:.1f} |")
     lines.append("")
+    solved = {(s.source_question_id, s.strategy_id): s for s in result.solutions}
     for a in result.analyses:
         lines += [f"## {a.source_question_id} — {a.skill_family}", ""]
         for s in a.strategies:
             flag = " (primary)" if s.is_primary else ""
-            lines += [f"**{s.strategy_name}{flag}** `{profile_summary(s.rpdice.levels())}`", ""]
+            tag = f" `{s.strategy_id}` {s.status}" if s.strategy_id else ""
+            lines += [f"**{s.strategy_name}{flag}** `{profile_summary(s.rpdice.levels())}`{tag}", ""]
             lines += [f"1. {step}" for step in s.steps] + [""]
+            solution = solved.get((a.source_question_id, s.strategy_id))
+            if solution is not None:
+                if solution.reached_answer:
+                    lines.append(f"Solver: reached **{solution.final_answer}**")
+                else:
+                    lines.append(f"Solver: did not reach an answer ({solution.notes or 'no reason given'})")
+                for d in solution.deviations:
+                    lines.append(f"- deviation: {d}")
+                lines.append("")
             for d in ("R", "P", "D", "I", "C", "E"):
                 dim = getattr(s.rpdice, d)
                 if dim.evidence:
@@ -293,11 +333,16 @@ def render_analysis_markdown(result: AnalysisResult, taxonomy: Taxonomy) -> str:
             lines += ["Proposed: " + ", ".join(a.proposed_skills + a.proposed_errors), ""]
     if result.repairs:
         lines += ["## Repairs", ""] + [f"- {note}" for note in result.repairs] + [""]
-    if result.issues:
-        lines += ["## Issues", "", "| Severity | Code | Q | Message |", "|---|---|---|---|"]
-        for i in result.issues:
-            message = i.message.replace("|", "\\|")
-            lines.append(f"| {i.severity} | `{i.issue_code}` | {i.source_question_id or ''} | "
-                         f"{message} |")
-        lines.append("")
+    for title, issues in (("Issues", result.issues), ("Critic", result.critic_issues)):
+        if issues:
+            lines += [f"## {title}", "", "| Severity | Code | Q | Message |", "|---|---|---|---|"]
+            for i in issues:
+                message = i.message.replace("|", "\\|")
+                lines.append(f"| {i.severity} | `{i.issue_code}` | {i.source_question_id or ''} | "
+                             f"{message} |")
+            lines.append("")
+    if result.critic:
+        lines += [f"Critic run `{result.critic.run_id}` · {result.critic.model} · "
+                  f"{len(result.solutions)} strategies solved · "
+                  f"{len(result.critic_issues)} critic issues", ""]
     return "\n".join(lines)

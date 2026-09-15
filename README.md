@@ -213,6 +213,8 @@ pytest
 | `app/taxonomy.py` | 🔵 Python | 讀、驗 `taxonomy/*.csv` |
 | `app/rpdice.py` | 🔵 Python | RPDICE 標準、analysis schema、validator、黃金集、計分 |
 | `app/analyzer.py` | 🔵 Python | 砌 prompt、跑 Gemini、存 analysis |
+| `app/solver.py` | 🔵 Python | Solver:照每個 strategy 解一次,對返 marking scheme |
+| `app/critic.py` | 🔵 Python | Critic:獨立 prompt 挑錯,定每個 strategy 嘅 status |
 | `app/analysis_store.py` | 🔵 Python | `question_analyses` rows |
 | `prompts/analyzer_v1.txt` | 🟢 Prompt | RPDICE Analyzer 指令(rubric 由 code 注入) |
 | `taxonomy/golden/rpdice_gold.csv` | 🟡 Config | 人手評分黃金集 |
@@ -251,7 +253,8 @@ pytest
 | `scripts/check_taxonomy.py` | 🔴 Test | 驗 taxonomy CSV,對返 Guide |
 | `scripts/extract_guide_objectives.py` | 🔵 Python | 由兩份 EDB PDF 抽 Learning Objectives |
 | `scripts/db_push_taxonomy.py` | 🔴 Test | Taxonomy 推上 Supabase |
-| `scripts/analyse_rpdice.py` | 🔴 Test | 跑 Analyzer |
+| `scripts/analyse_rpdice.py` | 🔴 Test | 跑 Analyzer → Solver → Critic |
+| `scripts/critique_rpdice.py` | 🔴 Test | 對已有 analysis 補跑 Solver / Critic |
 | `scripts/score_rpdice.py` | 🔴 Test | Analyzer 對黃金集計分 |
 
 ---
@@ -443,10 +446,34 @@ objective 都至少有一粒 skill,`check_taxonomy` 會守住呢點。
 份字。
 
 ```bash
-python3 -m scripts.analyse_rpdice            # data/extracted/*.json → data/analyses/*.json + .md
+python3 -m scripts.analyse_rpdice            # Analyzer → Solver → Critic;data/extracted/*.json → data/analyses/*.json + .md
+python3 -m scripts.analyse_rpdice --skip-critique   # 只跑 Analyzer(平一半以上)
+python3 -m scripts.critique_rpdice           # 補跑 Solver / Critic(未 critique 過嘅 analysis)
 python3 -m scripts.score_rpdice              # 對返 taxonomy/golden/rpdice_gold.csv
 python3 -m scripts.score_rpdice --check      # 只驗黃金集
 ```
+
+### Solver 同 Critic(spec 第 2 層)
+
+Analyzer 講嘅 strategy 唔係講咗就算:
+
+- **Solver** 照每個 strategy 嘅 steps 真係解一次(`prompts/solver_v1.txt`),記低 worked
+  steps、最終答案、有冇偏離 steps。解唔到 = Analyzer 嘅 strategy 有問題,唔係 Solver 有問題。
+- **Code 對答案**:Solver 嘅答案同 extraction 嘅 `answer`(marking scheme)對,唔靠 model
+  自己話啱——`ANSWER_MISMATCH` / `STRATEGY_DOES_NOT_SOLVE` / `STRATEGIES_DISAGREE` 都係 code 報。
+- **Critic** 用另一個 prompt(`prompts/critic_v1.txt`,可以用另一個 model:`GEMINI_CRITIC_MODEL`)
+  睇原題 + analysis + Solver 結果,**只挑錯,唔重寫**:`LEVEL_OVERRATED` / `LEVEL_UNDERRATED`、
+  `STRATEGY_MISSING`、`PRIMARY_NOT_TYPICAL`、`EVIDENCE_NOT_IN_QUESTION`、`SKILL_MISSING` /
+  `SKILL_IRRELEVANT`、`ERROR_NOT_TRIGGERED` / `ERROR_MISSING`……唔喺清單嘅 code 一律變
+  `CRITIC_OTHER`。
+- **每個 strategy 有 `strategy_id`**(由名 + skills 生成,重跑都一樣)、`source`(analyzer /
+  student / teacher)同 `status`:Solver 解到、答案啱、Critic 冇 high issue → `confirmed`;
+  解唔到 → `rejected`;其餘 `proposed`。將來學生答題用另一種方法,`student_responses.strategy_id`
+  就指住呢個 id;佢用嘅方法 Analyzer 冇列,就以 `source: student` 加落嗰題度。
+
+結果寫入同一份 analysis JSON(`solutions`、`critic_issues`、`critic`)同 markdown(每個
+strategy 下面一行 Solver 結果,尾段 Critic 表),Supabase `question_analyses` 多三欄
+(`solutions`、`critic_issues`、`critic_run_id`)。
 
 Analyzer 每條題目 output:skill_family、`atomic_skills`(只可以係 taxonomy id)、每個
 strategy 嘅 steps 同 RPDICE profile(每級要 evidence)、`method_cues`(原文照抄)、

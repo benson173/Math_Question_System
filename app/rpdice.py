@@ -13,6 +13,7 @@ by its vector and by which dimensions drive it.
 
 from __future__ import annotations
 
+import hashlib
 import csv
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -135,12 +136,54 @@ class RpdiceProfile(BaseModel):
         return {d: getattr(self, d).level for d in DIMENSIONS}
 
 
+STRATEGY_SOURCES = ("analyzer", "student", "teacher")
+STRATEGY_STATUSES = ("proposed", "confirmed", "rejected")
+
+
+def strategy_id_for(strategy_name: str, skills) -> str:
+    """A stable id for a strategy: the same method with the same skills gets
+    the same id in every run, so a student's answer can point at it later.
+
+    Spelling and spacing of the name do not matter; the skill list does.
+    """
+    name = " ".join(re.sub(r"[^a-z0-9\u4e00-\u9fff ]+", " ", strategy_name.lower()).split())
+    key = name + "|" + ";".join(sorted(set(skills)))
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
+
+
 class Strategy(BaseModel):
     strategy_name: str
     steps: list[str]
     skills: list[str] = Field(default_factory=list)      # skill_ids
     rpdice: RpdiceProfile
     is_primary: bool = False
+    # Filled by the pipeline, never trusted from the model: see strategy_id_for.
+    strategy_id: Optional[str] = None
+    source: str = "analyzer"           # analyzer | student | teacher
+    status: str = "proposed"           # proposed | confirmed (Solver reached the answer) | rejected
+
+
+class StrategySolution(BaseModel):
+    """The Solver's attempt at one question along one strategy."""
+
+    source_question_id: str
+    strategy_id: str
+    final_answer: Optional[str] = None
+    worked_steps: list[str] = Field(default_factory=list)
+    reached_answer: bool = False        # the strategy, as listed, gets to an answer
+    deviations: list[str] = Field(default_factory=list)   # where the steps had to change
+    pitfalls_met: list[str] = Field(default_factory=list) # error_ids genuinely encountered
+    notes: Optional[str] = None
+
+
+class CriticRun(BaseModel):
+    run_id: str
+    critiqued_at: str
+    model: str
+    solver_prompt_sha256: Optional[str] = None
+    critic_prompt_sha256: Optional[str] = None
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
 
 
 class QuestionAnalysis(BaseModel):
@@ -214,7 +257,17 @@ def validate_analysis(analysis: QuestionAnalysis, question_text: str, taxonomy,
         report("PRIMARY_STRATEGY_COUNT", "medium",
                f"{qid}: {len(primaries)} strategies marked primary; exactly one is expected.")
 
+    ids = [s.strategy_id for s in analysis.strategies if s.strategy_id]
+    for sid in _unique(ids):
+        if ids.count(sid) > 1:
+            names = [s.strategy_name for s in analysis.strategies if s.strategy_id == sid]
+            report("DUPLICATE_STRATEGY", "medium",
+                   f"{qid}: strategies {names} are the same method with the same skills.")
     for strategy in analysis.strategies:
+        if strategy.source not in STRATEGY_SOURCES or strategy.status not in STRATEGY_STATUSES:
+            report("STRATEGY_FIELDS_INVALID", "medium",
+                   f"{qid}: strategy {strategy.strategy_name!r} has source "
+                   f"{strategy.source!r} / status {strategy.status!r}.")
         for letter in DIMENSIONS:
             dim: Dimension = getattr(strategy.rpdice, letter)
             if not 0 <= dim.level <= MAX_LEVEL:

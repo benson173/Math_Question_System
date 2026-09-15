@@ -8,7 +8,7 @@ fails with a message that says what went wrong.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from google import genai
 from google.genai import types
@@ -110,12 +110,14 @@ def parse_response(response: Any, schema) -> Any:
 
 
 class GeminiClient:
-    def __init__(self):
+    def __init__(self, model: Optional[str] = None):
         self.settings = load_settings()
         if not self.settings.gemini_api_key:
             raise ValueError("Missing GEMINI_API_KEY in .env")
         if not self.settings.gemini_extractor_model:
             raise ValueError("Missing GEMINI_EXTRACTOR_MODEL in .env")
+        # The extractor's model unless a stage asks for its own (the Critic).
+        self.model = model or self.settings.gemini_extractor_model
 
         # Filled after every call, read by whoever builds the run record.
         self.last_usage: dict[str, int | None] = {"input_tokens": None, "output_tokens": None}
@@ -180,7 +182,7 @@ class GeminiClient:
             config_kwargs["max_output_tokens"] = self.settings.gemini_max_output_tokens
 
         response = self.client.models.generate_content(
-            model=self.settings.gemini_extractor_model,
+            model=self.model,
             contents=contents,
             config=types.GenerateContentConfig(**config_kwargs),
         )

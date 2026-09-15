@@ -1,7 +1,8 @@
-"""Run the RPDICE Analyzer over saved extractions.
+"""Run the RPDICE Analyzer, then the Solver and Critic, over saved extractions.
 
     python3 -m scripts.analyse_rpdice                          # every JSON in data/extracted
     python3 -m scripts.analyse_rpdice data/extracted/x.json    # just this paper
+    python3 -m scripts.analyse_rpdice --skip-critique          # Analyzer only (cheaper)
 
 Writes data/analyses/<paper>-<hash>.json and .md, and a history copy per run.
 Pushes to Supabase (question_analyses) when .env is set. Then compare with the
@@ -23,6 +24,8 @@ from app.supabase_store import StoreError, connect, key_warning
 
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
+    skip_critique = "--skip-critique" in args
+    args = [a for a in args if a != "--skip-critique"]
     paths = [Path(a) for a in args] or sorted(EXTRACTED_DIR.glob("*.json"))
     if not paths:
         print(f"No extraction JSON in {EXTRACTED_DIR}. Ingest a paper first.")
@@ -40,6 +43,16 @@ def main(argv: list[str] | None = None) -> int:
             failed += 1
             print(f"  FAILED {type(exc).__name__}: {exc}")
             continue
+        if not skip_critique:
+            try:
+                from app.critic import critique
+                critique(result, analysis)
+                print(f"  Solver / Critic: {len(analysis.solutions)} strategies solved, "
+                      f"{len(analysis.critic_issues)} critic issues, "
+                      f"{_status_line(analysis)}")
+            except Exception as exc:
+                print(f"  Warning: Solver / Critic did not run ({type(exc).__name__}: {exc}); "
+                      f"run python3 -m scripts.critique_rpdice later")
         out = export_analysis_json(analysis, analysis_output_path(analysis))
         export_analysis_json(analysis, analysis_history_path(analysis))
         md = out.with_suffix(".md")
@@ -55,6 +68,12 @@ def main(argv: list[str] | None = None) -> int:
             except Exception as exc:
                 print(f"  Warning: not saved to Supabase ({type(exc).__name__}: {exc})")
     return 1 if failed else 0
+
+
+def _status_line(analysis) -> str:
+    from collections import Counter
+    counts = Counter(s.status for a in analysis.analyses for s in a.strategies)
+    return ", ".join(f"{counts.get(k, 0)} {k}" for k in ("confirmed", "proposed", "rejected"))
 
 
 def _client():

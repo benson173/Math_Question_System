@@ -141,6 +141,12 @@ create table if not exists question_analyses (
   proposed_errors     jsonb not null default '[]'::jsonb,
   confidence          numeric,
   issues              jsonb not null default '[]'::jsonb,
+  -- Solver / Critic stage: one solution per strategy (strategies[].strategy_id
+  -- is what a later student_responses.strategy_id will point at), the
+  -- Critic's issues, and which Critic run produced them.
+  solutions           jsonb not null default '[]'::jsonb,
+  critic_issues       jsonb not null default '[]'::jsonb,
+  critic_run_id       text,
   is_current          boolean not null default true,
   created_at          timestamptz not null default now(),
   unique (analysis_run_id, question_key)
@@ -249,6 +255,9 @@ insert into _mqs_columns (table_name, column_name, column_type) values
       ('question_analyses', 'proposed_errors',        'jsonb default ''[]''::jsonb'),
       ('question_analyses', 'confidence',             'numeric'),
       ('question_analyses', 'issues',                 'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'solutions',              'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'critic_issues',          'jsonb default ''[]''::jsonb'),
+      ('question_analyses', 'critic_run_id',          'text'),
       ('question_analyses', 'is_current',             'boolean default true'),
       ('question_analyses', 'created_at',             'timestamptz default now()'),
       ('skills',           'skill_id',                'text'),

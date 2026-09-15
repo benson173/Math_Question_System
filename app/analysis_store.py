@@ -18,9 +18,13 @@ TABLE_ANALYSES = "question_analyses"
 
 
 def analysis_rows(result: AnalysisResult) -> list[dict[str, Any]]:
-    by_question = {}
+    by_question, critic_by_question, solved = {}, {}, {}
     for issue in result.issues:
         by_question.setdefault(issue.source_question_id, []).append(issue.model_dump())
+    for issue in result.critic_issues:
+        critic_by_question.setdefault(issue.source_question_id, []).append(issue.model_dump())
+    for solution in result.solutions:
+        solved.setdefault(solution.source_question_id, []).append(solution.model_dump())
     rows = []
     for a in result.analyses:
         primary = a.primary()
@@ -46,6 +50,9 @@ def analysis_rows(result: AnalysisResult) -> list[dict[str, Any]]:
             "proposed_errors": list(a.proposed_errors),
             "confidence": a.confidence,
             "issues": by_question.get(a.source_question_id, []),
+            "solutions": solved.get(a.source_question_id, []),
+            "critic_issues": critic_by_question.get(a.source_question_id, []),
+            "critic_run_id": result.critic.run_id if result.critic else None,
             "is_current": True,
         })
     return rows
@@ -55,6 +62,8 @@ def push_analysis(client, result: AnalysisResult) -> int:
     rows = analysis_rows(result)
     if not rows:
         return 0
+    # the same run pushed again (after the Critic, say) replaces its own rows
+    client.table(TABLE_ANALYSES).delete().eq("analysis_run_id", result.run.run_id).execute()
     client.table(TABLE_ANALYSES).insert(rows).execute()
     for row in rows:
         (client.table(TABLE_ANALYSES).update({"is_current": False})

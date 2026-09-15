@@ -48,7 +48,8 @@ EXPECTED_COLUMNS["question_analyses"] = [
     "analyzer_version", "prompt_sha256", "model", "level", "module", "skill_family",
     "atomic_skills",
     "method_cues", "strategies", "rpdice", "difficulty_drivers", "possible_errors",
-    "proposed_skills", "proposed_errors", "confidence", "issues", "is_current"]
+    "proposed_skills", "proposed_errors", "confidence", "issues", "solutions", "critic_issues",
+    "critic_run_id", "is_current"]
 
 SCHEMA_FILE = "docs/supabase_schema.sql"
 
