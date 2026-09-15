@@ -56,8 +56,11 @@ def main() -> int:
         message = " ".join(str(getattr(exc, "message", exc)).split())
         print(f"FAILED: {type(exc).__name__}: {message}")
         print("A type or constraint error here usually means a table was made in the table "
-              "editor with a different column type. Run docs/supabase_schema.sql again: it "
-              "converts key columns to text and creates the unique indexes the upsert needs.")
+              "editor with different columns. Run docs/supabase_schema.sql again: it converts "
+              "key columns to text, keeps foreign keys working, and creates the unique "
+              "indexes the upsert needs.\nThe last thing that file prints is a list of "
+              "columns that would still block an insert - a column of your own that is NOT "
+              "NULL with no default - and the statement that fixes each.")
         return 1
     print(f"Pushed {len(taxonomy.skills)} skills and {len(taxonomy.errors)} error patterns "
           f"to {url}")

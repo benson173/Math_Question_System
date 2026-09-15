@@ -146,45 +146,24 @@ create table if not exists question_analyses (
 
 -- ------------------------------------------------- tables that already existed
 --
--- Adds any column the pipeline writes that is not there yet. Added columns are
--- nullable whatever the definitions above say, because an existing row cannot
--- satisfy NOT NULL retroactively - the pipeline always writes every one of
--- them, so nothing is lost. The two foreign-key columns are typed from the
--- parent table's own id, so a bigint id from the table editor works as well as
--- a uuid one.
+-- Brings a table that was made some other way - the Supabase table editor, an
+-- earlier version of this file - up to what the pipeline writes, without
+-- dropping anything:
+--
+--   * a missing column is added, always nullable (an existing row cannot
+--     satisfy NOT NULL retroactively, and the pipeline writes every column);
+--   * a key column the table editor typed as uuid is converted to text, since
+--     "na.factor.dos" and "b584940bfebb:4(a)" are not uuids. Existing uuid
+--     values survive as strings;
+--   * a foreign key that would block such a conversion is dropped, both of its
+--     columns are converted, and the constraint is put back;
+--   * the two foreign-key columns are typed from the parent table's own id, so
+--     a bigint id from the table editor works as well as a uuid one.
 
-do $$
-declare
-  doc_id_type    text;
-  run_id_type    text;
-  existing_type  text;
-  target         record;
-begin
-  -- Every row-keyed table needs an id the pipeline can read back after an
-  -- insert. skills and error_patterns key on skill_id / error_id instead.
-  for target in
-    select unnest(array['source_documents', 'extraction_runs', 'questions',
-                        'question_analyses']) as name
-  loop
-    if not exists (select 1 from pg_attribute
-                    where attrelid = target.name::regclass
-                      and attname = 'id' and attnum > 0 and not attisdropped) then
-      execute format('alter table %I add column id uuid not null default gen_random_uuid()',
-                     target.name);
-      execute format('create unique index if not exists %I on %I (id)',
-                     target.name || '_id_key', target.name);
-    end if;
-  end loop;
-
-  select format_type(atttypid, atttypmod) into doc_id_type
-    from pg_attribute
-   where attrelid = 'source_documents'::regclass and attname = 'id' and attnum > 0;
-  select format_type(atttypid, atttypmod) into run_id_type
-    from pg_attribute
-   where attrelid = 'extraction_runs'::regclass and attname = 'id' and attnum > 0;
-
-  for target in
-    select * from (values
+create temp table if not exists _mqs_columns
+  (table_name text, column_name text, column_type text);
+truncate _mqs_columns;
+insert into _mqs_columns (table_name, column_name, column_type) values
       ('source_documents', 'sha256',                  'text'),
       ('source_documents', 'file_name',               'text'),
       ('source_documents', 'page_count',              'integer'),
@@ -198,7 +177,7 @@ begin
       ('source_documents', 'topics',                  'jsonb default ''[]''::jsonb'),
       ('source_documents', 'first_seen_at',           'timestamptz default now()'),
       ('extraction_runs',  'run_id',                  'text'),
-      ('extraction_runs',  'source_document_id',      doc_id_type),
+      ('extraction_runs',  'source_document_id',      '__doc_id__'),
       ('extraction_runs',  'extracted_at',            'timestamptz'),
       ('extraction_runs',  'extraction_version',      'text'),
       ('extraction_runs',  'question_object_version', 'text'),
@@ -215,8 +194,8 @@ begin
       ('extraction_runs',  'marking_scheme_sha256',   'text'),
       ('extraction_runs',  'is_current',              'boolean default true'),
       ('extraction_runs',  'created_at',              'timestamptz default now()'),
-      ('questions',        'extraction_run_id',       run_id_type),
-      ('questions',        'source_document_id',      doc_id_type),
+      ('questions',        'extraction_run_id',       '__run_id__'),
+      ('questions',        'source_document_id',      '__doc_id__'),
       ('questions',        'source_question_id',      'text'),
       ('questions',        'question_key',            'text'),
       ('questions',        'depends_on',              'jsonb default ''[]''::jsonb'),
@@ -273,27 +252,119 @@ begin
       ('error_patterns',   'name_zh',                 'text'),
       ('error_patterns',   'skills',                  'jsonb default ''[]''::jsonb'),
       ('error_patterns',   'description',             'text'),
-      ('error_patterns',   'updated_at',              'timestamptz default now()')
-    ) as columns(table_name, column_name, column_type)
-  loop
-    execute format('alter table %I add column if not exists %I %s',
-                   target.table_name, target.column_name, target.column_type);
+      ('error_patterns',   'updated_at',              'timestamptz default now()');
 
-    -- A key column the table editor typed as uuid (skill_id, question_key...)
-    -- cannot hold "na.factor.dos". Where this file says text and the column is
-    -- not, convert it in place; a uuid casts to text without losing anything.
-    if target.column_type like 'text%' then
+do $$
+declare
+  doc_id_type    text;
+  run_id_type    text;
+  existing_type  text;
+  wanted_type    text;
+  target         record;
+  fk             record;
+  convert        text[] := '{}';
+  restore        text[] := '{}';
+  entry          text;
+  parts          text[];
+  changed        boolean;
+begin
+  -- Every row-keyed table needs an id the pipeline can read back after an
+  -- insert. skills and error_patterns key on skill_id / error_id instead.
+  for target in
+    select unnest(array['source_documents', 'extraction_runs', 'questions',
+                        'question_analyses']) as name
+  loop
+    if not exists (select 1 from pg_attribute
+                    where attrelid = target.name::regclass
+                      and attname = 'id' and attnum > 0 and not attisdropped) then
+      execute format('alter table %I add column id uuid not null default gen_random_uuid()',
+                     target.name);
+      execute format('create unique index if not exists %I on %I (id)',
+                     target.name || '_id_key', target.name);
+    end if;
+  end loop;
+
+  select format_type(atttypid, atttypmod) into doc_id_type
+    from pg_attribute
+   where attrelid = 'source_documents'::regclass and attname = 'id' and attnum > 0;
+  select format_type(atttypid, atttypmod) into run_id_type
+    from pg_attribute
+   where attrelid = 'extraction_runs'::regclass and attname = 'id' and attnum > 0;
+
+  -- 1. add what is missing, and note every text column that is not text
+  for target in select * from _mqs_columns loop
+    wanted_type := case target.column_type
+                     when '__doc_id__' then doc_id_type
+                     when '__run_id__' then run_id_type
+                     else target.column_type
+                   end;
+    execute format('alter table %I add column if not exists %I %s',
+                   target.table_name, target.column_name, wanted_type);
+
+    if wanted_type like 'text%' then
       select format_type(atttypid, atttypmod) into existing_type
         from pg_attribute
        where attrelid = target.table_name::regclass and attname = target.column_name
          and attnum > 0 and not attisdropped;
       if existing_type is distinct from 'text' then
-        execute format('alter table %I alter column %I drop default',
-                       target.table_name, target.column_name);
-        execute format('alter table %I alter column %I type text using %I::text',
-                       target.table_name, target.column_name, target.column_name);
+        convert := convert || (target.table_name || '|' || target.column_name);
       end if;
     end if;
+  end loop;
+
+  -- 2. a foreign key ties two columns together: convert both or neither
+  loop
+    changed := false;
+    for fk in
+      select c.conrelid::regclass::text  as child_table,  a.attname::text as child_column,
+             c.confrelid::regclass::text as parent_table, b.attname::text as parent_column
+        from pg_constraint c
+        join pg_attribute a on a.attrelid = c.conrelid  and a.attnum = c.conkey[1]
+        join pg_attribute b on b.attrelid = c.confrelid and b.attnum = c.confkey[1]
+       where c.contype = 'f' and array_length(c.conkey, 1) = 1
+    loop
+      if (fk.child_table || '|' || fk.child_column) = any(convert)
+         and not ((fk.parent_table || '|' || fk.parent_column) = any(convert)) then
+        convert := convert || (fk.parent_table || '|' || fk.parent_column);
+        changed := true;
+      end if;
+      if (fk.parent_table || '|' || fk.parent_column) = any(convert)
+         and not ((fk.child_table || '|' || fk.child_column) = any(convert)) then
+        convert := convert || (fk.child_table || '|' || fk.child_column);
+        changed := true;
+      end if;
+    end loop;
+    exit when not changed;
+  end loop;
+
+  -- 3. drop those foreign keys, remembering how to put them back
+  for fk in
+    select c.conname, c.conrelid::regclass as child_rel, pg_get_constraintdef(c.oid) as def,
+           c.conrelid::regclass::text  as child_table,  a.attname::text as child_column,
+           c.confrelid::regclass::text as parent_table, b.attname::text as parent_column
+      from pg_constraint c
+      join pg_attribute a on a.attrelid = c.conrelid  and a.attnum = c.conkey[1]
+      join pg_attribute b on b.attrelid = c.confrelid and b.attnum = c.confkey[1]
+     where c.contype = 'f' and array_length(c.conkey, 1) = 1
+  loop
+    if (fk.child_table || '|' || fk.child_column) = any(convert)
+       or (fk.parent_table || '|' || fk.parent_column) = any(convert) then
+      restore := restore || format('alter table %s add constraint %I %s',
+                                   fk.child_rel, fk.conname, fk.def);
+      execute format('alter table %s drop constraint %I', fk.child_rel, fk.conname);
+    end if;
+  end loop;
+
+  -- 4. convert, then put the constraints back
+  foreach entry in array convert loop
+    parts := string_to_array(entry, '|');
+    execute format('alter table %I alter column %I drop default', parts[1], parts[2]);
+    execute format('alter table %I alter column %I type text using %I::text',
+                   parts[1], parts[2], parts[2]);
+  end loop;
+
+  foreach entry in array restore loop
+    execute entry;
   end loop;
 end $$;
 
@@ -342,3 +413,26 @@ create view current_questions as
   from questions q
   join extraction_runs r on r.id = q.extraction_run_id
   where r.is_current;
+
+
+-- ------------------------------------------------------------------ check
+--
+-- Anything listed here would make an insert fail: a column this system never
+-- writes, NOT NULL, with no default. Run the fix it prints, or drop the
+-- column. An empty result means the tables are ready.
+
+select c.table_name,
+       c.column_name,
+       c.data_type,
+       format('alter table %I alter column %I drop not null;',
+              c.table_name, c.column_name) as fix
+  from information_schema.columns c
+ where c.table_schema = 'public'
+   and c.table_name in ('source_documents', 'extraction_runs', 'questions',
+                        'skills', 'error_patterns', 'question_analyses')
+   and c.is_nullable = 'NO'
+   and c.column_default is null
+   and c.column_name <> 'id'
+   and not exists (select 1 from _mqs_columns m
+                    where m.table_name = c.table_name and m.column_name = c.column_name)
+ order by c.table_name, c.column_name;
