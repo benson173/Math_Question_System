@@ -949,3 +949,43 @@ schema / 第一版 schema。全部升級到,taxonomy upsert、analysis 寫入、
 row → 轉完 upsert `na.directed.order` 成功,舊 row 仍在。
 
 `db_push_taxonomy` 而家會 catch 呢類 error 並指返去 schema 檔,唔會淨係 traceback。
+
+## 40. Foreign key 擋住轉 type，同埋「仲有咩會擋住 insert」
+
+§39 轉 `skill_id` 做 text 之後，真 Supabase 再爆：
+
+```text
+42804: foreign key constraint "skills_parent_skill_id_fkey" cannot be implemented
+DETAIL: Key columns "parent_skill_id" and "skill_id" are of incompatible types: uuid and text.
+```
+
+用家嘅 `skills` 有一個自我參照 FK（`parent_skill_id` → `skill_id`）。轉一邊做 text，FK
+就兩邊唔夾。
+
+修法係三步，全部喺同一個 DO block：
+
+1. 掃 `pg_constraint`，任何單欄 FK 只要一邊喺「要轉」名單，另一邊都拉入名單 —— 迴圈到
+   冇新增為止（FK 可以串成鏈）。
+2. 記低每個受影響 FK 嘅 `pg_get_constraintdef`，再 `drop constraint`。
+3. 全部轉完 text 之後，逐句 `add constraint` 駁返。
+
+測試：`skill_id uuid primary key` + `parent_skill_id uuid references skills(skill_id)`，
+加兩行真實 row（一個 parent、一個 child）。行完 schema：兩欄都係 text、FK 仲喺度、
+parent-child join 仍然搵到嗰行、舊 row 冇少。
+
+### 順手：column 清單唔再重複寫
+
+補 column 嗰張 (table, column, type) 表本來喺 DO block 入面寫死。而家改成一個 temp
+table `_mqs_columns`，DO block 同最後嗰個檢查都讀佢，唔會漂移。
+
+### 最後一段：仲有咩會擋住 insert
+
+Table editor 開 table 嗰陣好容易順手加一個 NOT NULL 嘅自訂欄。Pipeline 唔會寫嗰欄，
+insert 就會爆，而 `db_check` 隔住 REST 睇唔到 NOT NULL。所以 schema 檔最後一句係一個
+`select`，列出「唔係我哋嘅欄 + NOT NULL + 冇 default」，連埋修佢嘅 SQL：
+
+```text
+ skills | owner_note | text | alter table skills alter column owner_note drop not null;
+```
+
+空白就係齊。Supabase SQL editor 會顯示最後一個 statement 嘅結果，所以呢個一定睇得見。

@@ -776,8 +776,15 @@ python3 -m scripts.db_push
 - table 未有 → 開返
 - table 有咗但冇某啲 column（例如用 Supabase table editor 開，得 `id` +
   `created_at`）→ 補返缺嗰啲，你原本啲 row 照留
+- key column 俾 table editor 設咗做 **uuid**（`skill_id`、`question_key` 等）→ 轉返
+  text，因為 `na.factor.dos` 唔係 uuid。舊 row 嘅 uuid 會變成字串留低
+- 有 foreign key 擋住轉 type（例如 `parent_skill_id` → `skill_id`）→ 拆咗佢、兩邊一齊
+  轉、再駁返，關係唔會斷
 - 兩條 foreign key column 會跟返你 `id` 嘅型別，所以 table editor 嗰個
   `bigint` id 同全新嘅 `uuid` id 都用得
+
+份檔**最後會列出仲會擋住 insert 嘅 column** —— 即係你自己加、NOT NULL、又冇 default
+嗰啲。空白就係齊，有嘢就照佢印出嘅 `alter ... drop not null;` 行一句。
 
 ### 已經抽咗嘅卷,唔使再叫 Gemini
 
