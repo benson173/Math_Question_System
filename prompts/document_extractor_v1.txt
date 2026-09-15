@@ -19,6 +19,15 @@ LEVEL
 - If nothing printed names the form, set level_text to null. Never infer it
   from the difficulty or the topics.
 
+MODULE
+- HKDSE Mathematics has a Compulsory Part and two Extended Part modules:
+  Module 1 (Calculus and Statistics) and Module 2 (Algebra and Calculus).
+- If the paper prints which one it is - "Module 1", "M2", "Extended Part",
+  "單元二", "微積分與統計", "代數與微積分" - copy that exact printed text into
+  module_text. Copy the phrase only.
+- If nothing printed says, set module_text to null. Never infer the module
+  from the mathematics in the questions.
+
 QUESTION NUMBERING
 - Use the number printed in the PDF.
 - Write a sub-question as the parent number followed by the part in round

@@ -1017,3 +1017,54 @@ default。份檔最後一句就係 `select * from _mqs_relaxed`,Supabase editor 
 `title text not null`、`parent_skill_id` 自我參照 FK、`status` 有 default、兩行舊 row。
 行完:三欄放寬、FK 仍在、舊 row 兩行都喺、新 skill 入到。另一個 database 專測放寬唔到
 嗰條路。
+
+## 42. M1 / M2:一個標籤唔夠,要連 taxonomy 一齊分
+
+卷要分必修 / M1 / M2。加個欄好易,但只加欄會出一個大問題:taxonomy 得必修部分,M1 卷抽
+咗出嚟,Analyzer 冇 skill 可以揀,`proposed_skills` 會爆晒,之後所有統計都廢。所以呢個
+commit 兩樣一齊做。
+
+### 由檔名讀,難處喺分辨 paper 1 同 M1
+
+用家嘅命名係 `2526_1st_S4MATH1.pdf` —— 嗰個 1 係**卷一**,唔係 M1。但
+`2526_S6MATHM2.pdf` 嗰個就係 M2。三條規則分得開:
+
+- `M1` / `M2` 要獨立成 token(前面唔可以係字母或數字)。`S4MATH1` 入面個 M 後面係
+  A,所以唔 match。
+- `MATHS?M[12]` 專門處理 `MATHM1` 呢種貼住寫嘅。
+- `[SF][1-6]M[12]` 處理 `S6M1`。
+
+`2526M2` 呢類前面係數字嘅刻意唔認,太含糊。全部 case 有 test。
+
+### 乜都冇寫 = compulsory,但要睇得見
+
+大部分卷係必修,所以 default 係 `compulsory`;但 `module_source` 會記住 `default`,
+markdown report、console、`show_extraction` 都印出嚟。估錯唔會靜靜雞。
+
+### Taxonomy:m1 / m2 兩個 strand
+
+`skill_id` 嘅 strand 加咗 `m1` `m2`。
+
+| | Skills |
+|---|---|
+| M1(微積分與統計) | 83 |
+| M2(代數與微積分) | 85 |
+| 新增 error patterns | 37 |
+
+Foundation / Non-Foundation 係必修部分先有嘅概念,所以 M1/M2 嗰兩欄一定要空 ——
+validator 而家分開兩條規則檢查(必修 F4–F6 必須有、M1/M2 必須冇)。
+
+### Prompt 按 module 過濾
+
+`skills_for_module()`:必修卷得必修 + KS3;M1 卷得必修 + KS3 + `m1.*`。M1 卷嘅 prompt
+**見唔到** M2 skill,所以揀唔到。萬一 Analyzer 揀咗第二個單元嘅 skill(例如由舊 run 抄
+返),`SKILL_WRONG_MODULE`(high)會報。Error 清單跟住 skill 清單過濾,唔會俾一個必修卷
+見到「分部積分選錯 u」呢類 error。
+
+順帶:M1 卷 prompt 66k 字元、必修 56k —— 過濾令必修卷慳返成個延伸部分嘅字。
+
+### 未驗證
+
+M1/M2 嘅 unit 名、form 分配、同埋幾樣我唔肯定嘅課題(M1 有冇 normal approximation to
+binomial、M2 有冇 scalar triple product)全部憑記憶,冇對過官方 C&A Guide —— 同 §36
+一樣要你核對。`scripts.check_taxonomy` 只驗結構,唔驗課程內容。

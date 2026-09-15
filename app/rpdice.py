@@ -181,8 +181,8 @@ def drivers_of(levels: dict[str, int]) -> list[str]:
 
 # --- checking an analysis ---------------------------------------------------
 
-def validate_analysis(analysis: QuestionAnalysis, question_text: str,
-                      taxonomy) -> list[ValidationIssue]:
+def validate_analysis(analysis: QuestionAnalysis, question_text: str, taxonomy,
+                      module: Optional[str] = None) -> list[ValidationIssue]:
     """Everything that makes an analysis unusable or suspect.
 
     `taxonomy` is an app.taxonomy.Taxonomy. Unknown skills are only an error
@@ -229,6 +229,15 @@ def validate_analysis(analysis: QuestionAnalysis, question_text: str,
                    f"proposed_skills, never in atomic_skills.")
     if not analysis.atomic_skills:
         report("NO_SKILLS", "high", f"{qid}: no atomic_skills.")
+
+    if module is not None:
+        allowed = {s.skill_id for s in taxonomy.skills_for_module(module)}
+        for skill in all_skills:
+            if skill in known_skills and skill not in allowed:
+                report("SKILL_WRONG_MODULE", "high",
+                       f"{qid}: skill {skill} belongs to "
+                       f"{taxonomy.skills[skill].strand.upper()}, but this paper is "
+                       f"{module}.")
 
     listed = set(analysis.atomic_skills)
     for error in analysis.possible_errors:

@@ -205,6 +205,7 @@ pytest
 | `app/config.py` | 🔵 Python | 讀設定（有 cache） |
 | `app/paths.py` | 🔵 Python | 所有路徑錨住 repo root |
 | `app/level.py` | 🔵 Python | 中四 / S.4 / Form 4 → `F4` |
+| `app/module.py` | 🔵 Python | M1 / M2 / compulsory |
 | `app/question_key.py` | 🔵 Python | 重抽都唔變嘅題目 id |
 | `app/paper_meta.py` | 🔵 Python | 年份 / 學期 / 考試類型,由檔名或 sidecar |
 | `app/marking_scheme.py` | 🔵 Python | Marking scheme 配對、抽取、合併 |
@@ -216,8 +217,8 @@ pytest
 | `prompts/analyzer_v1.txt` | 🟢 Prompt | RPDICE Analyzer 指令(rubric 由 code 注入) |
 | `taxonomy/golden/rpdice_gold.csv` | 🟡 Config | 人手評分黃金集 |
 | `docs/rpdice_rubric.md` | 📄 Doc | 評分標準(人讀版) |
-| `taxonomy/skills.csv` | 🟡 Config | 369 個 atomic skill(HKDSE 必修 + KS3) |
-| `taxonomy/error_patterns.csv` | 🟡 Config | 99 個 error pattern |
+| `taxonomy/skills.csv` | 🟡 Config | 537 個 atomic skill(必修 + KS3 + M1 + M2) |
+| `taxonomy/error_patterns.csv` | 🟡 Config | 136 個 error pattern |
 | `prompts/marking_scheme_v1.txt` | 🟢 Prompt | Gemini 抄 marking scheme 指令 |
 | `app/errors.py` | 🔵 Python | 錯誤類型 |
 | `app/schemas.py` | 🔵 Python | 定義資料格式 |
@@ -394,8 +395,8 @@ Analyzer 之後標 skill、Student Model 計 mastery、學生錯誤同 Analyzer 
 
 | 檔 | 內容 | 數量 |
 |---|---|---|
-| `taxonomy/skills.csv` | HKDSE 必修部分(F4–F6)+ KS3(F1–F3),拆到 atomic skill | 369 |
-| `taxonomy/error_patterns.csv` | 題目會暴露嘅錯誤(RPDICE 嘅 E),每個掛返 skill | 99 |
+| `taxonomy/skills.csv` | 必修部分 + KS3 + M1 + M2,拆到 atomic skill | 537 |
+| `taxonomy/error_patterns.csv` | 題目會暴露嘅錯誤(RPDICE 嘅 E),每個掛返 skill | 136 |
 
 ```text
 skill_id                strand  unit             name_en                                 name_zh    form  foundation  prerequisites
@@ -446,12 +447,59 @@ Supabase `question_analyses` 一條題目一次 run 一行,掛 `question_key`;�
 
 ---
 
+## M1 / M2（延伸部分）
+
+HKDSE 數學有必修部分同兩個延伸部分單元：
+
+```text
+M1  單元一（微積分與統計）   Calculus and Statistics
+M2  單元二（代數與微積分）   Algebra and Calculus
+```
+
+M1 嘅題目同必修部分嘅題目**唔可以比較** —— 唔同課程、唔同學生、唔同 skill。所以抽題
+嗰陣就要標住，同 level 一樣。
+
+### 檔名點寫
+
+| 檔名 | 讀到 |
+|---|---|
+| `dse-m1-2024.pdf`、`S6-M2-mock.pdf` | M1 / M2 |
+| `MATHM1-2025.pdf`、`2526_S6MATHM2.pdf` | M1 / M2（緊貼 MATH 都認） |
+| `S6M1-mock.pdf` | M1（級別加單元） |
+| `2024-DSE-Module 1.pdf`、`數學延伸部分單元二.pdf` | M1 / M2 |
+| **`2526_1st_S4MATH1.pdf`** | **唔係 M1** —— 係數學卷一 |
+| `F5-mock-paper1.pdf` | 乜都冇寫 → `compulsory` |
+
+「乜都冇寫就當必修」係刻意嘅，因為大部分卷都係必修。`module_source` 會寫住
+`default`，report 同 console 都睇得到，所以估錯唔會隱形。
+
+Sidecar 寫 `module: M1` 最大，凌駕檔名同封面。封面印住「Module 2」但檔名寫 M1 →
+`MODULE_MISMATCH`（medium），用檔名。
+
+### Taxonomy 分開
+
+| 卷 | Analyzer 可以揀嘅 skill |
+|---|---|
+| Compulsory | 必修 + KS3（369） |
+| M1 | 必修 + KS3 + `m1.*`（452） |
+| M2 | 必修 + KS3 + `m2.*`（454） |
+
+M1 卷嘅 prompt **唔會**見到 M2 skill，反之亦然。Analyzer 揀咗第二個單元嘅 skill 會報
+`SKILL_WRONG_MODULE`（high）。
+
+```sql
+select * from current_questions where module = 'M1' and level = 'F6';
+```
+
+---
+
 ## Question Object
 
 ```json
 {
   "source_question_id": "1(a)",
   "question_key": "b584940bfebb:1(a)",
+  "module": "compulsory",
   "depends_on": [],
   "level": "F4",
   "page_start": 1,

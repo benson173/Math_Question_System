@@ -70,6 +70,7 @@ class PaperStats:
     questions: int
     issues: int
     level: Optional[str] = None
+    module: Optional[str] = None
     codes: Counter = field(default_factory=Counter)
 
     @property
@@ -113,6 +114,7 @@ def analyse(results: list[ExtractionResult]) -> Analysis:
             model=result.run.model if result.run else "",
             pages=document.page_count,
             level=document.level,
+            module=document.module,
             questions=len(document.questions),
             issues=len(result.issues),
             codes=Counter(i.issue_code for i in result.issues),
@@ -167,10 +169,11 @@ def render_analysis(analysis: Analysis, top_questions: int = 15) -> str:
         lines.append("| (none) | 0 |")
 
     lines += ["", "## By paper", "",
-              "| Paper | Level | Pages | Questions | Q/page | Issues |",
-              "|---|---|---|---|---|---|"]
+              "| Paper | Level | Module | Pages | Questions | Q/page | Issues |",
+              "|---|---|---|---|---|---|---|"]
     for paper in sorted(analysis.papers, key=lambda p: -p.issues):
-        lines.append(f"| {paper.file_name} | {paper.level or '?'} | {paper.pages} | "
+        lines.append(f"| {paper.file_name} | {paper.level or '?'} | "
+                     f"{paper.module or '?'} | {paper.pages} | "
                      f"{paper.questions} | {paper.questions_per_page:.1f} | "
                      f"{paper.issues} |")
 

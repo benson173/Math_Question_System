@@ -19,10 +19,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Optional
 
 from app.config import load_settings
 from app.extraction_io import load_extractions
 from app.level import resolve_level
+from app.module import resolve_module
 from app.paper_meta import meta_from_filename
 from app.paths import EXTRACTED_DIR
 from app.schemas import ExtractionResult
@@ -49,6 +51,16 @@ def fill_in_level(result: ExtractionResult) -> str | None:
     result.document.level = resolved.level
     result.document.level_source = resolved.source
     return resolved.level
+
+
+def fill_in_module(result: ExtractionResult) -> Optional[str]:
+    """Work out the module for a JSON written before modules existed."""
+    if result.document.module:
+        return None
+    resolved = resolve_module(result.document.file_name, result.document.module_text)
+    result.document.module = resolved.module
+    result.document.module_source = resolved.source
+    return resolved.module
 
 
 def fill_in_paper(result: ExtractionResult) -> bool:
@@ -105,6 +117,9 @@ def main(argv: list[str] | None = None) -> int:
         added_level = fill_in_level(result)
         if added_level:
             print(f"  level    {name}  read {added_level} off the file name")
+        added_module = fill_in_module(result)
+        if added_module:
+            print(f"  module   {name}  {added_module}")
         if fill_in_paper(result):
             print(f"  paper    {name}  read year/term/type off the file name")
 

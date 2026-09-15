@@ -52,7 +52,8 @@ _EXAM_TYPE = [
 # some and Primary 1 to others.
 _PAPER = re.compile(r"(?<![a-z])(?:paper|maths?)[-_ ]?([1-4])(?![0-9])", re.I)
 
-FIELDS = ("year", "term", "exam_type", "paper_number", "school", "topics", "level")
+FIELDS = ("year", "term", "exam_type", "paper_number", "school", "topics", "level",
+          "module")
 
 
 def _year(text: str) -> Optional[str]:
@@ -104,7 +105,8 @@ def parse_sidecar(text: str) -> dict[str, object]:
         key, value = (part.strip() for part in line.split(":", 1))
         key = key.lower().replace("-", "_").replace(" ", "_")
         aliases = {"exam": "exam_type", "type": "exam_type", "paper": "paper_number",
-                   "form": "level", "subject": "topics", "topic": "topics"}
+                   "form": "level", "subject": "topics", "topic": "topics",
+                   "part": "module", "extended": "module"}
         key = aliases.get(key, key)
         if key not in FIELDS or not value:
             continue
@@ -126,17 +128,30 @@ def meta_from_sidecar(pdf_path: str | Path) -> Optional[PaperMeta]:
     values = parse_sidecar(path.read_text(encoding="utf-8"))
     if not values:
         return None
-    return PaperMeta(**{k: v for k, v in values.items() if k != "level"},
+    return PaperMeta(**{k: v for k, v in values.items() if k not in ("level", "module")},
                      source="sidecar")
+
+
+def _sidecar_value(pdf_path: str | Path, field: str) -> Optional[str]:
+    path = sidecar_path(pdf_path)
+    if not path.exists():
+        return None
+    value = parse_sidecar(path.read_text(encoding="utf-8")).get(field)
+    return str(value) if value else None
 
 
 def sidecar_level(pdf_path: str | Path) -> Optional[str]:
     """A level stated in the sidecar, which outranks both file name and paper."""
-    path = sidecar_path(pdf_path)
-    if not path.exists():
+    return _sidecar_value(pdf_path, "level")
+
+
+def sidecar_module(pdf_path: str | Path) -> Optional[str]:
+    """A module stated in the sidecar: "compulsory", "M1" or "M2"."""
+    value = _sidecar_value(pdf_path, "module")
+    if not value:
         return None
-    value = parse_sidecar(path.read_text(encoding="utf-8")).get("level")
-    return str(value) if value else None
+    from app.module import parse_module
+    return parse_module(value) or (value if value.lower() == "compulsory" else None)
 
 
 def resolve_paper_meta(pdf_path: str | Path) -> PaperMeta:

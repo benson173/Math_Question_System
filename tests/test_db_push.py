@@ -180,3 +180,15 @@ def test_an_old_extraction_gets_its_paper_context_from_the_file_name(tmp_path, w
     assert db_push.main([str(tmp_path / "meta.json")]) == 0
     doc = wired.rows["source_documents"][0]
     assert (doc["year"], doc["term"], doc["paper_number"]) == ("2025-26", "1st", 1)
+
+
+def test_an_old_extraction_gets_its_module_from_the_file_name(tmp_path, wired, capsys):
+    result = make_result(run_id="run-mod")
+    result.document.file_name = "2024-dse-m1-paper1.pdf"
+    result.document.module = None
+    export_extraction_json(result, tmp_path / "m.json")
+
+    assert db_push.main([str(tmp_path / "m.json")]) == 0
+    assert wired.rows["source_documents"][0]["module"] == "M1"
+    assert all(row["module"] == "M1" for row in wired.rows["questions"])
+    assert "module   2024-dse-m1-paper1.pdf  M1" in capsys.readouterr().out

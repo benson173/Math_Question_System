@@ -15,7 +15,8 @@ from app.config import load_settings
 from app.document_loader import LoadedDocument, load_pdf
 from app.gemini_client import GeminiClient, prompt_sha256
 from app.level import resolve_level
-from app.paper_meta import resolve_paper_meta, sidecar_level
+from app.module import resolve_module
+from app.paper_meta import resolve_paper_meta, sidecar_level, sidecar_module
 from app.paths import PROMPT_DOCUMENT_EXTRACTOR_V1
 from app.schemas import (
     ExtractedDocument,
@@ -48,6 +49,8 @@ class DocumentExtractor:
 
         stated = sidecar_level(loaded.file_path)
         resolved = resolve_level(loaded.file_name, payload.level_text)
+        module = resolve_module(loaded.file_name, payload.module_text,
+                                sidecar_module(loaded.file_path))
         document = ExtractedDocument(
             file_name=loaded.file_name,
             page_count=loaded.page_count,
@@ -55,6 +58,9 @@ class DocumentExtractor:
             level=stated or resolved.level,
             level_source="sidecar" if stated else resolved.source,
             level_text=payload.level_text,
+            module=module.module,
+            module_source=module.source,
+            module_text=payload.module_text,
             paper=resolve_paper_meta(loaded.file_path),
         )
 

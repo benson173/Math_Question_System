@@ -384,3 +384,188 @@ fl.apply.multi-topic,fl,Further applications,Solve a problem that combines two o
 fl.apply.model,fl,Further applications,Build a mathematical model from a real situation and interpret the result,建立數學模型並詮釋結果,F6,F,na.var.word;na.func.optimise-word
 fl.inquiry.investigate,fl,Inquiry and investigation,Investigate a pattern and form a conjecture,探究規律並提出猜想,F6,F,na.algexp.sequence-term
 fl.inquiry.justify,fl,Inquiry and investigation,Justify or refute a conjecture (counter-example / proof),證明或反駁猜想,F6,F,fl.inquiry.investigate;ms.deduct.proof-writing
+#
+# ===================== EXTENDED PART MODULE 1 (Calculus and Statistics) =========
+# strand m1. Taught in F4-F6 alongside the Compulsory Part; the Foundation /
+# Non-Foundation split is a Compulsory Part idea only, so foundation stays blank.
+# --- Foundation knowledge ---------------------------------------------------------
+m1.binomial.expand,m1,Binomial expansion,Expand (a + b)ⁿ for a positive integer n,展開 (a+b)ⁿ,F4,,na.identity.expand
+m1.binomial.term,m1,Binomial expansion,Find a particular term or coefficient in an expansion,求展開式中的指定項或係數,F4,,m1.binomial.expand
+m1.binomial.two-expansions,m1,Binomial expansion,Find a coefficient in a product of two expansions,求兩個展開式之積的係數,F4,,m1.binomial.term
+m1.binomial.approximate,m1,Binomial expansion,Use an expansion to approximate a numerical value,以展開式作近似計算,F4,,m1.binomial.term
+m1.explog.natural,m1,Exponential and logarithmic functions,Use e and the natural logarithm ln,自然指數 e 與自然對數 ln,F4,,na.log.laws
+m1.explog.convert,m1,Exponential and logarithmic functions,Convert between exponential and logarithmic form,指數式與對數式互換,F4,,m1.explog.natural
+m1.explog.linear-form,m1,Exponential and logarithmic functions,Transform y = kaˣ or y = kxⁿ into a linear relation,把 y=kaˣ 或 y=kxⁿ 化成線性關係,F4,,na.log.linear-relation
+m1.explog.fit-line,m1,Exponential and logarithmic functions,Find k and a (or n) from the slope and intercept of the transformed line,由斜率與截距求 k 及 a(或 n),F4,,m1.explog.linear-form
+m1.explog.application,m1,Exponential and logarithmic functions,Model growth or decay with an exponential function,以指數函數模擬增長或衰減,F4,,m1.explog.convert
+# --- Differentiation -------------------------------------------------------------
+m1.limit.concept,m1,Limits,Idea of the limit of a function,函數極限的概念,F5,,
+m1.limit.evaluate,m1,Limits,Evaluate the limit of an algebraic function,求代數函數的極限,F5,,m1.limit.concept
+m1.diff.first-principles,m1,Differentiation,Differentiate from first principles,由基本原理求導數,F5,,m1.limit.evaluate
+m1.diff.power-rule,m1,Differentiation,Differentiate xⁿ and a constant,冪函數與常數的導數,F5,,m1.diff.first-principles
+m1.diff.sum-multiple,m1,Differentiation,Differentiate a sum and a constant multiple,和與常數倍的導數,F5,,m1.diff.power-rule
+m1.diff.product-rule,m1,Differentiation,Product rule,乘積法則,F5,,m1.diff.sum-multiple
+m1.diff.quotient-rule,m1,Differentiation,Quotient rule,商法則,F5,,m1.diff.sum-multiple
+m1.diff.chain-rule,m1,Differentiation,Chain rule,鏈式法則,F5,,m1.diff.sum-multiple
+m1.diff.exponential,m1,Differentiation,Differentiate eˣ and aˣ,指數函數的導數,F5,,m1.diff.chain-rule;m1.explog.natural
+m1.diff.logarithmic,m1,Differentiation,Differentiate ln x and logₐ x,對數函數的導數,F5,,m1.diff.chain-rule;m1.explog.natural
+m1.diff.combined,m1,Differentiation,Differentiate a function needing two or more rules,需用多條法則的求導,F5,,m1.diff.product-rule;m1.diff.quotient-rule;m1.diff.chain-rule
+m1.diff.second,m1,Differentiation,Find the second derivative,求二階導數,F5,,m1.diff.combined
+m1.diff.implicit-simple,m1,Differentiation,Differentiate an implicitly defined relation,隱函數求導,F5,,m1.diff.chain-rule
+m1.apply.tangent,m1,Applications of differentiation,Equation of a tangent to a curve,曲線的切線方程,F5,,m1.diff.combined;ms.line.forms
+m1.apply.rate-of-change,m1,Applications of differentiation,Rate of change of a quantity,變率,F5,,m1.diff.combined
+m1.apply.related-rates,m1,Applications of differentiation,Related rates of change,相關變率,F5,,m1.apply.rate-of-change;m1.diff.chain-rule
+m1.apply.monotonicity,m1,Applications of differentiation,Increasing and decreasing intervals from the first derivative,由一階導數判斷單調區間,F5,,m1.diff.combined
+m1.apply.stationary,m1,Applications of differentiation,Find stationary points,求駐點,F5,,m1.apply.monotonicity
+m1.apply.first-derivative-test,m1,Applications of differentiation,Classify a stationary point by the first derivative test,一階導數判別法,F5,,m1.apply.stationary
+m1.apply.second-derivative-test,m1,Applications of differentiation,Classify a stationary point by the second derivative test,二階導數判別法,F5,,m1.apply.stationary;m1.diff.second
+m1.apply.global-extremum,m1,Applications of differentiation,Global maximum or minimum on a closed interval,閉區間上的最大最小值,F5,,m1.apply.first-derivative-test
+m1.apply.optimisation,m1,Applications of differentiation,Optimise a quantity in a real-life problem,最優化應用題,F5,,m1.apply.global-extremum
+m1.apply.curve-sketch,m1,Applications of differentiation,Sketch a curve from its derivatives,由導數描繪曲線,F5,,m1.apply.monotonicity;m1.apply.second-derivative-test
+m1.apply.marginal,m1,Applications of differentiation,Marginal cost / revenue / profit,邊際成本、收益、利潤,F5,,m1.apply.rate-of-change
+# --- Integration ------------------------------------------------------------------
+m1.int.indefinite-power,m1,Indefinite integration,Integrate a power function and a constant,冪函數與常數的不定積分,F6,,m1.diff.power-rule
+m1.int.exponential,m1,Indefinite integration,Integrate eˣ and 1/x,指數與 1/x 的積分,F6,,m1.int.indefinite-power;m1.diff.exponential
+m1.int.sum-multiple,m1,Indefinite integration,Integrate a sum and a constant multiple,和與常數倍的積分,F6,,m1.int.indefinite-power
+m1.int.substitution,m1,Indefinite integration,Integrate by substitution,換元積分法,F6,,m1.int.sum-multiple;m1.diff.chain-rule
+m1.int.constant,m1,Indefinite integration,Find the constant of integration from a given condition,由條件求積分常數,F6,,m1.int.sum-multiple
+m1.int.from-rate,m1,Indefinite integration,Recover a quantity from its rate of change,由變率還原原函數,F6,,m1.int.constant;m1.apply.rate-of-change
+m1.def.evaluate,m1,Definite integration,Evaluate a definite integral,計算定積分,F6,,m1.int.sum-multiple
+m1.def.substitution,m1,Definite integration,Evaluate a definite integral by substitution with changed limits,換元後更改積分上下限,F6,,m1.def.evaluate;m1.int.substitution
+m1.def.properties,m1,Definite integration,Use the properties of definite integrals,定積分的性質,F6,,m1.def.evaluate
+m1.def.area-curve,m1,Definite integration,Area between a curve and an axis,曲線與坐標軸間的面積,F6,,m1.def.evaluate
+m1.def.area-between,m1,Definite integration,Area between two curves,兩曲線間的面積,F6,,m1.def.area-curve
+m1.def.negative-area,m1,Definite integration,Handle a region below the axis,處理軸下方的區域,F6,,m1.def.area-curve
+m1.def.trapezoidal,m1,Definite integration,Approximate a definite integral by the trapezoidal rule,梯形法則近似定積分,F6,,m1.def.evaluate
+m1.def.trapezoidal-error,m1,Definite integration,Decide whether the trapezoidal estimate is too high or too low,判斷梯形法則的高估或低估,F6,,m1.def.trapezoidal;m1.apply.curve-sketch
+m1.def.application,m1,Definite integration,Total change from a rate in a real-life problem,由變率求總變化的應用題,F6,,m1.def.evaluate;m1.int.from-rate
+# --- Probability and distributions -------------------------------------------------
+m1.prob.bayes,m1,Further probability,Bayes' theorem,貝葉斯定理,F5,,dh.prob2.conditional
+m1.prob.independence,m1,Further probability,Use independence in a multi-stage problem,多階段問題中的獨立性,F5,,dh.prob2.multiplication-law
+m1.rv.distribution,m1,Discrete random variables,Write the probability distribution of a discrete random variable,離散隨機變量的機率分佈,F5,,dh.prob.definition
+m1.rv.expectation,m1,Discrete random variables,Expectation E(X),期望值 E(X),F5,,m1.rv.distribution
+m1.rv.variance,m1,Discrete random variables,Variance and standard deviation of a random variable,隨機變量的方差與標準差,F5,,m1.rv.expectation
+m1.rv.linear,m1,Discrete random variables,E(aX + b) and Var(aX + b),線性變換後的期望與方差,F5,,m1.rv.variance
+m1.binom.recognise,m1,Binomial distribution,Recognise a binomial experiment and state n and p,辨認二項分佈並寫出 n 及 p,F5,,dh.prob2.multiplication-law
+m1.binom.probability,m1,Binomial distribution,Compute P(X = r),計算 P(X=r),F5,,m1.binom.recognise;m1.binomial.term
+m1.binom.cumulative,m1,Binomial distribution,Compute P(X ≤ r) and "at least" probabilities,累積機率及「至少」,F5,,m1.binom.probability
+m1.binom.mean-variance,m1,Binomial distribution,Mean np and variance npq,平均值 np 與方差 npq,F5,,m1.binom.recognise
+m1.binom.find-parameter,m1,Binomial distribution,Find n or p from a given probability or mean,由機率或平均值求 n 或 p,F5,,m1.binom.mean-variance
+m1.geo.probability,m1,Geometric distribution,P(X = r) for a geometric distribution,幾何分佈的 P(X=r),F5,,m1.binom.recognise
+m1.geo.cumulative,m1,Geometric distribution,P(X > r) and P(X ≤ r) for a geometric distribution,幾何分佈的累積機率,F5,,m1.geo.probability
+m1.geo.mean,m1,Geometric distribution,Mean 1/p of a geometric distribution,幾何分佈的平均值,F5,,m1.geo.probability
+m1.poisson.probability,m1,Poisson distribution,Compute a Poisson probability,泊松分佈的機率,F6,,m1.rv.distribution
+m1.poisson.mean-variance,m1,Poisson distribution,Mean and variance both equal λ,平均值與方差皆為 λ,F6,,m1.poisson.probability
+m1.poisson.interval,m1,Poisson distribution,Rescale λ for a different interval,按區間調整 λ,F6,,m1.poisson.probability
+m1.poisson.sum,m1,Poisson distribution,Sum of independent Poisson variables,獨立泊松變量之和,F6,,m1.poisson.interval
+m1.poisson.choose,m1,Poisson distribution,Decide between a binomial and a Poisson model,判別二項或泊松模型,F6,,m1.poisson.mean-variance;m1.binom.recognise
+m1.normal.properties,m1,Normal distribution,Symmetry and shape of the normal curve,正態曲線的對稱與形狀,F6,,dh.disp.normal-basic
+m1.normal.standardise,m1,Normal distribution,Standardise with z = (x − μ)/σ,標準化,F6,,dh.disp.standard-score
+m1.normal.probability,m1,Normal distribution,Find a probability from the standard normal table,由標準正態表求機率,F6,,m1.normal.standardise
+m1.normal.inverse,m1,Normal distribution,Find the value of x from a given probability,由機率反求 x,F6,,m1.normal.probability
+m1.normal.parameter,m1,Normal distribution,Find μ or σ from given probabilities,由機率求 μ 或 σ,F6,,m1.normal.inverse;na.simeq.choose-method
+m1.normal.application,m1,Normal distribution,Apply the normal distribution to a real problem,正態分佈應用題,F6,,m1.normal.probability
+# --- Sampling and estimation --------------------------------------------------------
+m1.sample.concepts,m1,Sampling,Population and sample and sampling distribution,母體、樣本與抽樣分佈,F6,,dh.stat.sampling
+m1.sample.mean-distribution,m1,Sampling,Distribution of the sample mean: mean and standard error,樣本平均值的分佈與標準誤,F6,,m1.sample.concepts;m1.rv.linear
+m1.sample.central-limit,m1,Sampling,Central limit theorem,中央極限定理,F6,,m1.sample.mean-distribution;m1.normal.properties
+m1.estimate.point,m1,Point and interval estimation,Point estimates of a population mean and variance,母體平均值與方差的點估計,F6,,m1.sample.concepts
+m1.estimate.unbiased,m1,Point and interval estimation,Unbiased estimator: why n − 1,無偏估計:為何除以 n−1,F6,,m1.estimate.point
+m1.ci.mean-known,m1,Point and interval estimation,Confidence interval for a mean with σ known,σ 已知時平均值的置信區間,F6,,m1.sample.mean-distribution;m1.normal.inverse
+m1.ci.mean-unknown,m1,Point and interval estimation,Confidence interval for a mean with σ estimated from a large sample,大樣本以 s 估計 σ 的置信區間,F6,,m1.ci.mean-known;m1.estimate.unbiased
+m1.ci.proportion,m1,Point and interval estimation,Confidence interval for a proportion,比例的置信區間,F6,,m1.ci.mean-known
+m1.ci.width,m1,Point and interval estimation,Effect of sample size and confidence level on the width,樣本量與置信水平對區間寬度的影響,F6,,m1.ci.mean-known
+m1.ci.interpret,m1,Point and interval estimation,Interpret a confidence interval correctly,正確詮釋置信區間,F6,,m1.ci.mean-known
+#
+# ======================= EXTENDED PART MODULE 2 (Algebra and Calculus) ==========
+# strand m2. Same convention as m1: foundation blank.
+# --- Foundation knowledge ----------------------------------------------------------
+m2.induction.sum,m2,Mathematical induction,Prove a summation formula by induction,以數學歸納法證明求和公式,F4,,na.seq.as-sum
+m2.induction.divisibility,m2,Mathematical induction,Prove a divisibility result by induction,以數學歸納法證明整除性,F4,,m2.induction.sum
+m2.induction.inequality,m2,Mathematical induction,Prove an inequality by induction,以數學歸納法證明不等式,F4,,m2.induction.sum
+m2.induction.recurrence,m2,Mathematical induction,Prove a property of a recurrence-defined sequence,證明遞歸數列的性質,F4,,m2.induction.sum;na.seq.recurrence
+m2.binomial.theorem,m2,Binomial theorem,Binomial theorem for a positive integral index,正整數指數的二項式定理,F4,,na.identity.expand
+m2.binomial.term,m2,Binomial theorem,Find a particular term or coefficient,求指定項或係數,F4,,m2.binomial.theorem
+m2.trig.compound,m2,Trigonometry,Compound angle formulae,複角公式,F4,,ms.trig.identity-prove
+m2.trig.double,m2,Trigonometry,Double angle and half angle formulae,倍角與半角公式,F4,,m2.trig.compound
+m2.trig.subsidiary,m2,Trigonometry,Write a sin θ + b cos θ as R sin(θ + α),化 a sinθ + b cosθ 為 R sin(θ+α),F4,,m2.trig.compound
+m2.trig.product-sum,m2,Trigonometry,Product-to-sum and sum-to-product formulae,積化和差與和差化積,F4,,m2.trig.compound
+m2.trig.identity,m2,Trigonometry,Prove an identity with the compound angle formulae,以複角公式證明恆等式,F4,,m2.trig.double
+m2.trig.equation,m2,Trigonometry,Solve an equation using the compound angle formulae,以複角公式解三角方程,F4,,m2.trig.double;ms.trig.equation
+m2.trig.extremum,m2,Trigonometry,Maximum and minimum of a sin θ + b cos θ,a sinθ + b cosθ 的最值,F4,,m2.trig.subsidiary
+m2.explog.e,m2,Exponential and logarithmic functions,e as a limit and the natural logarithm,e 的極限定義與自然對數,F4,,na.log.laws
+# --- Limits and differentiation -----------------------------------------------------
+m2.limit.concept,m2,Limits,Idea of a limit and one-sided limits,極限概念與單側極限,F5,,
+m2.limit.algebraic,m2,Limits,Evaluate an algebraic limit,求代數極限,F5,,m2.limit.concept
+m2.limit.trig,m2,Limits,Use lim (sin x)/x = 1,運用 lim (sinx)/x = 1,F5,,m2.limit.algebraic
+m2.limit.exponential,m2,Limits,Use lim (eˣ − 1)/x = 1,運用 lim (eˣ−1)/x = 1,F5,,m2.limit.algebraic;m2.explog.e
+m2.diff.first-principles,m2,Differentiation,Differentiate from first principles,由基本原理求導數,F5,,m2.limit.algebraic
+m2.diff.power-rule,m2,Differentiation,Differentiate xⁿ for a rational n,有理指數冪函數的導數,F5,,m2.diff.first-principles
+m2.diff.sum-multiple,m2,Differentiation,Differentiate a sum and a constant multiple,和與常數倍的導數,F5,,m2.diff.power-rule
+m2.diff.product-rule,m2,Differentiation,Product rule,乘積法則,F5,,m2.diff.sum-multiple
+m2.diff.quotient-rule,m2,Differentiation,Quotient rule,商法則,F5,,m2.diff.sum-multiple
+m2.diff.chain-rule,m2,Differentiation,Chain rule,鏈式法則,F5,,m2.diff.sum-multiple
+m2.diff.trigonometric,m2,Differentiation,Differentiate sin x and cos x and tan x,三角函數的導數,F5,,m2.diff.chain-rule;m2.limit.trig
+m2.diff.exponential,m2,Differentiation,Differentiate eˣ and aˣ,指數函數的導數,F5,,m2.diff.chain-rule;m2.limit.exponential
+m2.diff.logarithmic,m2,Differentiation,Differentiate ln x and logₐ x,對數函數的導數,F5,,m2.diff.chain-rule;m2.explog.e
+m2.diff.implicit,m2,Differentiation,Implicit differentiation,隱函數求導,F5,,m2.diff.chain-rule
+m2.diff.log-technique,m2,Differentiation,Logarithmic differentiation,對數求導法,F5,,m2.diff.logarithmic;m2.diff.implicit
+m2.diff.combined,m2,Differentiation,Differentiate a function needing several rules,需用多條法則的求導,F5,,m2.diff.product-rule;m2.diff.quotient-rule;m2.diff.chain-rule
+m2.diff.second,m2,Differentiation,Second and higher derivatives,二階及更高階導數,F5,,m2.diff.combined
+m2.apply.tangent-normal,m2,Applications of differentiation,Tangent and normal to a curve,曲線的切線與法線,F5,,m2.diff.combined;ms.line.parallel-perp-equation
+m2.apply.rate,m2,Applications of differentiation,Rate of change and related rates,變率與相關變率,F5,,m2.diff.chain-rule
+m2.apply.monotonicity,m2,Applications of differentiation,Increasing and decreasing intervals,單調區間,F5,,m2.diff.combined
+m2.apply.extrema,m2,Applications of differentiation,Local and global extrema,局部與整體極值,F5,,m2.apply.monotonicity;m2.diff.second
+m2.apply.concavity,m2,Applications of differentiation,Concavity and points of inflexion,凹凸性與拐點,F5,,m2.diff.second
+m2.apply.asymptote,m2,Applications of differentiation,Vertical and horizontal and oblique asymptotes,鉛垂、水平及斜漸近線,F5,,m2.limit.algebraic
+m2.apply.curve-sketch,m2,Applications of differentiation,Sketch a curve from its derivatives and asymptotes,綜合描繪曲線,F5,,m2.apply.concavity;m2.apply.asymptote
+m2.apply.optimisation,m2,Applications of differentiation,Optimise a quantity in a real-life problem,最優化應用題,F5,,m2.apply.extrema
+# --- Integration --------------------------------------------------------------------
+m2.int.basic,m2,Indefinite integration,Integrate power and constant functions,冪函數與常數的積分,F6,,m2.diff.power-rule
+m2.int.trigonometric,m2,Indefinite integration,Integrate sin x and cos x and sec²x,三角函數的積分,F6,,m2.int.basic;m2.diff.trigonometric
+m2.int.exponential,m2,Indefinite integration,Integrate eˣ and 1/x,指數與 1/x 的積分,F6,,m2.int.basic;m2.diff.exponential
+m2.int.substitution,m2,Indefinite integration,Integrate by substitution,換元積分法,F6,,m2.int.basic;m2.diff.chain-rule
+m2.int.trig-identity,m2,Indefinite integration,Integrate using a trigonometric identity first,先用三角恆等式再積分,F6,,m2.int.trigonometric;m2.trig.double
+m2.int.by-parts,m2,Indefinite integration,Integrate by parts,分部積分法,F6,,m2.int.substitution;m2.diff.product-rule
+m2.int.by-parts-repeat,m2,Indefinite integration,Integrate by parts more than once or in a loop,重複或循環使用分部積分,F6,,m2.int.by-parts
+m2.int.constant,m2,Indefinite integration,Find the constant of integration from a condition,由條件求積分常數,F6,,m2.int.basic
+m2.def.evaluate,m2,Definite integration,Fundamental theorem of calculus and evaluation,微積分基本定理與計算,F6,,m2.int.basic
+m2.def.properties,m2,Definite integration,Properties of definite integrals including even and odd functions,定積分性質(含奇偶函數),F6,,m2.def.evaluate
+m2.def.substitution,m2,Definite integration,Substitution with changed limits,換元並更改上下限,F6,,m2.def.evaluate;m2.int.substitution
+m2.def.by-parts,m2,Definite integration,Definite integration by parts,定積分的分部積分,F6,,m2.def.evaluate;m2.int.by-parts
+m2.def.area,m2,Definite integration,Area under and between curves,曲線下及兩曲線間的面積,F6,,m2.def.evaluate
+m2.def.volume-disc,m2,Definite integration,Volume of revolution by the disc method,圓盤法求旋轉體體積,F6,,m2.def.area
+m2.def.volume-shell,m2,Definite integration,Volume of revolution by the shell method,薄殼法求旋轉體體積,F6,,m2.def.volume-disc
+m2.def.choose-method,m2,Definite integration,Choose the disc or the shell method for a region,選擇圓盤法或薄殼法,F6,,m2.def.volume-shell
+# --- Matrices and systems of equations ------------------------------------------------
+m2.matrix.operations,m2,Matrices,Addition and subtraction and scalar multiplication,矩陣加減與純量乘法,F5,,
+m2.matrix.multiply,m2,Matrices,Matrix multiplication,矩陣乘法,F5,,m2.matrix.operations
+m2.matrix.properties,m2,Matrices,Non-commutativity and other properties of multiplication,矩陣乘法的性質,F5,,m2.matrix.multiply
+m2.matrix.identity,m2,Matrices,Identity and zero matrices,單位矩陣與零矩陣,F5,,m2.matrix.multiply
+m2.matrix.transpose,m2,Matrices,Transpose and its properties,轉置矩陣及其性質,F5,,m2.matrix.multiply
+m2.matrix.determinant-2,m2,Matrices,Determinant of a 2 x 2 matrix,二階行列式,F5,,m2.matrix.multiply
+m2.matrix.determinant-3,m2,Matrices,Determinant of a 3 x 3 matrix,三階行列式,F5,,m2.matrix.determinant-2
+m2.matrix.inverse-2,m2,Matrices,Inverse of a 2 x 2 matrix,二階逆矩陣,F5,,m2.matrix.determinant-2
+m2.matrix.inverse-3,m2,Matrices,Inverse of a 3 x 3 matrix,三階逆矩陣,F5,,m2.matrix.determinant-3
+m2.matrix.inverse-properties,m2,Matrices,Properties of inverses including (AB)⁻¹,逆矩陣的性質,F5,,m2.matrix.inverse-2
+m2.matrix.equation,m2,Matrices,Solve a matrix equation for an unknown matrix,解矩陣方程,F5,,m2.matrix.inverse-2
+m2.matrix.power,m2,Matrices,Find Aⁿ by induction or by a pattern,求 Aⁿ,F5,,m2.matrix.multiply;m2.induction.sum
+m2.linsys.condition,m2,Systems of linear equations,Condition for a unique solution via the determinant,由行列式判斷唯一解,F6,,m2.matrix.determinant-3
+m2.linsys.inverse,m2,Systems of linear equations,Solve by the inverse matrix,以逆矩陣解方程組,F6,,m2.matrix.inverse-3
+m2.linsys.cramer,m2,Systems of linear equations,Solve by Cramer's rule,克拉瑪法則,F6,,m2.linsys.condition
+m2.linsys.gaussian,m2,Systems of linear equations,Solve by Gaussian elimination,高斯消去法,F6,,m2.matrix.operations
+m2.linsys.classify,m2,Systems of linear equations,Classify a system as unique or infinite or inconsistent,判別解的個數,F6,,m2.linsys.gaussian;m2.linsys.condition
+m2.linsys.homogeneous,m2,Systems of linear equations,Trivial and non-trivial solutions of a homogeneous system,齊次方程組的平凡與非平凡解,F6,,m2.linsys.classify
+# --- Vectors ---------------------------------------------------------------------------
+m2.vector.notation,m2,Vectors,Vector notation and magnitude and unit vectors,向量記號、模與單位向量,F6,,
+m2.vector.operations,m2,Vectors,Addition and subtraction and scalar multiplication of vectors,向量加減與純量乘法,F6,,m2.vector.notation
+m2.vector.components,m2,Vectors,Vectors in two and three dimensions in component form,二維及三維分量形式,F6,,m2.vector.operations
+m2.vector.position,m2,Vectors,Position vectors and the section formula,位置向量與分點公式,F6,,m2.vector.components;ms.coordgeo.section
+m2.vector.collinear,m2,Vectors,Test for collinear points with vectors,以向量判斷共線,F6,,m2.vector.position
+m2.vector.dot,m2,Vectors,Scalar product and the angle between two vectors,純量積與夾角,F6,,m2.vector.components
+m2.vector.perpendicular,m2,Vectors,Test for perpendicularity,垂直的判別,F6,,m2.vector.dot
+m2.vector.projection,m2,Vectors,Projection of one vector on another,向量的投影,F6,,m2.vector.dot
+m2.vector.cross,m2,Vectors,Vector product and its properties,向量積及其性質,F6,,m2.vector.components
+m2.vector.area,m2,Vectors,Area of a triangle or parallelogram from a vector product,以向量積求面積,F6,,m2.vector.cross
+m2.vector.geometry,m2,Vectors,Prove a geometric result with vectors,以向量證明幾何結果,F6,,m2.vector.collinear;m2.vector.dot
+m2.vector.application,m2,Vectors,Solve a 3-D geometry problem with vectors,以向量解三維幾何問題,F6,,m2.vector.area;m2.vector.projection

@@ -73,9 +73,13 @@ class QuestionExtractionPayload(BaseModel):
     # The exact printed words naming the form (中四, S.4, Form 4), or null.
     # Copied, not interpreted: app/level.py turns it into an F1-F6 code.
     level_text: Optional[str] = None
+    # The printed words naming the Extended Part module, if any: "Module 1
+    # (Calculus and Statistics)", "單元二". Copied, never inferred.
+    module_text: Optional[str] = None
 
 
 LevelSource = Literal["filename", "paper", "sidecar"]
+ModuleSource = Literal["filename", "paper", "sidecar", "default"]
 
 
 class MarkedAnswer(BaseModel):
@@ -126,6 +130,11 @@ class ExtractedDocument(BaseModel):
     level: Optional[str] = None
     level_source: Optional[LevelSource] = None
     level_text: Optional[str] = None
+    # Which syllabus: "compulsory", "M1" or "M2". A paper that says nothing is
+    # compulsory, with module_source "default" so the assumption is visible.
+    module: Optional[str] = None
+    module_source: Optional[ModuleSource] = None
+    module_text: Optional[str] = None
     paper: Optional[PaperMeta] = None
     marking_scheme: Optional[MarkingScheme] = None
 

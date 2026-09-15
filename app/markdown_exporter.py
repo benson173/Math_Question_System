@@ -69,6 +69,8 @@ def _summary_table(result: ExtractionResult) -> list[str]:
         ("Pages", str(document.page_count)),
         ("Level", f"{document.level} (from {document.level_source})"
                   if document.level else "unknown"),
+        ("Module", f"{document.module} (from {document.module_source})"
+                   if document.module else "unknown"),
         ("Paper", _paper_label(document.paper)),
         ("Marking scheme", f"{document.marking_scheme.file_name} "
                            f"({len(document.marking_scheme.matched)} answers attached)"

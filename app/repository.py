@@ -72,6 +72,8 @@ class Repository:
         print("Pages:", document.page_count)
         print("Level:", f"{document.level} (from {document.level_source})"
                         if document.level else "unknown")
+        print("Module:", f"{document.module} (from {document.module_source})"
+                         if document.module else "unknown")
         if document.paper and document.paper.source:
             paper = document.paper
             print("Paper:", ", ".join(str(v) for v in (paper.year, paper.term, paper.exam_type,
@@ -124,7 +126,10 @@ class Repository:
 
     def _save_quietly(self, result: ExtractionResult) -> None:
         document = result.document
-        parts = [document.level or "level unknown", f"{len(document.questions)} questions"]
+        parts = [" ".join(filter(None, [document.level or "level unknown",
+                                        document.module if document.module != "compulsory"
+                                        else None])),
+                 f"{len(document.questions)} questions"]
         if result.issues:
             parts.append(f"{len(result.issues)} issues")
         if result.diagrams:

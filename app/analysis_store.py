@@ -34,6 +34,7 @@ def analysis_rows(result: AnalysisResult) -> list[dict[str, Any]]:
             "prompt_sha256": result.run.prompt_sha256,
             "model": result.run.model,
             "level": result.level,
+            "module": result.module,
             "skill_family": a.skill_family,
             "atomic_skills": list(a.atomic_skills),
             "method_cues": list(a.method_cues),

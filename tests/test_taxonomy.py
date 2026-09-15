@@ -26,7 +26,8 @@ def test_the_shipped_taxonomy_is_valid():
 
 def test_every_strand_form_and_unit_is_represented():
     taxonomy = load_taxonomy()
-    assert {s.strand for s in taxonomy.skills.values()} == {"na", "ms", "dh", "fl"}
+    assert {s.strand for s in taxonomy.skills.values()} == {"na", "ms", "dh", "fl",
+                                                            "m1", "m2"}
     assert {s.form for s in taxonomy.skills.values()} == {"F1", "F2", "F3", "F4", "F5", "F6"}
     units = {s.unit for s in taxonomy.skills.values()}
     for unit in ("Quadratic equations in one unknown", "Basic properties of circles",
@@ -76,7 +77,7 @@ def test_a_clean_pair_has_no_problems():
 
 @pytest.mark.parametrize("bad,expected", [
     ([skill(), skill()], "appears more than once"),
-    ([skill(skill_id="bad id")], "not <strand>.<unit>.<slug>"),
+    ([skill(skill_id="bad id", strand="na")], "not <strand>.<unit>.<slug>"),
     ([skill(skill_id="ms.x.y", strand="na")], "says strand"),
     ([skill(form="F7")], "not F1-F6"),
     ([skill(form="F4", foundation=None)], "no foundation flag"),

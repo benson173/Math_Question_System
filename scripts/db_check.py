@@ -26,7 +26,7 @@ from app.supabase_store import (
 
 
 EXPECTED_COLUMNS = {
-    TABLE_DOCUMENTS: ["id", "sha256", "file_name", "page_count", "byte_size", "level",
+    TABLE_DOCUMENTS: ["id", "sha256", "file_name", "page_count", "byte_size", "level", "module",
                       "year", "term", "exam_type", "paper_number", "school", "topics"],
     TABLE_RUNS: ["id", "run_id", "source_document_id", "extracted_at", "extraction_version",
                  "question_object_version", "model", "prompt_sha256", "input_tokens",
@@ -34,7 +34,7 @@ EXPECTED_COLUMNS = {
                  "blocking", "issues", "repairs", "marking_scheme_file_name",
                  "marking_scheme_sha256", "is_current"],
     TABLE_QUESTIONS: ["id", "extraction_run_id", "source_document_id", "source_question_id",
-                      "question_key", "depends_on", "level", "position", "question_type", "question_text", "options",
+                      "question_key", "depends_on", "level", "module", "position", "question_type", "question_text", "options",
                       "marks", "group_marks", "group_marks_scope", "answer", "answer_source",
                       "worked_solution", "page_start", "page_end", "diagram_required",
                       "diagram_region", "table_regions", "extraction_notes", "images"],
@@ -45,7 +45,8 @@ EXPECTED_COLUMNS["skills"] = ["skill_id", "strand", "unit", "name_en", "name_zh"
 EXPECTED_COLUMNS["error_patterns"] = ["error_id", "name_en", "name_zh", "skills", "description"]
 EXPECTED_COLUMNS["question_analyses"] = [
     "id", "question_key", "source_sha256", "source_question_id", "analysis_run_id",
-    "analyzer_version", "prompt_sha256", "model", "level", "skill_family", "atomic_skills",
+    "analyzer_version", "prompt_sha256", "model", "level", "module", "skill_family",
+    "atomic_skills",
     "method_cues", "strategies", "rpdice", "difficulty_drivers", "possible_errors",
     "proposed_skills", "proposed_errors", "confidence", "issues", "is_current"]
 

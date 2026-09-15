@@ -59,6 +59,8 @@ def document_row(result: ExtractionResult) -> dict[str, Any]:
     # form a previous run of the same paper had established.
     if result.document.level:
         row["level"] = result.document.level
+    if result.document.module:
+        row["module"] = result.document.module
     return row
 
 
@@ -145,6 +147,7 @@ def question_rows(result: ExtractionResult, document_id: str, run_id: str) -> li
                             if result.source and q.source_question_id.strip() else None,
             "depends_on": list(q.depends_on),
             "level": result.document.level,
+            "module": result.document.module,
             "position": position,
             "question_type": q.question_type,
             "question_text": q.question_text,

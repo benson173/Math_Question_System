@@ -31,6 +31,7 @@ create table if not exists source_documents (
   page_count     integer not null,
   byte_size      bigint not null,
   level          text,                      -- F1-F6, null if unknown
+  module         text,                      -- compulsory | M1 | M2
   year           text,                      -- "2025" or "2025-26"
   term           text,                      -- 1st | 2nd | mid | final
   exam_type      text,                      -- test | exam | mock | dse | quiz | homework
@@ -70,6 +71,7 @@ create table if not exists questions (
   question_key         text,                -- <sha12>:<source_question_id>; stable across runs
   depends_on           jsonb not null default '[]'::jsonb,
   level                text,                -- F1-F6, copied from the document
+  module               text,                -- compulsory | M1 | M2
   position             integer not null,
   question_type        text not null default 'open',
   question_text        text not null,
@@ -126,6 +128,7 @@ create table if not exists question_analyses (
   prompt_sha256       text,
   model               text,
   level               text,
+  module              text,
   skill_family        text,
   atomic_skills       jsonb not null default '[]'::jsonb,
   method_cues         jsonb not null default '[]'::jsonb,
@@ -175,6 +178,7 @@ insert into _mqs_columns (table_name, column_name, column_type) values
       ('source_documents', 'page_count',              'integer'),
       ('source_documents', 'byte_size',               'bigint'),
       ('source_documents', 'level',                   'text'),
+  ('source_documents', 'module',                  'text'),
       ('source_documents', 'year',                    'text'),
       ('source_documents', 'term',                    'text'),
       ('source_documents', 'exam_type',               'text'),
@@ -206,6 +210,7 @@ insert into _mqs_columns (table_name, column_name, column_type) values
       ('questions',        'question_key',            'text'),
       ('questions',        'depends_on',              'jsonb default ''[]''::jsonb'),
       ('questions',        'level',                   'text'),
+  ('questions',        'module',                  'text'),
       ('questions',        'position',                'integer'),
       ('questions',        'question_type',           'text default ''open'''),
       ('questions',        'question_text',           'text'),
@@ -231,6 +236,7 @@ insert into _mqs_columns (table_name, column_name, column_type) values
       ('question_analyses', 'prompt_sha256',          'text'),
       ('question_analyses', 'model',                  'text'),
       ('question_analyses', 'level',                  'text'),
+  ('question_analyses', 'module',                 'text'),
       ('question_analyses', 'skill_family',           'text'),
       ('question_analyses', 'atomic_skills',          'jsonb default ''[]''::jsonb'),
       ('question_analyses', 'method_cues',            'jsonb default ''[]''::jsonb'),
@@ -422,6 +428,7 @@ create index        if not exists questions_key_idx           on questions (ques
 create index if not exists questions_document_idx  on questions (source_document_id);
 create index if not exists questions_type_idx      on questions (question_type);
 create index if not exists questions_level_idx     on questions (level);
+create index if not exists questions_module_idx    on questions (module);
 create index if not exists runs_document_idx        on extraction_runs (source_document_id);
 create index if not exists runs_current_idx         on extraction_runs (source_document_id) where is_current;
 

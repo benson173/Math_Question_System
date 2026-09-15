@@ -27,16 +27,22 @@ TAXONOMY_DIR = PROJECT_ROOT / "taxonomy"
 SKILLS_CSV = TAXONOMY_DIR / "skills.csv"
 ERROR_PATTERNS_CSV = TAXONOMY_DIR / "error_patterns.csv"
 
+# The Compulsory Part (and Key Stage 3 below it) is organised in strands; the
+# two Extended Part modules are each a strand of their own.
+COMPULSORY_STRANDS = ("na", "ms", "dh", "fl")
+MODULE_STRANDS = {"m1": "M1", "m2": "M2"}
 STRANDS = {
     "na": "Number and Algebra",
     "ms": "Measures, Shape and Space",
     "dh": "Data Handling",
     "fl": "Further Learning Unit",
+    "m1": "Module 1 (Calculus and Statistics)",
+    "m2": "Module 2 (Algebra and Calculus)",
 }
 FORMS = ("F1", "F2", "F3", "F4", "F5", "F6")
 FOUNDATION = {"": None, "F": "foundation", "N": "non-foundation"}
 
-_SKILL_ID = re.compile(r"^(na|ms|dh|fl)\.[a-z0-9-]+\.[a-z0-9-]+$")
+_SKILL_ID = re.compile(r"^(na|ms|dh|fl|m1|m2)\.[a-z0-9-]+\.[a-z0-9-]+$")
 _ERROR_ID = re.compile(r"^err\.[a-z0-9-]+\.[a-z0-9-]+$")
 
 
@@ -71,6 +77,19 @@ class Taxonomy:
 
     def skills_in_unit(self, unit: str) -> list[Skill]:
         return [s for s in self.skills.values() if s.unit == unit]
+
+    def skills_for_module(self, module: Optional[str]) -> list[Skill]:
+        """Every skill a paper of this module can draw on.
+
+        M1 and M2 are built on the Compulsory Part, so an Extended Part paper
+        gets its own strand plus everything compulsory; a compulsory paper
+        never gets M1 or M2 skills.
+        """
+        wanted = set(COMPULSORY_STRANDS)
+        for strand, name in MODULE_STRANDS.items():
+            if module == name:
+                wanted.add(strand)
+        return [s for s in self.skills.values() if s.strand in wanted]
 
     def errors_for_skill(self, skill_id: str) -> list[ErrorPattern]:
         return [e for e in self.errors.values() if skill_id in e.skills]
@@ -151,11 +170,15 @@ def validate(skills: Iterable[Skill], errors: Iterable[ErrorPattern]) -> list[st
             problems.append(f"skill {s.skill_id} has form {s.form!r}, not F1-F6")
         if s.foundation == "?":
             problems.append(f"skill {s.skill_id} has a foundation flag that is not F, N or blank")
-        if s.form in ("F4", "F5", "F6") and s.foundation is None:
+        compulsory = s.strand in COMPULSORY_STRANDS
+        if compulsory and s.form in ("F4", "F5", "F6") and s.foundation is None:
             problems.append(f"skill {s.skill_id} is Compulsory Part ({s.form}) but has no "
                             f"foundation flag")
-        if s.form in ("F1", "F2", "F3") and s.foundation is not None:
+        if compulsory and s.form in ("F1", "F2", "F3") and s.foundation is not None:
             problems.append(f"skill {s.skill_id} is KS3 ({s.form}) but has a foundation flag")
+        if not compulsory and s.foundation is not None:
+            problems.append(f"skill {s.skill_id} is {STRANDS[s.strand]}, where the "
+                            f"Foundation / Non-Foundation split does not apply")
         if not s.name_en or not s.name_zh:
             problems.append(f"skill {s.skill_id} is missing an English or Chinese name")
         for pre in s.prerequisites:

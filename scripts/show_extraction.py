@@ -48,6 +48,9 @@ def main(argv: list[str] | None = None) -> int:
     level = document.get("level")
     print(f"Level  : {level} (from {document.get('level_source')})" if level
           else "Level  : unknown")
+    module = document.get("module")
+    print(f"Module : {module} (from {document.get('module_source')})" if module
+          else "Module : unknown")
     if source:
         print(f"SHA256 : {source['sha256']}")
     if run:

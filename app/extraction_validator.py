@@ -12,6 +12,7 @@ from app.diagram_geometry import is_usable_region
 from app.extraction_repair import (find_control_characters, find_stem_contamination,
                                    parent_id, referenced_parts, says_hence)
 from app.level import level_from_filename, level_from_paper
+from app.module import parse_module
 from app.schemas import ExtractedDocument, Severity, ValidationIssue
 
 
@@ -193,6 +194,18 @@ def count_dashes(text: str) -> dict[str, int]:
             for character in DASHES if character in prose}
 
 
+def find_module_issues(document: ExtractedDocument) -> list[tuple[str, Severity, str]]:
+    """Do the file name and the paper agree on which module this is?"""
+    from_name = parse_module(document.file_name)
+    from_paper = parse_module(document.module_text)
+    if from_name and from_paper and from_name != from_paper:
+        return [("MODULE_MISMATCH", "medium",
+                 f"The file name says {from_name} but the paper prints "
+                 f"{document.module_text!r} ({from_paper}); using {document.module} from "
+                 f"the {document.module_source}. Rename the file if the paper is right.")]
+    return []
+
+
 def find_dependency_issues(document: ExtractedDocument) -> list[tuple[str, Severity, str, str]]:
     """Do depends_on lists point at real parts, and are stated ones recorded?"""
     ids = [q.source_question_id for q in document.questions]
@@ -291,6 +304,9 @@ def validate_extraction(document: ExtractedDocument) -> list[ValidationIssue]:
         report("NO_QUESTIONS_FOUND", "critical", "No questions were extracted.")
 
     for code, severity, message in find_level_issues(document):
+        report(code, severity, message)
+
+    for code, severity, message in find_module_issues(document):
         report(code, severity, message)
 
     for code, severity, message, qid in find_dependency_issues(document):

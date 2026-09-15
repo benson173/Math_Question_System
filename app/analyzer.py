@@ -46,6 +46,7 @@ class AnalysisResult(BaseModel):
     sha256: str
     extraction_run_id: Optional[str] = None
     level: Optional[str] = None
+    module: Optional[str] = None
     run: AnalysisRun
     analyses: list[QuestionAnalysis]
     issues: list[ValidationIssue] = Field(default_factory=list)
@@ -56,17 +57,27 @@ class AnalysisResult(BaseModel):
 
 # --- the prompt ---------------------------------------------------------------
 
-def skills_block(taxonomy: Taxonomy) -> str:
-    lines = ["SKILLS (skill_id | unit | form | name)"]
-    for s in taxonomy.skills.values():
+def skills_block(taxonomy: Taxonomy, module: Optional[str] = None) -> str:
+    """The skills this paper may use: its module's, plus the Compulsory Part.
+
+    A Compulsory Part paper is never shown M1 or M2 skills, so they cannot be
+    chosen by mistake, and an Extended Part prompt stays a third shorter than
+    the whole taxonomy.
+    """
+    skills = taxonomy.skills_for_module(module)
+    lines = [f"SKILLS for {module or 'compulsory'} (skill_id | unit | form | name)"]
+    for s in skills:
         lines.append(f"{s.skill_id} | {s.unit} | {s.form} | {s.name_en}")
     return "\n".join(lines)
 
 
-def errors_block(taxonomy: Taxonomy) -> str:
+def errors_block(taxonomy: Taxonomy, module: Optional[str] = None) -> str:
+    """The error patterns of exactly those skills."""
+    allowed = {s.skill_id for s in taxonomy.skills_for_module(module)}
     lines = ["ERRORS (error_id | skills | name)"]
     for e in taxonomy.errors.values():
-        lines.append(f"{e.error_id} | {';'.join(e.skills)} | {e.name_en}")
+        if allowed & set(e.skills):
+            lines.append(f"{e.error_id} | {';'.join(e.skills)} | {e.name_en}")
     return "\n".join(lines)
 
 
@@ -88,15 +99,24 @@ def build_prompt(result: ExtractionResult, taxonomy: Taxonomy,
                  prompt_path: Path = PROMPT_ANALYZER_V1) -> str:
     template = Path(prompt_path).read_text(encoding="utf-8")
     form = (result.document.level or "F4").lstrip("F")
-    head = template.replace("{RUBRIC}", rubric_text()).replace("{FORM}", form)
-    return "\n\n".join([head, skills_block(taxonomy), errors_block(taxonomy),
-                        questions_block(result)])
+    module = result.document.module or "compulsory"
+    head = (template.replace("{RUBRIC}", rubric_text())
+                    .replace("{FORM}", form)
+                    .replace("{MODULE}", _module_label(module)))
+    return "\n\n".join([head, skills_block(taxonomy, module),
+                        errors_block(taxonomy, module), questions_block(result)])
+
+
+def _module_label(module: str) -> str:
+    return {"M1": "Extended Part Module 1 (Calculus and Statistics)",
+            "M2": "Extended Part Module 2 (Algebra and Calculus)"}.get(module, "Compulsory Part")
 
 
 # --- checking the whole payload against the paper -----------------------------
 
 def check_payload(payload: AnalysisPayload, result: ExtractionResult,
                   taxonomy: Taxonomy) -> list[ValidationIssue]:
+    """Every analysis against its question, and the set against the paper."""
     issues: list[ValidationIssue] = []
     texts = {q.source_question_id: q.question_text for q in result.document.questions}
     seen = [a.source_question_id for a in payload.analyses]
@@ -119,7 +139,8 @@ def check_payload(payload: AnalysisPayload, result: ExtractionResult,
                                           message=f"{analysis.source_question_id}: analysed "
                                                   f"more than once.",
                                           source_question_id=analysis.source_question_id))
-        issues.extend(validate_analysis(analysis, texts[analysis.source_question_id], taxonomy))
+        issues.extend(validate_analysis(analysis, texts[analysis.source_question_id],
+                                        taxonomy, module=result.document.module))
     return issues
 
 
@@ -156,6 +177,7 @@ class RpdiceAnalyzer:
             sha256=result.source.sha256 if result.source else "",
             extraction_run_id=result.run.run_id if result.run else None,
             level=result.document.level,
+            module=result.document.module,
             run=AnalysisRun(
                 run_id=uuid.uuid4().hex[:12],
                 analysed_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
