@@ -791,6 +791,21 @@ python3 -m scripts.db_push
 `COULD NOT relax`（通常係嗰欄係 primary key 一部分），就要你自己 drop 咗嗰欄或者俾佢
 一個 default。
 
+### 你本來嗰套 column 點算？
+
+如果你之前用另一套命名開過 table（`skill_code` / `skill_name`、`document_id`、
+`model_name`、`prompt_version`、`question_id`、`raw_analysis` 之類），行完 schema 之後
+兩套會並存：你嗰套全部 null，pipeline 寫自己嗰套。三個選擇：
+
+| 做法 | 幾時揀 |
+|---|---|
+| **咩都唔做** | 最簡單。舊欄留喺度，永遠 null，唔阻住任何嘢 |
+| **drop 咗舊欄** | 確認冇資料先。查：`select count(*) from skills where skill_code is not null;` |
+| **改 pipeline 去遷就你嘅命名** | 你有第二個系統喺度讀嗰套欄。改 `app/supabase_store.py` 同 `app/analysis_store.py` 入面嘅 row builder 就得，其他嘢唔使掂 |
+
+建議：如果嗰套欄係你試 Supabase 嗰陣順手開、冇真正用過，查清楚冇資料就 drop 咗，
+`questions` 同 `question_analyses` 睇落乾淨好多。
+
 ### 已經抽咗嘅卷,唔使再叫 Gemini
 
 第一次接通 Supabase（或者補完 schema）之後,`questions` 係空嘅 —— 因為只有 **抽題嗰一刻**
