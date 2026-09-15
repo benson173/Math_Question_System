@@ -58,9 +58,9 @@ def main() -> int:
         print("A type or constraint error here usually means a table was made in the table "
               "editor with different columns. Run docs/supabase_schema.sql again: it converts "
               "key columns to text, keeps foreign keys working, and creates the unique "
-              "indexes the upsert needs.\nThe last thing that file prints is a list of "
-              "columns that would still block an insert - a column of your own that is NOT "
-              "NULL with no default - and the statement that fixes each.")
+              "indexes the upsert needs, and relaxes NOT NULL on columns of your own that "
+              "it cannot fill.\nThe last thing that file prints is what it changed about "
+              "your columns.")
         return 1
     print(f"Pushed {len(taxonomy.skills)} skills and {len(taxonomy.errors)} error patterns "
           f"to {url}")

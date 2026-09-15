@@ -163,6 +163,12 @@ create table if not exists question_analyses (
 create temp table if not exists _mqs_columns
   (table_name text, column_name text, column_type text);
 truncate _mqs_columns;
+
+-- What the repair had to change about columns of your own, for the report at
+-- the end of this file.
+create temp table if not exists _mqs_relaxed
+  (table_name text, column_name text, note text);
+truncate _mqs_relaxed;
 insert into _mqs_columns (table_name, column_name, column_type) values
       ('source_documents', 'sha256',                  'text'),
       ('source_documents', 'file_name',               'text'),
@@ -366,6 +372,35 @@ begin
   foreach entry in array restore loop
     execute entry;
   end loop;
+
+  -- 5. A column of your own that is NOT NULL with no default blocks every
+  --    insert, because the pipeline does not know it exists and cannot fill
+  --    it. Relax it: no data is touched, and "alter column ... set not null"
+  --    puts it back whenever you are ready to fill it in. A column that
+  --    cannot be relaxed - one in a primary key - is reported instead.
+  for target in
+    select c.table_name::text as table_name, c.column_name::text as column_name
+      from information_schema.columns c
+     where c.table_schema = 'public'
+       and c.table_name in ('source_documents', 'extraction_runs', 'questions',
+                            'skills', 'error_patterns', 'question_analyses')
+       and c.is_nullable = 'NO'
+       and c.column_default is null
+       and c.column_name <> 'id'
+       and not exists (select 1 from _mqs_columns m
+                        where m.table_name = c.table_name
+                          and m.column_name = c.column_name)
+  loop
+    begin
+      execute format('alter table %I alter column %I drop not null',
+                     target.table_name, target.column_name);
+      insert into _mqs_relaxed values (target.table_name, target.column_name,
+        'NOT NULL dropped so inserts can leave it empty; set not null to put it back');
+    exception when others then
+      insert into _mqs_relaxed values (target.table_name, target.column_name,
+        'COULD NOT relax (' || sqlerrm || ') - drop this column, or give it a default');
+    end;
+  end loop;
 end $$;
 
 
@@ -415,24 +450,11 @@ create view current_questions as
   where r.is_current;
 
 
--- ------------------------------------------------------------------ check
+-- ------------------------------------------------------------------ report
 --
--- Anything listed here would make an insert fail: a column this system never
--- writes, NOT NULL, with no default. Run the fix it prints, or drop the
--- column. An empty result means the tables are ready.
+-- Columns of your own that the pipeline does not write, and what was done so
+-- they would not block an insert. An empty result means there were none.
 
-select c.table_name,
-       c.column_name,
-       c.data_type,
-       format('alter table %I alter column %I drop not null;',
-              c.table_name, c.column_name) as fix
-  from information_schema.columns c
- where c.table_schema = 'public'
-   and c.table_name in ('source_documents', 'extraction_runs', 'questions',
-                        'skills', 'error_patterns', 'question_analyses')
-   and c.is_nullable = 'NO'
-   and c.column_default is null
-   and c.column_name <> 'id'
-   and not exists (select 1 from _mqs_columns m
-                    where m.table_name = c.table_name and m.column_name = c.column_name)
- order by c.table_name, c.column_name;
+select table_name, column_name, note
+  from _mqs_relaxed
+ order by table_name, column_name;

@@ -783,8 +783,13 @@ python3 -m scripts.db_push
 - 兩條 foreign key column 會跟返你 `id` 嘅型別，所以 table editor 嗰個
   `bigint` id 同全新嘅 `uuid` id 都用得
 
-份檔**最後會列出仲會擋住 insert 嘅 column** —— 即係你自己加、NOT NULL、又冇 default
-嗰啲。空白就係齊，有嘢就照佢印出嘅 `alter ... drop not null;` 行一句。
+- 你自己加、NOT NULL、又冇 default 嘅 column（例如 `skill_code`）→ 自動放寬做
+  nullable。Pipeline 唔識寫嗰啲欄，唔放寬就每次 insert 都爆。**冇任何資料被改動**，
+  你想改返 `alter table skills alter column skill_code set not null;` 就得
+
+份檔**最後會列出佢對你自己啲 column 做過乜**。空白就係本來就冇衝突；如果見到
+`COULD NOT relax`（通常係嗰欄係 primary key 一部分），就要你自己 drop 咗嗰欄或者俾佢
+一個 default。
 
 ### 已經抽咗嘅卷,唔使再叫 Gemini
 

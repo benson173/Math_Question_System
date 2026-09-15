@@ -989,3 +989,31 @@ insert 就會爆，而 `db_check` 隔住 REST 睇唔到 NOT NULL。所以 schema
 ```
 
 空白就係齊。Supabase SQL editor 會顯示最後一個 statement 嘅結果，所以呢個一定睇得見。
+
+## 41. 自己嘅 NOT NULL column:報告唔夠,要放寬
+
+§40 加咗個「仲有咩會擋住 insert」嘅報告,列出用家自己加、NOT NULL、冇 default 嘅欄。
+但落到真 Supabase,下一步一樣爆:
+
+```text
+23502: null value in column "skill_code" of relation "skills" violates not-null constraint
+```
+
+報告係啱嘅,但要人手再行一句 SQL 先用得。呢個 round trip 已經第四次,所以改成自動放寬:
+DO block 最後一步掃六個 table,凡係「唔喺 `_mqs_columns` + NOT NULL + 冇 default +
+唔係 id」就 `drop not null`,每個記入 `_mqs_relaxed`。
+
+點解敢改人哋嘅 constraint:
+
+- **冇資料被改動**,只係容許之後 insert 留空。
+- **可逆**,一句 `set not null` 就駁返。
+- **唔放寬就一定寫唔入**。Pipeline 唔識嗰欄,冇可能填。
+
+放寬唔到嘅情況(嗰欄係 primary key 一部分)會 catch 住,記低
+`COULD NOT relax (column "skill_code" is in a primary key)`,叫用家 drop 咗嗰欄或者俾
+default。份檔最後一句就係 `select * from _mqs_relaxed`,Supabase editor 一定睇得見。
+
+測試:一個模擬用家 project 嘅 schema —— `skill_id uuid` PK、`skill_code text not null`、
+`title text not null`、`parent_skill_id` 自我參照 FK、`status` 有 default、兩行舊 row。
+行完:三欄放寬、FK 仍在、舊 row 兩行都喺、新 skill 入到。另一個 database 專測放寬唔到
+嗰條路。
