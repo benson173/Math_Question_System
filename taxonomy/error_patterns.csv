@@ -24,7 +24,7 @@ err.log.of-sum,Splits a log over a sum,對數分配到和上,na.log.laws,"log(a 
 err.log.power-misplaced,Misapplies the power law,錯用對數的乘方定律,na.log.laws,"(log a)² confused with log a² or 2 log a."
 err.log.domain-ignored,Accepts a log equation solution outside the domain,對數方程未檢驗定義域,na.log.equation,Keeps a root that makes the argument of a log non-positive.
 err.log.base-change,Wrong direction in the change-of-base formula,換底公式方向錯,na.log.change-base,
-err.exp.equate-bases-wrong,Equates indices without equal bases,底未相同便比較指數,na.exp.equation;na.indices.equation,
+err.exp.equate-bases-wrong,Equates indices without equal bases,底未相同便比較指數,na.exp.equation;na.exp.equation,
 # --- equations and inequalities ---
 err.eq.sign-transposing,Sign error when transposing a term,移項時符號錯,*,"Any equation solved for an unknown, in algebra or in a geometry / mensuration question."
 err.eq.divide-by-unknown,Divides both sides by an expression that may be zero and loses a root,兩邊除以含未知數的式子而失根,na.quad.solve-factor;na.eqn.fractional,"x² = 3x solved as x = 3 only."

@@ -41,7 +41,7 @@ EXPECTED_COLUMNS = {
 }
 
 EXPECTED_COLUMNS["skills"] = ["skill_id", "strand", "unit", "name_en", "name_zh", "form",
-                              "foundation", "prerequisites"]
+                              "foundation", "prerequisites", "guide_ref"]
 EXPECTED_COLUMNS["error_patterns"] = ["error_id", "name_en", "name_zh", "skills", "description"]
 EXPECTED_COLUMNS["question_analyses"] = [
     "id", "question_key", "source_sha256", "source_question_id", "analysis_run_id",

@@ -22,6 +22,7 @@ def skill_rows(taxonomy) -> list[dict]:
         "skill_id": s.skill_id, "strand": s.strand, "unit": s.unit,
         "name_en": s.name_en, "name_zh": s.name_zh, "form": s.form,
         "foundation": s.foundation, "prerequisites": list(s.prerequisites),
+        "guide_ref": list(s.guide_ref),
     } for s in taxonomy.skills.values()]
 
 

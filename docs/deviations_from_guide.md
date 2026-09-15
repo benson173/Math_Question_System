@@ -1108,3 +1108,42 @@ Q20 三個 skill 全部 Mensuration 但 I = 2。Rubric I2 係「跨 unit」,一�
   `err.algfrac.subtract-denominators`、`err.mensur.radius-vs-diameter`、
   `err.geo.similar-corresponding-angles`。
 - 20 條全部 confidence 0.9,冇資訊。Prompt 加咗用返成個 range 嘅規則。
+
+## 44. Taxonomy 逐條對返官方 C&A Guide
+
+你將 2017 C&A Guide(S4–6)同 KS3 補充文件嘅 PDF 放入 `docs/`。呢個環境冇 poppler、裝唔到
+pypdf,所以寫咗個純 stdlib 嘅 extractor(`scripts/extract_guide_objectives.py`):Word 出嘅
+PDF 只有 FlateDecode 同 ToUnicode,夠用。兩個細節值得記低:
+
+- **Non-foundation 係靠底線**。Word 畫底線係一個 0.6 pt 高嘅實心矩形,而表格框線係 0.48 pt;
+  用高度分開,底線落喺邊條 objective 嘅 baseline 下面就標 N。最初冇分,成個 unit 3 都變 N,
+  對返原文先發現係框線。
+- **Unit 名喺表格入面上下置中**,所以佢個 y 可能喺第一條 objective 之後;unit 編號要由
+  objective 編號(`6.1` → unit 6)推,唔可以靠「最近見過嘅 unit 行」。
+
+抽出 328 條 objective(必修 93、M1 49、M2 42、KS3 144)入 `taxonomy/guide_objectives.csv`。
+然後 538 粒 skill 逐粒對:
+
+- **`guide_ref` 欄**:每粒 skill 寫明來自邊條 objective。534 粒對到;23 粒 Guide 冇(標 `ext`),
+  例如 M1 幾何分佈、M2 輔助角、M1 兩曲線之間面積(Guide 明講 not required)——留低係因為
+  試卷會問,但而家有 flag 可以排除。
+- **Foundation 標記由 Guide 決定,254 粒改咗**。最大嘅發現:必修 unit 3(指數對數)、unit 5
+  (More about equations)、unit 7(等差等比)、unit 15、16 成個 unit 都係 Non-foundation;
+  14.3 面積公式 ½ab sin C、14.4 正弦餘弦公式都係 N。我原本憑記憶標 F。KS3 而家都有 flag
+  (補充文件有底線同 `**`),新增 `E` = Enrichment。
+- **Unit 名跟 Guide**:Locus → Loci、Permutation and combination → Permutations and
+  combinations、Rate and ratio → Rates, ratios and proportions……;有啲 skill 搬咗 unit
+  (弧長扇形由 Mensuration 搬去 Guide 自己嘅 unit 16;二次方程配方法係 Guide 2.4 嘅嘢,
+  所以入 Functions and graphs)。I 維度計 unit 數,呢個先對。
+- **21 粒新 skill** 補冇 skill 嘅 objective:KS3 unit 1 基本運算(整除、質因數、HCF/LCM…)、
+  n 次方根、函數初步、鑲嵌、尺規作圖、全等 / 相似平面圖形、立體圖形平面表示、數系層次、
+  正反變圖像、三垂線定理、M2 奇偶函數、弧度、餘割正割餘切。
+- **4 粒重複合併**:`dh.prob2.expected-value`(=KS3 31.5 嘅 `dh.prob.expected-value`)、
+  `ms.solid.*-plane-angle`(=CP-14.7 嘅 `ms.trig.3d-*`)、`na.indices.equation`(=CP-3.5
+  嘅 `na.exp.equation`)。
+
+`check_taxonomy` 而家多三條規則:必修 strand 每粒要有 `guide_ref`;ref 要真係喺
+`guide_objectives.csv`;flag 要同 objective 一致(掂到 F 就係 F)。仲會列出邊條可評核嘅
+objective 冇 skill——而家係 0 條。
+
+**Guide 答唔到嘅**:KS3 邊級教(補充文件只分 unit),`form` 照跟教科書。

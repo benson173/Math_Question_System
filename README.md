@@ -217,7 +217,8 @@ pytest
 | `prompts/analyzer_v1.txt` | 🟢 Prompt | RPDICE Analyzer 指令(rubric 由 code 注入) |
 | `taxonomy/golden/rpdice_gold.csv` | 🟡 Config | 人手評分黃金集 |
 | `docs/rpdice_rubric.md` | 📄 Doc | 評分標準(人讀版) |
-| `taxonomy/skills.csv` | 🟡 Config | 538 個 atomic skill(必修 + KS3 + M1 + M2) |
+| `taxonomy/guide_objectives.csv` | 🟡 Config | C&A Guide 328 條 Learning Objective(由 PDF 抽出) |
+| `taxonomy/skills.csv` | 🟡 Config | 555 個 atomic skill(KS3 + 必修 + M1 + M2),每粒有 guide_ref |
 | `taxonomy/error_patterns.csv` | 🟡 Config | 139 個 error pattern |
 | `prompts/marking_scheme_v1.txt` | 🟢 Prompt | Gemini 抄 marking scheme 指令 |
 | `app/errors.py` | 🔵 Python | 錯誤類型 |
@@ -247,7 +248,8 @@ pytest
 | `scripts/db_check.py` | 🔴 Test | 驗證 Supabase 連線同 schema |
 | `scripts/db_push.py` | 🔴 Test | 舊 JSON 推上 Supabase,唔使再叫 Gemini |
 | `scripts/attach_marking_scheme.py` | 🔴 Test | 將 marking scheme 合入已抽嘅卷 |
-| `scripts/check_taxonomy.py` | 🔴 Test | 驗 taxonomy CSV |
+| `scripts/check_taxonomy.py` | 🔴 Test | 驗 taxonomy CSV,對返 Guide |
+| `scripts/extract_guide_objectives.py` | 🔵 Python | 由兩份 EDB PDF 抽 Learning Objectives |
 | `scripts/db_push_taxonomy.py` | 🔴 Test | Taxonomy 推上 Supabase |
 | `scripts/analyse_rpdice.py` | 🔴 Test | 跑 Analyzer |
 | `scripts/score_rpdice.py` | 🔴 Test | Analyzer 對黃金集計分 |
@@ -390,24 +392,33 @@ Supabase `questions.answer_source` 係 `paper` / `marking_scheme` / null,
 ## Skills 同 error patterns 受控詞彙表(`taxonomy/`)
 
 Analyzer 之後標 skill、Student Model 計 mastery、學生錯誤同 Analyzer 嘅 E 對數,全部靠
-兩個人手 curate 嘅 CSV。**Gemini 只可以揀,唔可以創**——free text 會令一個 skill 變幾個
-串法,之後乜統計都冇意思。
+呢幾個 CSV。**Gemini 只可以揀,唔可以創**——free text 會令一個 skill 變幾個串法,之後乜
+統計都冇意思。
 
 | 檔 | 內容 | 數量 |
 |---|---|---|
-| `taxonomy/skills.csv` | 必修部分 + KS3 + M1 + M2,拆到 atomic skill | 538 |
+| `taxonomy/guide_objectives.csv` | EDB C&A Guide(2017)必修 / M1 / M2 + KS3 補充文件嘅每一條 Learning Objective,由 `docs/*.pdf` 抽出 | 328 |
+| `taxonomy/skills.csv` | KS3 + 必修部分 + M1 + M2,拆到 atomic skill,每粒對返 Guide 邊條 objective | 555 |
 | `taxonomy/error_patterns.csv` | 題目會暴露嘅錯誤(RPDICE 嘅 E),每個掛返 skill | 139 |
 
 ```text
-skill_id                strand  unit             name_en                                 name_zh    form  foundation  prerequisites
-na.factor.dos           na      Factorisation    Factorise a difference of two squares   平方差因式分解  F2                na.factor.recognise-square;na.identity.dos
-na.quad.sum-product     na      Quadratic eq…    Sum and product of roots                根的和與積      F4    N           na.quad.form-from-roots
+skill_id             strand  unit                 name_en                                form  foundation  prerequisites                 guide_ref
+na.factor.dos        na      Factorisation        Factorise a difference of two squares  F2    F           na.factor.recognise-square;…  KS3-12.3
+na.quad.sum-product  na      Quadratic equations…  Sum and product of roots               F4    N           na.quad.form-from-roots       CP-1.7
 ```
 
 - `skill_id` = `<strand>.<unit>.<slug>`:`na` Number & Algebra、`ms` Measures Shape & Space、
-  `dh` Data Handling、`fl` Further Learning。改名唔改 id。
-- `form` 係**通常**邊級教。EDB 只定 strand 唔定 form,KS3 嗰啲跟常見教科書次序。
-- `foundation`:`F` Foundation Topic、`N` Non-Foundation(只限必修部分);KS3 留空。
+  `dh` Data Handling、`fl` Further Learning、`m1` / `m2` 延伸部分。改名唔改 id。
+- `unit` 用 Guide 嘅 Learning Unit 名(得 Factorisation、Deductive geometry 兩個係自己嘅
+  跨 unit 分組)。RPDICE 嘅 I 用 unit 數目,所以 unit 跟 Guide 先有意思。
+- `form` 係**通常**邊級教。Guide 只定 strand 同 unit 唔定 form,KS3 嗰啲跟常見教科書次序。
+- `foundation` 由 Guide 決定:`F` Foundation Topic、`N` Non-foundation(Guide 入面
+  底線嗰啲)、`E` Enrichment(KS3 補充文件 `**` 嗰啲)。KS3 都有;M1 / M2 同 Guide 冇嘅
+  skill 留空。一粒 skill 掂到任何一條 Foundation objective 就係 F。
+- `guide_ref`:對返 `guide_objectives.csv` 嘅 `<part>-<n.m>`(`CP-1.4`、`KS3-11.3`、`M1-6.1`、
+  `M2-9.6`;Further Learning Unit 係 `CP-19` 咁);`KS2` = 小學已學;`ext` = Guide 冇呢條
+  objective(23 粒,例如 M1 幾何分佈、M2 輔助角、分點到直線距離),留低係因為試卷會問,
+  要排除可以用呢個 flag。
 - `prerequisites` 用 `;` 分隔,唔求齊,求關鍵嗰幾個。
 - `error_patterns.csv` 嘅 `skills` 欄:一個或多個 skill_id(`;` 分隔),或者 `*`(任何 skill)、
   `ms.*`(成個 strand)。validator 接受 error 掛喺列出嘅 skill **或者佢嘅 prerequisite** 上。
@@ -415,12 +426,13 @@ na.quad.sum-product     na      Quadratic eq…    Sum and product of roots     
 改完一定要行:
 
 ```bash
-python3 -m scripts.check_taxonomy       # id 重複 / 唔存在 / form 錯 / 循環 全部會列
+python3 -m scripts.check_taxonomy       # id / guide_ref 唔存在、flag 同 Guide 唔夾、循環、冇 skill 嘅 objective 全部會列
 python3 -m scripts.db_push_taxonomy     # upsert 上 Supabase 嘅 skills / error_patterns
 ```
 
-> 呢份係由 2017 C&A Guide 同 KS3 補充文件嘅記憶起稿,冇對住官方 PDF 逐條核對
-> (呢個環境連唔到 edb.gov.hk)。Unit 名同 foundation 標記請對返官方文件改。
+`guide_objectives.csv` 由 `python3 -m scripts.extract_guide_objectives` 重新生成(純 stdlib
+讀 `docs/CA_2017_e.pdf`、`docs/jsmc2017_e.pdf`;PDF 用圖畫嘅公式會缺)。每條 Guide 可評核嘅
+objective 都至少有一粒 skill,`check_taxonomy` 會守住呢點。
 
 ---
 

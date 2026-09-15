@@ -1,11 +1,15 @@
 """The controlled vocabularies the later layers speak in.
 
-Two CSV files under taxonomy/ are the source of truth:
+Three CSV files under taxonomy/ are the source of truth:
 
-    skills.csv           one row per atomic skill, HKDSE Compulsory Part + KS3
+    skills.csv           one row per atomic skill, KS3 + Compulsory Part + M1 + M2
     error_patterns.csv   one row per error a question can expose (RPDICE "E")
+    guide_objectives.csv the Learning Objectives of the EDB C&A Guide (2017) and
+                         the KS3 Supplement, as extracted from the two PDFs
 
-They are curated by hand. The Analyzer chooses from them and may not invent
+Every skill names the Guide objective(s) it comes from (guide_ref), and the
+Foundation / Non-foundation / Enrichment flag is taken from there. Skills and
+errors are curated by hand. The Analyzer chooses from them and may not invent
 entries; the Student Model counts mastery by skill_id; student errors are
 tagged by error_id and compared with what the Analyzer said a question would
 expose. A free-text skill name would split one skill into several spellings
@@ -26,6 +30,7 @@ from app.paths import PROJECT_ROOT
 TAXONOMY_DIR = PROJECT_ROOT / "taxonomy"
 SKILLS_CSV = TAXONOMY_DIR / "skills.csv"
 ERROR_PATTERNS_CSV = TAXONOMY_DIR / "error_patterns.csv"
+GUIDE_OBJECTIVES_CSV = TAXONOMY_DIR / "guide_objectives.csv"
 
 # The Compulsory Part (and Key Stage 3 below it) is organised in strands; the
 # two Extended Part modules are each a strand of their own.
@@ -40,7 +45,14 @@ STRANDS = {
     "m2": "Module 2 (Algebra and Calculus)",
 }
 FORMS = ("F1", "F2", "F3", "F4", "F5", "F6")
-FOUNDATION = {"": None, "F": "foundation", "N": "non-foundation"}
+FOUNDATION = {"": None, "F": "foundation", "N": "non-foundation", "E": "enrichment"}
+
+# guide_ref: Guide objectives separated by ";" ("CP-1.4", "KS3-11.3", "M1-6.1",
+# "M2-9.6", a Further Learning Unit as "CP-19"), "KS2" for primary-school
+# knowledge the Guide assumes, or "ext" for a skill outside every Guide
+# objective (kept because papers still ask it; flagged so it can be excluded).
+GUIDE_PARTS = ("KS3", "CP", "M1", "M2")
+_GUIDE_REF = re.compile(r"^(KS3|CP|M1|M2)-\d+(\.\d+)?$")
 
 _SKILL_ID = re.compile(r"^(na|ms|dh|fl|m1|m2)\.[a-z0-9-]+\.[a-z0-9-]+$")
 _ERROR_ID = re.compile(r"^err\.[a-z0-9-]+\.[a-z0-9-]+$")
@@ -72,8 +84,13 @@ class Skill:
     name_en: str
     name_zh: str
     form: str
-    foundation: Optional[str]          # "foundation" | "non-foundation" | None (KS3)
+    foundation: Optional[str]          # foundation | non-foundation | enrichment | None
     prerequisites: tuple[str, ...] = ()
+    guide_ref: tuple[str, ...] = ()    # see GUIDE_PARTS
+
+    @property
+    def in_guide(self) -> bool:
+        return any(_GUIDE_REF.match(r) for r in self.guide_ref)
 
 
 @dataclass(frozen=True)
@@ -93,10 +110,23 @@ class ErrorPattern:
         return any(is_wildcard(entry) for entry in self.skills)
 
 
+@dataclass(frozen=True)
+class GuideObjective:
+    ref: str                           # "CP-1.4"
+    part: str                          # KS3 | CP | M1 | M2
+    strand: str
+    unit_no: str
+    unit: str
+    text: str
+    status: str                        # foundation | non-foundation | enrichment
+    remarks: str = ""
+
+
 @dataclass
 class Taxonomy:
     skills: dict[str, Skill] = field(default_factory=dict)
     errors: dict[str, ErrorPattern] = field(default_factory=dict)
+    objectives: dict[str, GuideObjective] = field(default_factory=dict)
 
     def skills_for_form(self, form: str) -> list[Skill]:
         return [s for s in self.skills.values() if s.form == form]
@@ -136,6 +166,15 @@ class Taxonomy:
                                                self.prerequisites_closure(skill_id)):
                 return True
         return False
+
+    def skills_for_objective(self, ref: str) -> list[Skill]:
+        return [s for s in self.skills.values() if ref in s.guide_ref]
+
+    def uncovered_objectives(self) -> list[GuideObjective]:
+        """Assessed Guide objectives that no skill names (Enrichment ones are not assessed)."""
+        covered = {ref for s in self.skills.values() for ref in s.guide_ref}
+        return [o for o in self.objectives.values()
+                if o.ref not in covered and o.status != "enrichment"]
 
     def unique_skill_for(self, wrong_id: str) -> Optional[str]:
         """The one known skill whose unit and slug match a wrong id, if any.
@@ -189,8 +228,19 @@ def read_skills(path: Path = SKILLS_CSV) -> list[Skill]:
             form=row["form"].strip(),
             foundation=FOUNDATION.get(row.get("foundation", "").strip(), "?"),
             prerequisites=_split(row.get("prerequisites", "")),
+            guide_ref=_split(row.get("guide_ref", "")),
         ))
     return skills
+
+
+def read_guide_objectives(path: Path = GUIDE_OBJECTIVES_CSV) -> list[GuideObjective]:
+    status = {"": "foundation", "N": "non-foundation", "E": "enrichment"}
+    return [GuideObjective(
+        ref=f"{row['part'].strip()}-{row['obj'].strip()}",
+        part=row["part"].strip(), strand=row["strand"].strip(), unit_no=row["unit_no"].strip(),
+        unit=row["unit"].strip(), text=row["text"].strip(),
+        status=status[row.get("nf", "").strip()], remarks=(row.get("remarks") or "").strip(),
+    ) for row in _rows(path)]
 
 
 def read_error_patterns(path: Path = ERROR_PATTERNS_CSV) -> list[ErrorPattern]:
@@ -205,12 +255,18 @@ def read_error_patterns(path: Path = ERROR_PATTERNS_CSV) -> list[ErrorPattern]:
 
 # --- checking -----------------------------------------------------------------
 
-def validate(skills: Iterable[Skill], errors: Iterable[ErrorPattern]) -> list[str]:
-    """Every way the two files can be wrong, as plain sentences."""
+def validate(skills: Iterable[Skill], errors: Iterable[ErrorPattern],
+             objectives: Optional[Iterable[GuideObjective]] = None) -> list[str]:
+    """Every way the files can be wrong, as plain sentences.
+
+    With `objectives`, every guide_ref must name one of them and the
+    Foundation / Non-foundation / Enrichment flag must agree with them.
+    """
     problems: list[str] = []
     skills, errors = list(skills), list(errors)
     ids = [s.skill_id for s in skills]
     known = set(ids)
+    guide = {o.ref: o for o in objectives} if objectives is not None else None
 
     for skill_id in ids:
         if ids.count(skill_id) > 1:
@@ -228,14 +284,26 @@ def validate(skills: Iterable[Skill], errors: Iterable[ErrorPattern]) -> list[st
         if s.foundation == "?":
             problems.append(f"skill {s.skill_id} has a foundation flag that is not F, N or blank")
         compulsory = s.strand in COMPULSORY_STRANDS
-        if compulsory and s.form in ("F4", "F5", "F6") and s.foundation is None:
-            problems.append(f"skill {s.skill_id} is Compulsory Part ({s.form}) but has no "
-                            f"foundation flag")
-        if compulsory and s.form in ("F1", "F2", "F3") and s.foundation is not None:
-            problems.append(f"skill {s.skill_id} is KS3 ({s.form}) but has a foundation flag")
+        if compulsory and s.foundation is None and s.in_guide:
+            problems.append(f"skill {s.skill_id} is in the Guide but has no foundation flag")
         if not compulsory and s.foundation is not None:
             problems.append(f"skill {s.skill_id} is {STRANDS[s.strand]}, where the "
-                            f"Foundation / Non-Foundation split does not apply")
+                            f"Foundation / Non-foundation split does not apply")
+        if compulsory and not s.guide_ref:
+            problems.append(f"skill {s.skill_id} has no guide_ref (an objective, KS2 or ext)")
+        for ref in s.guide_ref:
+            if ref in ("ext", "KS2"):
+                continue
+            if not _GUIDE_REF.match(ref):
+                problems.append(f"skill {s.skill_id} has guide_ref {ref!r}, not <part>-<n.m>")
+            elif guide is not None and ref not in guide:
+                problems.append(f"skill {s.skill_id} refers to Guide objective {ref}, which "
+                                f"is not in guide_objectives.csv")
+        if guide is not None and compulsory:
+            expected = _expected_flag(s, guide)
+            if expected and FOUNDATION.get(expected) != s.foundation:
+                problems.append(f"skill {s.skill_id} is flagged {s.foundation or 'blank'} but "
+                                f"its Guide objectives say {FOUNDATION[expected]}")
         if not s.name_en or not s.name_zh:
             problems.append(f"skill {s.skill_id} is missing an English or Chinese name")
         for pre in s.prerequisites:
@@ -264,6 +332,18 @@ def validate(skills: Iterable[Skill], errors: Iterable[ErrorPattern]) -> list[st
     return sorted(set(problems))
 
 
+def _expected_flag(skill: Skill, guide: dict[str, GuideObjective]) -> str:
+    """F if any named objective is Foundation, else N, else E; "" when none is named."""
+    kinds = {guide[r].status for r in skill.guide_ref if r in guide}
+    if "foundation" in kinds or ("KS2" in skill.guide_ref and not kinds):
+        return "F"
+    if "non-foundation" in kinds:
+        return "N"
+    if "enrichment" in kinds:
+        return "E"
+    return ""
+
+
 def _cycles(graph: dict[str, tuple[str, ...]]) -> list[str]:
     """A prerequisite chain that comes back to its start."""
     problems = []
@@ -288,11 +368,14 @@ def _cycles(graph: dict[str, tuple[str, ...]]) -> list[str]:
 
 
 def load_taxonomy(skills_path: Path = SKILLS_CSV,
-                  errors_path: Path = ERROR_PATTERNS_CSV) -> Taxonomy:
-    """Both files, checked. Raises with every problem if there are any."""
+                  errors_path: Path = ERROR_PATTERNS_CSV,
+                  objectives_path: Optional[Path] = GUIDE_OBJECTIVES_CSV) -> Taxonomy:
+    """All files, checked. Raises with every problem if there are any."""
     skills = read_skills(skills_path)
     errors = read_error_patterns(errors_path)
-    problems = validate(skills, errors)
+    objectives = read_guide_objectives(objectives_path) if objectives_path else []
+    problems = validate(skills, errors, objectives if objectives_path else None)
     if problems:
         raise ValueError("The taxonomy has problems:\n  " + "\n  ".join(problems))
-    return Taxonomy({s.skill_id: s for s in skills}, {e.error_id: e for e in errors})
+    return Taxonomy({s.skill_id: s for s in skills}, {e.error_id: e for e in errors},
+                    {o.ref: o for o in objectives})

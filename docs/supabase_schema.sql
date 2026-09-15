@@ -102,8 +102,9 @@ create table if not exists skills (
   name_en        text not null,
   name_zh        text not null,
   form           text not null,           -- F1-F6
-  foundation     text,                    -- foundation | non-foundation | null (KS3)
+  foundation     text,                    -- foundation | non-foundation | enrichment | null
   prerequisites  jsonb not null default '[]'::jsonb,
+  guide_ref      jsonb not null default '[]'::jsonb,   -- C&A Guide objectives, e.g. ["CP-1.4"]
   updated_at     timestamptz not null default now()
 );
 
@@ -258,6 +259,7 @@ insert into _mqs_columns (table_name, column_name, column_type) values
       ('skills',           'form',                    'text'),
       ('skills',           'foundation',              'text'),
       ('skills',           'prerequisites',           'jsonb default ''[]''::jsonb'),
+      ('skills',           'guide_ref',               'jsonb default ''[]''::jsonb'),
       ('skills',           'updated_at',              'timestamptz default now()'),
       ('error_patterns',   'error_id',                'text'),
       ('error_patterns',   'name_en',                 'text'),

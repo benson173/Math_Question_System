@@ -7,10 +7,12 @@ from __future__ import annotations
 import pytest
 
 from app.taxonomy import (
+    GuideObjective,
     ErrorPattern,
     Skill,
     load_taxonomy,
     read_error_patterns,
+    read_guide_objectives,
     read_skills,
     validate,
 )
@@ -22,6 +24,32 @@ def test_the_shipped_taxonomy_is_valid():
     taxonomy = load_taxonomy()
     assert len(taxonomy.skills) > 300
     assert len(taxonomy.errors) > 60
+    assert len(taxonomy.objectives) > 300
+
+
+def test_every_assessed_guide_objective_has_a_skill_and_every_skill_a_reference():
+    taxonomy = load_taxonomy()
+    assert taxonomy.uncovered_objectives() == []
+    for s in taxonomy.skills.values():
+        if s.strand in ("na", "ms", "dh", "fl"):
+            assert s.guide_ref, s.skill_id
+    # the flags come from the Guide: unit 3 (exp / log) is Non-foundation throughout,
+    # sequences too, while the whole of KS3 directed numbers is Foundation
+    assert taxonomy.skills["na.log.laws"].foundation == "non-foundation"
+    assert taxonomy.skills["na.seq.as-term"].foundation == "non-foundation"
+    assert taxonomy.skills["na.directed.add-sub"].foundation == "foundation"
+    assert taxonomy.skills["ms.solid.euler"].foundation == "enrichment"
+    assert taxonomy.skills["na.quad.solve-factor"].guide_ref == ("CP-1.1",)
+    assert taxonomy.objectives["CP-1.7"].status == "non-foundation"
+    assert taxonomy.objectives["KS3-17.5"].status == "enrichment"
+    assert [s.skill_id for s in taxonomy.skills_for_objective("CP-14.8")] == \
+        ["ms.trig.3d-three-perpendiculars"]
+
+
+def test_a_skill_outside_the_guide_is_marked_ext():
+    taxonomy = load_taxonomy()
+    outside = taxonomy.skills["m1.geo.probability"]          # no geometric distribution in M1
+    assert outside.guide_ref == ("ext",) and not outside.in_guide
 
 
 def test_every_strand_form_and_unit_is_represented():
@@ -31,8 +59,8 @@ def test_every_strand_form_and_unit_is_represented():
     assert {s.form for s in taxonomy.skills.values()} == {"F1", "F2", "F3", "F4", "F5", "F6"}
     units = {s.unit for s in taxonomy.skills.values()}
     for unit in ("Quadratic equations in one unknown", "Basic properties of circles",
-                 "Permutation and combination", "Measures of dispersion", "Factorisation"):
-        assert unit in units
+                 "Permutations and combinations", "Measures of dispersion", "Factorisation"):
+        assert unit in units          # Guide unit names, except our own cross-cutting ones
 
 
 def test_the_worked_example_from_the_spec_is_in_the_taxonomy():
@@ -53,7 +81,7 @@ def test_prerequisites_close_over_the_chain():
 def test_lookups_by_form_unit_and_skill():
     taxonomy = load_taxonomy()
     assert all(s.form == "F4" for s in taxonomy.skills_for_form("F4"))
-    assert taxonomy.skills_in_unit("Locus")
+    assert taxonomy.skills_in_unit("Loci")
     assert taxonomy.errors_for_skill("na.log.laws")
 
 
@@ -89,10 +117,11 @@ def test_a_wrong_strand_prefix_maps_to_the_one_skill_it_can_mean():
 
 # --- what the validator catches ---------------------------------------------
 
-def skill(skill_id="na.x.y", form="F4", foundation="foundation", prerequisites=(), **kw):
+def skill(skill_id="na.x.y", form="F4", foundation="foundation", prerequisites=(),
+          guide_ref=("CP-1.1",), **kw):
     defaults = dict(skill_id=skill_id, strand=skill_id.split(".")[0], unit="U",
                     name_en="n", name_zh="名", form=form, foundation=foundation,
-                    prerequisites=tuple(prerequisites))
+                    prerequisites=tuple(prerequisites), guide_ref=tuple(guide_ref))
     defaults.update(kw)
     return Skill(**defaults)
 
@@ -118,7 +147,10 @@ def test_wildcard_error_scopes_are_valid_but_only_for_real_strands():
     ([skill(skill_id="ms.x.y", strand="na")], "says strand"),
     ([skill(form="F7")], "not F1-F6"),
     ([skill(form="F4", foundation=None)], "no foundation flag"),
-    ([skill(form="F2", foundation="foundation")], "KS3"),
+    ([skill(form="F2", foundation=None)], "no foundation flag"),          # KS3 is flagged too
+    ([skill(skill_id="m1.x.y", foundation="foundation", guide_ref=("M1-1.1",))], "does not apply"),
+    ([skill(guide_ref=())], "has no guide_ref"),
+    ([skill(guide_ref=("CP1.1",))], "not <part>-<n.m>"),
     ([skill(prerequisites=("na.nope.nope",))], "does not exist"),
     ([skill(prerequisites=("na.x.y",))], "lists itself"),
     ([skill(name_zh="")], "missing an English or Chinese name"),
@@ -126,6 +158,34 @@ def test_wildcard_error_scopes_are_valid_but_only_for_real_strands():
 def test_each_skill_fault_is_named(bad, expected):
     problems = validate(bad, [])
     assert any(expected in p for p in problems), problems
+
+
+def objective(ref="CP-1.1", status="foundation"):
+    part, obj = ref.split("-")
+    return GuideObjective(ref=ref, part=part, strand="s", unit_no=obj.split(".")[0], unit="u",
+                          text="t", status=status)
+
+
+def test_with_the_guide_a_reference_must_exist_and_the_flag_must_agree():
+    guide = [objective("CP-1.1"), objective("CP-1.7", "non-foundation"),
+             objective("KS3-17.5", "enrichment")]
+    assert validate([skill()], [], guide) == []
+    assert any("not in guide_objectives" in p for p in validate([skill(guide_ref=("CP-9.9",))], [], guide))
+    wrong = skill(guide_ref=("CP-1.7",))                    # flagged F, objective is N
+    assert any("Guide objectives say non-foundation" in p for p in validate([wrong], [], guide))
+    assert validate([skill(guide_ref=("CP-1.7",), foundation="non-foundation")], [], guide) == []
+    assert validate([skill(guide_ref=("KS3-17.5",), foundation="enrichment")], [], guide) == []
+    # a skill touching a Foundation objective and a Non-foundation one is Foundation
+    assert validate([skill(guide_ref=("CP-1.1", "CP-1.7"))], [], guide) == []
+    # ext skills carry no flag and are not checked against the Guide
+    assert validate([skill(guide_ref=("ext",), foundation=None)], [], guide) == []
+
+
+def test_the_shipped_objectives_file_reads():
+    objectives = read_guide_objectives()
+    parts = {o.part for o in objectives}
+    assert parts == {"KS3", "CP", "M1", "M2"}
+    assert any(o.ref == "CP-19" for o in objectives)         # Further Learning Unit
 
 
 def test_a_prerequisite_cycle_is_named():
@@ -182,5 +242,7 @@ def test_database_rows_carry_lists_as_lists():
     taxonomy = load_taxonomy()
     rows = {r["skill_id"]: r for r in skill_rows(taxonomy)}
     assert isinstance(rows["na.factor.dos"]["prerequisites"], list)
-    assert rows["na.directed.order"]["foundation"] is None
+    assert rows["na.directed.order"]["foundation"] == "foundation"
+    assert rows["m1.geo.probability"]["foundation"] is None
+    assert rows["na.factor.dos"]["guide_ref"] == ["KS3-12.3"]
     assert all(isinstance(r["skills"], list) for r in error_rows(taxonomy))
