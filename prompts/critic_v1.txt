@@ -40,6 +40,11 @@ RULES
   never solve the question yourself beyond what the check needs.
 - source_question_id must be one of the given questions; strategy_id, when
   the issue is about one strategy, must be one of that question's ids.
+- The pipeline already reports, from the solver output, a strategy that did
+  not reach an answer and an answer that disagrees with the reference. Use
+  STRATEGY_DOES_NOT_SOLVE or ANSWER_MISMATCH only when you disagree with the
+  solver's own verdict. A solver that could not see a diagram is not a
+  failed strategy.
 - If an analysis is sound, return nothing for it. An empty list is a valid
   and common result.
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import re
 from typing import Optional
 import uuid
 
@@ -124,7 +125,9 @@ def apply_status(analysis: AnalysisResult, solutions: list[StrategySolution],
                         high_against.add((a.source_question_id, st.strategy_id))
                     elif st.strategy_id and st.strategy_id in i.message:
                         high_against.add((a.source_question_id, st.strategy_id))
-    counts = {"confirmed": 0, "rejected": 0, "proposed": 0}
+    needs_diagram = {(i.source_question_id, _strategy_in(i.message))
+                     for i in issues if i.issue_code == "SOLUTION_NEEDS_DIAGRAM"}
+    counts = {"confirmed": 0, "rejected": 0, "proposed": 0, "unverified": 0}
     for a in analysis.analyses:
         for st in a.strategies:
             key = (a.source_question_id, st.strategy_id)
@@ -132,13 +135,29 @@ def apply_status(analysis: AnalysisResult, solutions: list[StrategySolution],
             if solution is None:
                 st.status = "proposed"
             elif not solution.reached_answer:
-                st.status = "rejected"
+                st.status = "unverified" if key in needs_diagram else "rejected"
             elif key in high_against:
                 st.status = "proposed"
             else:
                 st.status = "confirmed"
             counts[st.status] += 1
     return counts
+
+
+def _strategy_in(message: str) -> Optional[str]:
+    m = re.search(r"\[([0-9a-f]{12})\]", message)
+    return m.group(1) if m else None
+
+
+def drop_repeats(critic_issues: list[ValidationIssue],
+                 code_issues: list[ValidationIssue]) -> list[ValidationIssue]:
+    """A Critic issue the pipeline already raised (same code, question and
+    strategy) is dropped: one finding, one row."""
+    seen = {(i.issue_code, i.source_question_id, _strategy_in(i.message)) for i in code_issues}
+    seen |= {(i.issue_code, i.source_question_id, None) for i in code_issues}
+    return [i for i in critic_issues
+            if (i.issue_code, i.source_question_id, _strategy_in(i.message)) not in seen
+            and (i.issue_code, i.source_question_id, None) not in seen]
 
 
 # --- running it ---------------------------------------------------------------
@@ -172,8 +191,9 @@ def critique(extraction: ExtractionResult, analysis: AnalysisResult,
     solver = solver or Solver()
     critic = critic or Critic()
     solutions = solver.solve(extraction, analysis)
-    issues = check_solutions(analysis, extraction, solutions)
-    issues += critic.critique(extraction, analysis, solutions)
+    issues = check_solutions(analysis, extraction, solutions,
+                             getattr(solver, "diagrams_sent", None))
+    issues += drop_repeats(critic.critique(extraction, analysis, solutions), issues)
     apply_status(analysis, solutions, issues)
     analysis.solutions = solutions
     analysis.critic_issues = issues

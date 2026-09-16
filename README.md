@@ -255,6 +255,8 @@ pytest
 | `scripts/db_push_taxonomy.py` | 🔴 Test | Taxonomy 推上 Supabase |
 | `scripts/analyse_rpdice.py` | 🔴 Test | 跑 Analyzer → Solver → Critic |
 | `scripts/critique_rpdice.py` | 🔴 Test | 對已有 analysis 補跑 Solver / Critic |
+| `scripts/diff_analyses.py` | 🔴 Test | 兩個 Analyzer run 逐題對,量 Analyzer 嘅噪音 |
+| `app/analysis_diff.py` | 🔵 Python | 兩個 run 嘅差異(levels / skills / primary) |
 | `scripts/score_rpdice.py` | 🔴 Test | Analyzer 對黃金集計分 |
 
 ---
@@ -449,6 +451,7 @@ objective 都至少有一粒 skill,`check_taxonomy` 會守住呢點。
 python3 -m scripts.analyse_rpdice            # Analyzer → Solver → Critic;data/extracted/*.json → data/analyses/*.json + .md
 python3 -m scripts.analyse_rpdice --skip-critique   # 只跑 Analyzer(平一半以上)
 python3 -m scripts.critique_rpdice           # 補跑 Solver / Critic(未 critique 過嘅 analysis)
+python3 -m scripts.diff_analyses 2526_2nd_S4MATH2   # 同一份卷最新兩個 run 逐題對:邊個字母郁咗、skill 變咗、primary 轉咗
 python3 -m scripts.score_rpdice              # 對返 taxonomy/golden/rpdice_gold.csv
 python3 -m scripts.score_rpdice --check      # 只驗黃金集
 ```
@@ -468,7 +471,9 @@ Analyzer 講嘅 strategy 唔係講咗就算:
   `CRITIC_OTHER`。
 - **每個 strategy 有 `strategy_id`**(由名 + skills 生成,重跑都一樣)、`source`(analyzer /
   student / teacher)同 `status`:Solver 解到、答案啱、Critic 冇 high issue → `confirmed`;
-  解唔到 → `rejected`;其餘 `proposed`。將來學生答題用另一種方法,`student_responses.strategy_id`
+  解唔到 → `rejected`;題目要睇圖但 Solver 收唔到圖 → `unverified`(render 完圖再
+  `critique_rpdice --again`);其餘 `proposed`。有圖嘅題,Solver 會連 `data/diagrams/` 嘅 PNG
+  一齊送。將來學生答題用另一種方法,`student_responses.strategy_id`
   就指住呢個 id;佢用嘅方法 Analyzer 冇列,就以 `source: student` 加落嗰題度。
 
 結果寫入同一份 analysis JSON(`solutions`、`critic_issues`、`critic`)同 markdown(每個

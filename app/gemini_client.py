@@ -149,9 +149,11 @@ class GeminiClient:
         finally:
             self._delete_quietly(uploaded)
 
-    def generate_json(self, prompt: str, schema):
-        """A text-only structured call - the Analyzer sends questions, not a PDF."""
-        return self._generate_contents([prompt], schema)
+    def generate_json(self, prompt: str, schema, images: Optional[list] = None):
+        """A structured call over text, plus any PNG / JPEG images (the Solver
+        sends a question's diagram). `images` is a list of (bytes, mime_type)."""
+        parts = [types.Part.from_bytes(data=data, mime_type=mime) for data, mime in (images or [])]
+        return self._generate_contents(parts + [prompt], schema)
 
     def _delete_quietly(self, uploaded: Any) -> None:
         """Remove an uploaded file so repeated batches do not fill the quota."""

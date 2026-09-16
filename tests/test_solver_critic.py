@@ -15,6 +15,7 @@ from app.solver import (SolverPayload, Solver, answers_match, build_solver_promp
                         check_solutions, normalise_answer)
 from app.taxonomy import load_taxonomy
 from scripts import critique_rpdice
+from app.analyzer import AnalysisRun
 from tests.test_rpdice import analysis, make_analysis_result
 from tests.test_supabase_store import make_result
 
@@ -111,7 +112,7 @@ def test_solver_checks_name_the_missing_the_failed_and_the_wrong():
     assert check_solutions(result, extraction, fine) == []
 
     wrong = [solution("1", sid1, answer="x = 4"), solution("2(a)", sid2, reached=False, notes="stuck")]
-    codes = {i.issue_code for i in check_solutions(result, extraction, wrong)}
+    codes = {i.issue_code for i in check_solutions(result, extraction, wrong, diagrams_sent={"2(a)"})}
     assert codes == {"ANSWER_MISMATCH", "STRATEGY_DOES_NOT_SOLVE"}
 
     codes = {i.issue_code for i in check_solutions(result, extraction, [solution("1", "nope")])}
@@ -179,7 +180,7 @@ def test_statuses_follow_the_solver_and_the_critic():
     sid1, sid2 = (a.strategies[0].strategy_id for a in result.analyses)
     sols = [solution("1", sid1), solution("2(a)", sid2, reached=False)]
     counts = apply_status(result, sols, [])
-    assert counts == {"confirmed": 1, "rejected": 1, "proposed": 0}
+    assert counts == {"confirmed": 1, "rejected": 1, "proposed": 0, "unverified": 0}
     assert result.analyses[0].strategies[0].status == "confirmed"
     assert result.analyses[1].strategies[0].status == "rejected"
     # a high Critic issue against the strategy holds it back to proposed
@@ -270,3 +271,113 @@ def test_critique_rpdice_pairs_an_analysis_with_its_extraction(tmp_path, monkeyp
     assert critique_rpdice.main([]) == 0
     assert json.loads((analyses / "p-aaaaaaaaaaaa.json").read_text())["critic"]["run_id"] == \
         saved["critic"]["run_id"]
+
+
+# --- diagrams, LaTeX answers, repeats -----------------------------------------------
+
+@pytest.mark.parametrize("given,reference", [
+    (r"D (\( \frac{1}{2^{555}} \) 。)", "D"),
+    (r"\( \frac{9}{(2x - 5)(4x - 1)} \) 。", "9/((2x-5)(4x-1))"),
+    (r"\( x = \frac{-9 \pm \sqrt{19}}{2} \)", "(-9±sqrt(19))/2"),
+    ("40 平方單位", "40"),
+    ("3 分", "3"),
+    (r"\frac{3}{4}", "0.75"),
+    ("(1, −25)", "(1,-25)"),
+])
+def test_latex_and_units_in_a_solver_answer_do_not_hide_a_match(given, reference):
+    assert answers_match(given, reference) is True
+
+
+def test_a_question_needing_its_diagram_is_unverified_not_rejected(tmp_path):
+    extraction, result = reviewed()
+    sid1, sid2 = (a.strategies[0].strategy_id for a in result.analyses)
+    # 2(a) is diagram_required in make_result; its PNG does not exist here
+    sols = [solution("1", sid1), solution("2(a)", sid2, reached=False, notes="figure missing")]
+    issues = check_solutions(result, extraction, sols, diagrams_sent=set())
+    assert [i.issue_code for i in issues] == ["SOLUTION_NEEDS_DIAGRAM"]
+    assert issues[0].severity == "medium"
+    counts = apply_status(result, sols, issues)
+    assert counts["unverified"] == 1 and result.analyses[1].strategies[0].status == "unverified"
+    # once the diagram was sent, not reaching an answer is the strategy's fault
+    issues = check_solutions(result, extraction, sols, diagrams_sent={"2(a)"})
+    assert [i.issue_code for i in issues] == ["STRATEGY_DOES_NOT_SOLVE"]
+    assert apply_status(result, sols, issues)["rejected"] == 1
+
+
+def test_the_solver_attaches_the_rendered_diagram_and_lists_it_in_the_prompt(tmp_path, monkeypatch):
+    from app import solver as solver_module
+    extraction, result = reviewed()
+    png = tmp_path / "2-a.png"
+    png.write_bytes(b"\x89PNG fake")
+    extraction.diagrams[0].image_path = str(png)
+    sid1, sid2 = (a.strategies[0].strategy_id for a in result.analyses)
+
+    class ImageGemini(FakeGemini):
+        def generate_json(self, prompt, schema, images=None):
+            self.images = images
+            return super().generate_json(prompt, schema)
+
+    gemini = ImageGemini([SolverPayload(solutions=[solution("1", sid1), solution("2(a)", sid2, answer="B")])])
+    built = Solver.__new__(Solver)
+    built.gemini, built.usage, built.diagrams_sent = gemini, {"input_tokens": 0, "output_tokens": 0}, set()
+    built.solve(extraction, result)
+    assert gemini.images == [(b"\x89PNG fake", "image/png")]
+    assert "image 1: the diagram of question 2(a)" in gemini.prompts[0]
+    assert '"has_diagram": true' in gemini.prompts[0]
+    assert built.diagrams_sent == {"2(a)"}
+
+
+def test_a_critic_issue_the_pipeline_already_raised_is_dropped():
+    from app.critic import drop_repeats
+    from app.schemas import ValidationIssue
+    code = [ValidationIssue(issue_code="STRATEGY_DOES_NOT_SOLVE", severity="high",
+                            message="7: [abc123abc123] strategy 'x' did not reach an answer",
+                            source_question_id="7")]
+    critic = [ValidationIssue(issue_code="STRATEGY_DOES_NOT_SOLVE", severity="high",
+                              message="7: [abc123abc123] cannot reach", source_question_id="7"),
+              ValidationIssue(issue_code="STRATEGY_DOES_NOT_SOLVE", severity="high",
+                              message="7: the figure is missing", source_question_id="7"),
+              ValidationIssue(issue_code="LEVEL_OVERRATED", severity="medium",
+                              message="7: [abc123abc123] C is 1", source_question_id="7")]
+    assert [i.issue_code for i in drop_repeats(critic, code)] == ["LEVEL_OVERRATED"]
+
+
+# --- two runs compared ----------------------------------------------------------------
+
+def test_diff_names_moved_levels_skills_and_a_changed_primary():
+    from app.analysis_diff import diff_analyses, render_diff
+    before = make_analysis_result(analyses=[analysis(qid="1"), analysis(qid="2")])
+    after = make_analysis_result(analyses=[
+        analysis(qid="1", levels=dict(R=2, P=1, D=2, I=1, C=1, E=2),
+                 skills=("na.factor.recognise-square", "na.factor.dos", "na.factor.common")),
+        analysis(qid="2")], run=AnalysisRun(run_id="an2", analysed_at="t2",
+                                            analyzer_version="RPDICE_v1", model="m"))
+    after.analyses[1].strategies[0].strategy_name = "Other route"
+    assign_strategy_ids(AnalysisPayload(analyses=before.analyses))
+    assign_strategy_ids(AnalysisPayload(analyses=after.analyses))
+    diff = diff_analyses(before, after)
+    q1, q2 = diff.questions
+    assert q1.levels == {"D": (1, 2)} and q1.skills_added == ["na.factor.common"]
+    assert q2.primary_changed and not q2.levels
+    assert diff.letter_counts()["D"] == 1 and len(diff.changed) == 2
+    text = render_diff(diff, TAX)
+    assert "2 questions, 2 changed, 0 identical" in text
+    assert "D1->2" in text and "+ skill Take out the highest common factor" in text
+    assert "primary: 'DOS' -> 'Other route'" in text
+
+
+def test_diff_script_takes_two_files_and_orders_them_by_time(tmp_path, monkeypatch, capsys):
+    from app.analyzer import export_analysis_json
+    from scripts import diff_analyses as script
+    a = make_analysis_result(run=AnalysisRun(run_id="an1", analysed_at="2026-09-15T00:00:00",
+                                             analyzer_version="RPDICE_v1", model="m"))
+    b = make_analysis_result(analyses=[analysis(qid="1", levels=dict(R=1, P=1, D=1, I=1, C=1, E=2)),
+                                       analysis(qid="2(a)")],
+                             run=AnalysisRun(run_id="an2", analysed_at="2026-09-16T00:00:00",
+                                             analyzer_version="RPDICE_v1", model="m"))
+    export_analysis_json(a, tmp_path / "a.json")
+    export_analysis_json(b, tmp_path / "b.json")
+    assert script.main([str(tmp_path / "b.json"), str(tmp_path / "a.json")]) == 0
+    out = capsys.readouterr().out
+    assert "Runs an1 -> an2" in out and "R2->1" in out
+    assert script.main([]) == 2

@@ -1185,3 +1185,21 @@ strategy 下面一行「Solver: reached **x**」,尾段 Critic 表。
 `analyse_rpdice` 而家係 Analyzer → Solver → Critic,`--skip-critique` 只跑 Analyzer;
 `critique_rpdice` 對已有 analysis 補跑(同名 extraction 喺 `data/extracted`)。重 push 同一個
 run 會先刪返自己嗰批 rows 再 insert,所以 critique 完再 push 唔會重複。
+
+## 46. 同一份卷跑兩次:Analyzer 嘅噪音,同 Solver 要睇圖
+
+`2526_2nd_S4MATH2` 同一個 prompt、同一個 model、temperature 0,兩日兩個 run:40 題有 28 題唔同
+——25 個字母(10%)郁咗一級,D 最多(7 次),16 題 skill 列表有變(多數係多列一粒 prerequisite),
+Q18 嘅 primary 由展開法變咗對稱軸法。呢個係噪音下限,任何 prompt 改動都要同佢比。
+
+- `scripts/diff_analyses.py` 將呢個比較變成一條命令(`app/analysis_diff.py`):逐題印字母變動、
+  skill 增刪、error 增刪、primary 有冇轉、strategy 數目。
+- Critic 第一次真跑,兩題(Q7、Q20)被標 `rejected`,原因係「圖中……」而 Solver 只有文字。
+  唔係 strategy 錯。改:Solver 對 `diagram_required` 嘅題連 `data/diagrams/` 嘅 PNG 一齊送
+  (`GeminiClient.generate_json(images=…)`,prompt 有 FIGURES 段講邊張圖係邊題);冇圖可送而
+  Solver 話解唔到 → `SOLUTION_NEEDS_DIAGRAM`(medium),status 新增 `unverified`。
+- Solver 答案有 LaTeX(`\( \frac{1}{2^{555}} \) 。`)同單位(「40 平方單位」),`answers_match`
+  而家先剝 LaTeX(frac 由內向外、sqrt、上下標)、單位、尾隨句號再比。
+- Critic 同 code 對同一件事各報一次(Q7)。`drop_repeats`:同 code、同題、同 strategy 嘅
+  Critic issue 掉;prompt 亦講明 pipeline 已報嘅唔使再報。
+- 未做:Analyzer 跑 N 次取眾數。等多幾份卷嘅 diff 數據先決定 N。

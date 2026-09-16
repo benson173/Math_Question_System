@@ -19,6 +19,11 @@ RULES
 - pitfalls_met lists, from the error_ids given for that question, only those
   you genuinely had to guard against while solving. Do not list errors you
   did not meet.
+- A question with has_diagram true refers to a figure. When a FIGURES list
+  is given, the attached images are those figures, in that order: read the
+  values and configuration from the image. When no image is attached for
+  such a question, set reached_answer to false and say in notes that the
+  diagram is missing; do not guess the figure.
 - Solve every pair; do not skip a strategy because another one already
   reached the answer. Keep the pairs in the order given, one entry per
   strategy_id.

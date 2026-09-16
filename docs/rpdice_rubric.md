@@ -109,6 +109,7 @@
 | `ANSWER_MISMATCH` | code | Solver 答案同 marking scheme 唔同 |
 | `STRATEGIES_DISAGREE` | code | 同一題唔同 strategy 解出唔同答案 |
 | `SOLUTION_MISSING` | code | Solver 冇交某個 strategy 嘅解 |
+| `SOLUTION_NEEDS_DIAGRAM` | code | 題目要睇圖而 Solver 冇圖 → strategy `unverified`,唔算 rejected |
 | `STRATEGY_STEPS_WRONG` / `STRATEGY_MISSING` / `PRIMARY_NOT_TYPICAL` | Critic | steps 數學上錯 / 漏咗明顯方法 / primary 揀錯 |
 | `LEVEL_OVERRATED` / `LEVEL_UNDERRATED` | Critic | 某個字母唔跟 rubric(message 講邊個 strategy、邊個字母、應該幾多) |
 | `EVIDENCE_NOT_IN_QUESTION` | Critic | evidence 講嘅嘢題目冇 |

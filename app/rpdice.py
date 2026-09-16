@@ -137,7 +137,7 @@ class RpdiceProfile(BaseModel):
 
 
 STRATEGY_SOURCES = ("analyzer", "student", "teacher")
-STRATEGY_STATUSES = ("proposed", "confirmed", "rejected")
+STRATEGY_STATUSES = ("proposed", "confirmed", "rejected", "unverified")
 
 
 def strategy_id_for(strategy_name: str, skills) -> str:
@@ -160,7 +160,7 @@ class Strategy(BaseModel):
     # Filled by the pipeline, never trusted from the model: see strategy_id_for.
     strategy_id: Optional[str] = None
     source: str = "analyzer"           # analyzer | student | teacher
-    status: str = "proposed"           # proposed | confirmed (Solver reached the answer) | rejected
+    status: str = "proposed"           # proposed | confirmed | rejected | unverified (needs the diagram)
 
 
 class StrategySolution(BaseModel):
