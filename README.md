@@ -215,6 +215,8 @@ pytest
 | `app/analyzer.py` | 🔵 Python | 砌 prompt、跑 Gemini、存 analysis |
 | `app/solver.py` | 🔵 Python | Solver:照每個 strategy 解一次,對返 marking scheme |
 | `app/critic.py` | 🔵 Python | Critic:獨立 prompt 挑錯,定每個 strategy 嘅 status |
+| `app/grader.py` | 🔵 Python | Grader:讀學生手寫頁,對 strategy / skills / errors,code 判對錯 |
+| `app/attempt_store.py` | 🔵 Python | `students` / `attempts` rows |
 | `app/analysis_store.py` | 🔵 Python | `question_analyses` rows |
 | `prompts/analyzer_v1.txt` | 🟢 Prompt | RPDICE Analyzer 指令(rubric 由 code 注入) |
 | `taxonomy/golden/rpdice_gold.csv` | 🟡 Config | 人手評分黃金集 |
@@ -256,6 +258,7 @@ pytest
 | `scripts/analyse_rpdice.py` | 🔴 Test | 跑 Analyzer → Solver → Critic |
 | `scripts/critique_rpdice.py` | 🔴 Test | 對已有 analysis 補跑 Solver / Critic |
 | `scripts/diff_analyses.py` | 🔴 Test | 兩個 Analyzer run 逐題對,量 Analyzer 嘅噪音 |
+| `scripts/grade_answer.py` | 🔴 Test | 一頁學生手寫 → attempt |
 | `app/analysis_diff.py` | 🔵 Python | 兩個 run 嘅差異(levels / skills / primary) |
 | `scripts/score_rpdice.py` | 🔴 Test | Analyzer 對黃金集計分 |
 
@@ -479,6 +482,28 @@ Analyzer 講嘅 strategy 唔係講咗就算:
 結果寫入同一份 analysis JSON(`solutions`、`critic_issues`、`critic`)同 markdown(每個
 strategy 下面一行 Solver 結果,尾段 Critic 表),Supabase `question_analyses` 多三欄
 (`solutions`、`critic_issues`、`critic_run_id`)。
+
+### Grader:讀學生手寫卷(學生層第一步)
+
+```bash
+python3 -m scripts.grade_answer inbox/answers/wong.pdf --question b584940bfebb:24 --student wong
+python3 -m scripts.grade_answer scan.jpg --paper 2526_2nd_S4MATH2 --qid 24 --student s001
+```
+
+一頁 scan(PDF / JPG / PNG)+ 邊條題 + 邊個學生。Gemini vision 讀完(`prompts/grader_v1.txt`):
+
+- **照抄**每行手寫(prompt 講明:寫錯都要照抄,唔准修正),最終答案、圈邊個選項。
+- 對返 Analyzer 嘅 `strategies[]`:行嘅係邊個 `strategy_id`;冇一個對到就 `strategy_match: new`。
+- 邊粒 skill 有**紙上證據**——直接寫個數出嚟而冇過程,唔算證據。
+- 錯誤分 `slip`(寫錯但結果啱,例如漏負號)同 `misconception`(概念錯令結果錯),對返 `error_id`。
+- **Model 唔會收到標準答案**:對錯由 code 用 marking scheme 判(`answers_match`),MC 字母同數值互相對得到。
+
+Code 再補:`skills_not_evidenced`(primary strategy 預期但紙上冇)、`needs_human`(讀唔清、
+信心低、新 strategy、冇標準答案、答對但報咗 misconception)。寫 `data/attempts/<student>/<key>-<run>.json`
++ `.md`(附原圖)+ scan 副本;Supabase 有 `students`、`attempts` 兩張新 table。
+
+> 第一張真卷(Q24):答對圈 D,對到 primary strategy,兩個符號抄寫 slip,`na.quad.solve-factor` 冇證據
+> (底 = 16 直接寫出)。呢個就係「答對但唔係全對」——MC 對錯記唔到嘅嘢。
 
 Analyzer 每條題目 output:skill_family、`atomic_skills`(只可以係 taxonomy id)、每個
 strategy 嘅 steps 同 RPDICE profile(每級要 evidence)、`method_cues`(原文照抄)、

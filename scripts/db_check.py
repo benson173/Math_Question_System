@@ -50,6 +50,13 @@ EXPECTED_COLUMNS["question_analyses"] = [
     "method_cues", "strategies", "rpdice", "difficulty_drivers", "possible_errors",
     "proposed_skills", "proposed_errors", "confidence", "issues", "solutions", "critic_issues",
     "critic_run_id", "is_current"]
+EXPECTED_COLUMNS["students"] = ["student_id", "form", "class_name", "cohort"]
+EXPECTED_COLUMNS["attempts"] = [
+    "id", "student_id", "question_key", "source_question_id", "paper_file_name", "scan_file_name",
+    "scan_sha256", "grader_run_id", "grader_version", "model", "answer_given", "is_correct",
+    "strategy_id", "strategy_match", "skills_evidenced", "skills_not_evidenced", "error_ids",
+    "slips", "misconceptions", "transcription", "confidence", "needs_human", "review_reasons",
+    "attempted_at"]
 
 SCHEMA_FILE = "docs/supabase_schema.sql"
 

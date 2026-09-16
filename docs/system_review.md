@@ -2,8 +2,8 @@
 
 > **狀態(2026-09-15)**:「而家要做嘅」1–8 全部做咗(§34–§37 deviations),Analyzer 嘅
 > prompt / schema / validator / 黃金集起咗(§37),taxonomy 逐條對咗 C&A Guide(§44),
-> 第 2 層 Solver / Critic 起咗,strategy 有穩定 id(§45)。未做:學生數據 table、
-> Calibration、Adaptive。
+> 第 2 層 Solver / Critic 起咗,strategy 有穩定 id(§45)。第 3 層開咗頭:Grader 讀單頁手寫,
+> `students` / `attempts` table(§47)。未做:Student Model(skill_mastery)、Calibration、Adaptive。
 
 對住 `system_spec.md` 逐層睇:而家有乜、缺乜、邊啲而家唔做將來補唔返。
 Ingestion 嗰層嘅 15 個 bug(pipeline 次序、blocking run 蓋過好 run 等)已經另外列咗,

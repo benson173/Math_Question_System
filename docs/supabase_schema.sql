@@ -153,6 +153,45 @@ create table if not exists question_analyses (
 );
 
 
+-- Students and their attempts: the first tables of the student layer. An
+-- attempt hangs off question_key, and off strategies[].strategy_id in
+-- question_analyses when the working follows a listed strategy.
+create table if not exists students (
+  student_id     text primary key,
+  form           text,
+  class_name     text,
+  cohort         text,
+  created_at     timestamptz not null default now()
+);
+
+create table if not exists attempts (
+  id                    uuid primary key default gen_random_uuid(),
+  student_id            text not null,
+  question_key          text not null,
+  source_question_id    text not null,
+  paper_file_name       text,
+  scan_file_name        text,
+  scan_sha256           text,
+  grader_run_id         text,
+  grader_version        text,
+  model                 text,
+  answer_given          text,
+  is_correct            boolean,                 -- null: no reference answer
+  strategy_id           text,                    -- question_analyses.strategies[].strategy_id
+  strategy_match        text,                    -- listed | new | none
+  skills_evidenced      jsonb not null default '[]'::jsonb,
+  skills_not_evidenced  jsonb not null default '[]'::jsonb,
+  error_ids             jsonb not null default '[]'::jsonb,
+  slips                 jsonb not null default '[]'::jsonb,
+  misconceptions        jsonb not null default '[]'::jsonb,
+  transcription         jsonb not null default '[]'::jsonb,
+  confidence            numeric,
+  needs_human           boolean not null default false,
+  review_reasons        jsonb not null default '[]'::jsonb,
+  attempted_at          timestamptz,
+  created_at            timestamptz not null default now()
+);
+
 
 -- ------------------------------------------------- tables that already existed
 --
@@ -258,6 +297,35 @@ insert into _mqs_columns (table_name, column_name, column_type) values
       ('question_analyses', 'solutions',              'jsonb default ''[]''::jsonb'),
       ('question_analyses', 'critic_issues',          'jsonb default ''[]''::jsonb'),
       ('question_analyses', 'critic_run_id',          'text'),
+      ('students',          'student_id',             'text'),
+      ('students',          'form',                   'text'),
+      ('students',          'class_name',             'text'),
+      ('students',          'cohort',                 'text'),
+      ('students',          'created_at',             'timestamptz default now()'),
+      ('attempts',          'student_id',             'text'),
+      ('attempts',          'question_key',           'text'),
+      ('attempts',          'source_question_id',     'text'),
+      ('attempts',          'paper_file_name',        'text'),
+      ('attempts',          'scan_file_name',         'text'),
+      ('attempts',          'scan_sha256',            'text'),
+      ('attempts',          'grader_run_id',          'text'),
+      ('attempts',          'grader_version',         'text'),
+      ('attempts',          'model',                  'text'),
+      ('attempts',          'answer_given',           'text'),
+      ('attempts',          'is_correct',             'boolean'),
+      ('attempts',          'strategy_id',            'text'),
+      ('attempts',          'strategy_match',         'text'),
+      ('attempts',          'skills_evidenced',       'jsonb default ''[]''::jsonb'),
+      ('attempts',          'skills_not_evidenced',   'jsonb default ''[]''::jsonb'),
+      ('attempts',          'error_ids',              'jsonb default ''[]''::jsonb'),
+      ('attempts',          'slips',                  'jsonb default ''[]''::jsonb'),
+      ('attempts',          'misconceptions',         'jsonb default ''[]''::jsonb'),
+      ('attempts',          'transcription',          'jsonb default ''[]''::jsonb'),
+      ('attempts',          'confidence',             'numeric'),
+      ('attempts',          'needs_human',            'boolean default false'),
+      ('attempts',          'review_reasons',         'jsonb default ''[]''::jsonb'),
+      ('attempts',          'attempted_at',           'timestamptz'),
+      ('attempts',          'created_at',             'timestamptz default now()'),
       ('question_analyses', 'is_current',             'boolean default true'),
       ('question_analyses', 'created_at',             'timestamptz default now()'),
       ('skills',           'skill_id',                'text'),
@@ -295,7 +363,7 @@ begin
   -- insert. skills and error_patterns key on skill_id / error_id instead.
   for target in
     select unnest(array['source_documents', 'extraction_runs', 'questions',
-                        'question_analyses']) as name
+                        'question_analyses', 'attempts']) as name
   loop
     if not exists (select 1 from pg_attribute
                     where attrelid = target.name::regclass
@@ -400,7 +468,8 @@ begin
       from information_schema.columns c
      where c.table_schema = 'public'
        and c.table_name in ('source_documents', 'extraction_runs', 'questions',
-                            'skills', 'error_patterns', 'question_analyses')
+                            'skills', 'error_patterns', 'question_analyses',
+                            'students', 'attempts')
        and c.is_nullable = 'NO'
        and c.column_default is null
        and c.column_name <> 'id'
@@ -450,6 +519,8 @@ create unique index if not exists analyses_run_key            on question_analys
 create index if not exists analyses_key_idx     on question_analyses (question_key);
 create index if not exists analyses_current_idx on question_analyses (question_key) where is_current;
 
+create index if not exists attempts_student_idx  on attempts (student_id);
+create index if not exists attempts_question_idx on attempts (question_key);
 create index if not exists skills_form_idx   on skills (form);
 create index if not exists skills_unit_idx   on skills (unit);
 

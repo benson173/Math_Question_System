@@ -1203,3 +1203,33 @@ Q18 嘅 primary 由展開法變咗對稱軸法。呢個係噪音下限,任何 pr
 - Critic 同 code 對同一件事各報一次(Q7)。`drop_repeats`:同 code、同題、同 strategy 嘅
   Critic issue 掉;prompt 亦講明 pipeline 已報嘅唔使再報。
 - 未做:Analyzer 跑 N 次取眾數。等多幾份卷嘅 diff 數據先決定 N。
+
+## 47. Grader:由一張真手寫頁開始
+
+你俾咗一張 Q24 嘅學生手寫答案(scan PDF,2480 × 3504)。呢個係學生層第一件真嘢,所以 Grader v1 就
+對住佢設計,佢亦係 `tests/test_grader.py` 嘅 fixture。
+
+### 分工:model 讀,code 判
+
+- Model(vision)做嘅:逐行**照抄**、最終答案 / 圈邊個、對返邊個 `strategy_id`、邊粒 skill 有紙上證據、
+  錯誤(slip / misconception)。**唔俾佢標準答案**——否則佢會「好心」將 `2(7)²` 讀成 `−2(7)²`,slip 就
+  冇咗。對錯由 code 用 `answers_match` 判;MC 字母對數值、數值對字母都識。
+- Code 補嘅:`skills_not_evidenced`(primary 預期但冇寫)、`needs_human` 五個條件、error_id 要喺
+  taxonomy 先收。
+
+### 呢張頁講明嘅設計要點
+
+1. **「有證據」要定義**。學生直接寫 `½ × 16 × 128`,冇解方程。答對,但 `na.quad.solve-factor` 冇證據。
+   Prompt 明講:寫個數出嚟唔算證據。呢個分別係 Student Model 之後要用嘅——唔可以因為答對就當所有
+   skill 都 mastered。
+2. **slip 同 misconception 要分開記**。`x = 28/2(−2) = 7` 漏負號但答 7:知公式、寫唔穩。同「用 x = −7
+   代入」係兩回事;後者先影響 mastery。
+3. **Strategy 對得返**:呢頁行嘅係 Analyzer 嘅 primary(頂點 → 面積),`strategy_id` 由此第一次由學生
+   指返題目分析。行第二條路(例如微分)→ `strategy_match: new`,`needs_human`,將來 source=student
+   加落題目度(§45)。
+
+### 未做
+
+- 多頁 / 多題一次過(而家一頁一題,人手講邊題)。
+- 學生 id 對名單、班別(`students` 只有 id)。
+- Student Model 本身。
