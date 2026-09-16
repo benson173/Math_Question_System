@@ -54,6 +54,7 @@ EXPECTED_COLUMNS["students"] = ["student_id", "form", "class_name", "cohort"]
 EXPECTED_COLUMNS["attempts"] = [
     "id", "student_id", "question_key", "source_question_id", "paper_file_name", "scan_file_name",
     "scan_sha256", "grader_run_id", "grader_version", "model", "answer_given", "is_correct",
+    "reference_answer", "reference_source",
     "strategy_id", "strategy_match", "skills_evidenced", "skills_not_evidenced", "error_ids",
     "slips", "misconceptions", "transcription", "confidence", "needs_human", "review_reasons",
     "attempted_at"]

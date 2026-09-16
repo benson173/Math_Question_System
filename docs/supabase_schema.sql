@@ -177,6 +177,8 @@ create table if not exists attempts (
   model                 text,
   answer_given          text,
   is_correct            boolean,                 -- null: no reference answer
+  reference_answer      text,
+  reference_source      text,                    -- marking_scheme | solver
   strategy_id           text,                    -- question_analyses.strategies[].strategy_id
   strategy_match        text,                    -- listed | new | none
   skills_evidenced      jsonb not null default '[]'::jsonb,
@@ -313,6 +315,8 @@ insert into _mqs_columns (table_name, column_name, column_type) values
       ('attempts',          'model',                  'text'),
       ('attempts',          'answer_given',           'text'),
       ('attempts',          'is_correct',             'boolean'),
+      ('attempts',          'reference_answer',       'text'),
+      ('attempts',          'reference_source',       'text'),
       ('attempts',          'strategy_id',            'text'),
       ('attempts',          'strategy_match',         'text'),
       ('attempts',          'skills_evidenced',       'jsonb default ''[]''::jsonb'),

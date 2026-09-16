@@ -34,7 +34,7 @@ err.quad.formula-sign,Sign error in the quadratic formula (−b or the discrimin
 err.quad.formula-division,Divides only part of the numerator by 2a,二次公式只把部分分子除以 2a,na.quad.solve-formula,
 err.quad.discriminant-condition-reversed,Wrong inequality for the nature of roots,根的性質對應錯判別式條件,na.quad.discriminant;na.quad.discriminant-condition,"Uses Δ > 0 for equal roots, or forgets Δ = 0 in 'real roots'."
 err.quad.sum-product-sign,Sign error in α + β = −b/a,根的和的符號錯,na.quad.sum-product,
-err.quad.vertex-sign,Reads the vertex of a(x − h)² + k as (−h k),頂點 x 坐標符號錯,na.func.vertex-form,
+err.quad.vertex-sign,Sign error at the vertex: (−h k) read from a(x − h)² + k or −b/2a written as b/2a,頂點 x 坐標符號錯(配方法或 −b/2a),na.func.vertex-form;na.func.vertex-formula,
 err.ineq.flip-missing,Does not reverse the inequality when multiplying / dividing by a negative,乘除負數時不等號未變向,na.lineineq.properties;na.lineineq.solve,
 err.ineq.quadratic-region,Chooses the wrong region for a quadratic inequality,二次不等式選錯區間,na.ineq.quadratic-algebra;na.ineq.quadratic-graph,"x² > 4 answered as x > 2 only."
 err.ineq.compound-and-or,Confuses 'and' with 'or' in compound inequalities,複合不等式混淆「及」與「或」,na.ineq.compound,

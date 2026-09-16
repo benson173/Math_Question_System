@@ -30,6 +30,8 @@ def attempt_row(attempt: GradedAttempt) -> dict[str, Any]:
         "model": attempt.run.model,
         "answer_given": attempt.reading.option_chosen or attempt.reading.final_answer,
         "is_correct": attempt.is_correct,
+        "reference_answer": attempt.reference_answer,
+        "reference_source": attempt.reference_source,
         "strategy_id": attempt.strategy_id,
         "strategy_match": attempt.strategy_match,
         "skills_evidenced": list(attempt.skills_evidenced),

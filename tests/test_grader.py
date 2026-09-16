@@ -88,6 +88,25 @@ def test_the_real_page_is_correct_matched_and_shows_a_gap():
     assert verdict["needs_human"] is False
 
 
+def test_without_a_marking_scheme_the_solvers_confirmed_answer_is_the_reference():
+    from app.grader import reference_for
+    from app.rpdice import StrategySolution
+    extraction, result = q24()
+    q, a = find_question(extraction, "24"), result.analyses[0]
+    sid = a.strategies[0].strategy_id
+    assert reference_for(q, a, result) == ("D", "marking_scheme")
+    q.answer = None
+    assert reference_for(q, a, result) == (None, None)                 # nothing solved yet
+    result.solutions = [StrategySolution(source_question_id="24", strategy_id=sid,
+                                         final_answer="D (1024 平方單位)", reached_answer=True)]
+    assert reference_for(q, a, result) == (None, None)                 # not confirmed
+    a.strategies[0].status = "confirmed"
+    assert reference_for(q, a, result) == ("D (1024 平方單位)", "solver")
+    verdict = decide(reading_of_the_page(sid), q, a, TAX, *reference_for(q, a, result))
+    assert verdict["is_correct"] is True and verdict["reference_source"] == "solver"
+    assert verdict["needs_human"] is False
+
+
 def test_a_letter_is_marked_against_a_value_and_a_value_against_a_letter():
     extraction, result = q24()
     q, a = find_question(extraction, "24"), result.analyses[0]
@@ -163,12 +182,14 @@ def test_grade_sends_the_scan_and_writes_a_complete_attempt(tmp_path, monkeypatc
     assert back.reading.transcription[1] == "x = 28 / 2(-2) = 7"
 
     text = render_attempt_markdown(attempt, TAX, "wong.jpg")
-    assert "**Verdict: correct**" in text and "![scan](wong.jpg)" in text
+    assert "**Verdict: correct** — answered 'D (1024)', reference 'D' (marking_scheme)" in text
+    assert "![scan](wong.jpg)" in text
     assert "✗ not shown: Solve a quadratic equation by factorisation" in text
     assert "- slip: err.quad.vertex-sign: wrote 28/2(-2) = 7" in text
 
     row = attempt_row(attempt)
     assert row["answer_given"] == "D" and row["strategy_id"] == sid
+    assert row["reference_source"] == "marking_scheme"
     assert isinstance(row["skills_not_evidenced"], list) and row["needs_human"] is False
 
     (tmp_path / "x.txt").write_text("not a scan")

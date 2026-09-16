@@ -496,7 +496,9 @@ python3 -m scripts.grade_answer scan.jpg --paper 2526_2nd_S4MATH2 --qid 24 --stu
 - 對返 Analyzer 嘅 `strategies[]`:行嘅係邊個 `strategy_id`;冇一個對到就 `strategy_match: new`。
 - 邊粒 skill 有**紙上證據**——直接寫個數出嚟而冇過程,唔算證據。
 - 錯誤分 `slip`(寫錯但結果啱,例如漏負號)同 `misconception`(概念錯令結果錯),對返 `error_id`。
-- **Model 唔會收到標準答案**:對錯由 code 用 marking scheme 判(`answers_match`),MC 字母同數值互相對得到。
+- **Model 唔會收到標準答案**:對錯由 code 判(`answers_match`),MC 字母同數值互相對得到。Reference
+  優先用 marking scheme;冇嘅話用 Solver 沿 `confirmed` strategy 解出嘅答案(`reference_source: solver`,
+  信任度低一級);兩樣都冇先係 not marked。
 
 Code 再補:`skills_not_evidenced`(primary strategy 預期但紙上冇)、`needs_human`(讀唔清、
 信心低、新 strategy、冇標準答案、答對但報咗 misconception)。寫 `data/attempts/<student>/<key>-<run>.json`

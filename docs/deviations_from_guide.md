@@ -1233,3 +1233,18 @@ Q18 嘅 primary 由展開法變咗對稱軸法。呢個係噪音下限,任何 pr
 - 多頁 / 多題一次過(而家一頁一題,人手講邊題)。
 - 學生 id 對名單、班別(`students` 只有 id)。
 - Student Model 本身。
+
+### 第一次真跑之後(§47 續)
+
+Gemini 讀你張頁:transcription 十行全對,**兩個漏負號都照抄冇補**,strategy 對到 primary,
+`na.quad.solve-factor` 正確標為冇證據。三個要修:
+
+1. 份卷冇 marking scheme,所以 not marked。而 Solver 已經沿 confirmed strategy 解出 `D (1024)`——
+   而家冇 marking scheme 就退而用 Solver 答案做 reference,`reference_source` 記住係邊個,`attempts`
+   多兩欄。
+2. Report 冇 reference 就唔印學生答乜——改為永遠印(`answered 'D (1024)'`)。
+3. 學生用 `x = −b/2a`,Gemini 話 `na.func.vertex-form`(配方法)冇證據——啱,但 taxonomy 根本冇
+   「頂點公式」呢粒 skill,Q23 嘅 Analyzer 都係被逼借 vertex-form。加 `na.func.vertex-formula`
+   (CP-2.3 / 2.4,F),`err.quad.vertex-sign` 掛埋佢。
+
+小事:`∴` 讀成 `∵`。符號係手寫 OCR 嘅弱點,記低,暫時唔處理。

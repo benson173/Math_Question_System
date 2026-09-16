@@ -79,6 +79,7 @@ class GradedAttempt(BaseModel):
     reading: GraderPayload
     is_correct: Optional[bool] = None          # None when there is no reference answer
     reference_answer: Optional[str] = None
+    reference_source: Optional[str] = None     # marking_scheme | solver | None
     strategy_id: Optional[str] = None          # a listed strategy the working follows
     strategy_match: str = "none"               # listed | new | none
     skills_evidenced: list[str] = Field(default_factory=list)
@@ -141,10 +142,31 @@ def build_grader_prompt(question: ExtractedQuestion, analysis, taxonomy: Taxonom
 
 # --- deciding -------------------------------------------------------------------
 
+def reference_for(question: ExtractedQuestion, analysis, analysis_result: Optional[AnalysisResult]):
+    """(answer, source): the marking scheme when there is one, else the Solver's
+    answer along a confirmed strategy of this question, else nothing."""
+    if question.answer:
+        return question.answer, "marking_scheme"
+    if analysis_result is not None:
+        confirmed = {s.strategy_id for s in analysis.strategies if s.status == "confirmed"}
+        for solution in analysis_result.solutions:
+            if (solution.source_question_id == analysis.source_question_id
+                    and solution.strategy_id in confirmed and solution.reached_answer
+                    and solution.final_answer):
+                return solution.final_answer, "solver"
+    return None, None
+
+
 def decide(reading: GraderPayload, question: ExtractedQuestion, analysis,
-           taxonomy: Taxonomy) -> dict:
-    """Everything the pipeline decides from the reading; pure, testable."""
-    reference = question.answer
+           taxonomy: Taxonomy, reference: Optional[str] = None,
+           reference_source: Optional[str] = None) -> dict:
+    """Everything the pipeline decides from the reading; pure, testable.
+
+    `reference` defaults to the question's own answer; the Grader passes the
+    Solver's confirmed answer when there is no marking scheme.
+    """
+    if reference is None and reference_source is None:
+        reference, reference_source = (question.answer, "marking_scheme") if question.answer else (None, None)
     given = reading.option_chosen or reading.final_answer
     is_correct = answers_match(given, reference)
     if is_correct is None and reference and reading.option_chosen and question.options:
@@ -189,7 +211,8 @@ def decide(reading: GraderPayload, question: ExtractedQuestion, analysis,
         reasons.append("no reference answer to mark against")
     if is_correct and misconceptions:
         reasons.append("correct answer but a misconception was reported")
-    return dict(is_correct=is_correct, reference_answer=reference, strategy_id=strategy_id,
+    return dict(is_correct=is_correct, reference_answer=reference, reference_source=reference_source,
+                strategy_id=strategy_id,
                 strategy_match=match, skills_evidenced=evidenced, skills_not_evidenced=not_evidenced,
                 error_ids=error_ids, slips=slips, misconceptions=misconceptions,
                 needs_human=bool(reasons), review_reasons=reasons)
@@ -219,7 +242,8 @@ class Grader:
         prompt = build_grader_prompt(question, analysis, self.taxonomy)
         reading: GraderPayload = self.gemini.generate_json(prompt, GraderPayload, images=[(data, mime)])
         usage = getattr(self.gemini, "last_usage", {}) or {}
-        verdict = decide(reading, question, analysis, self.taxonomy)
+        reference, source = reference_for(question, analysis, analysis_result)
+        verdict = decide(reading, question, analysis, self.taxonomy, reference, source)
         return GradedAttempt(
             student_id=student_id,
             question_key=question_key(extraction.source.sha256, qid),
@@ -260,9 +284,12 @@ def render_attempt_markdown(attempt: GradedAttempt, taxonomy: Taxonomy, scan_rel
              f"`{attempt.scan_file_name}` · grader run `{attempt.run.run_id}` · {attempt.run.model}", ""]
     if scan_relpath:
         lines += [f"![scan]({scan_relpath})", ""]
-    lines += [f"**Verdict: {verdict}**"
-              + (f" — answered {attempt.reading.option_chosen or attempt.reading.final_answer!r}, "
-                 f"reference {attempt.reference_answer!r}" if attempt.reference_answer else ""), ""]
+    answered = attempt.reading.option_chosen or attempt.reading.final_answer
+    if attempt.reading.option_chosen and attempt.reading.final_answer:
+        answered = f"{attempt.reading.option_chosen} ({attempt.reading.final_answer})"
+    lines += [f"**Verdict: {verdict}** — answered {answered!r}"
+              + (f", reference {attempt.reference_answer!r} ({attempt.reference_source})"
+                 if attempt.reference_answer else ""), ""]
     if attempt.needs_human:
         lines += ["> Needs a person: " + "; ".join(attempt.review_reasons), ""]
     lines += ["## Transcription", ""] + [f"    {line}" for line in attempt.reading.transcription] + [""]

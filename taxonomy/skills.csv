@@ -241,6 +241,7 @@ na.quad.number-systems,na,Quadratic equations in one unknown,Hierarchy of the nu
 na.func.concept,na,Functions and graphs,Function notation / domain / co-domain / dependent and independent variables,函數記號、定義域、對應域,F4,F,,CP-2.1
 na.func.evaluate,na,Functions and graphs,Evaluate f(a) and f(expression),求函數值 f(a)、f(g(x)) 型代入,F4,F,na.func.concept;na.algexp.substitute,CP-2.2
 na.func.quadratic-graph,na,Functions and graphs,Sketch y = ax² + bx + c: direction / intercepts / axis / vertex,二次函數圖像的特徵,F4,F,na.quad.solve-factor,CP-2.3
+na.func.vertex-formula,na,Functions and graphs,Find the vertex by x = −b/2a and substituting back,以 x = −b/2a 求頂點再代回,F4,F,na.func.quadratic-graph;na.formula.substitute,CP-2.3;CP-2.4
 na.func.vertex-form,na,Functions and graphs,Find max / min by completing the square into a(x − h)² + k,以配方法求最大 / 最小值,F4,N,na.quad.complete-square,CP-2.4
 na.func.optimise-word,na,Functions and graphs,Optimise a quantity modelled by a quadratic,二次函數最值應用題,F4,N,na.func.vertex-form,CP-2.4
 na.func.transform-translate,na,More about graphs of functions,Translation of graphs y = f(x) + k and y = f(x + h),圖像平移,F5,N,na.func.quadratic-graph,CP-9.4
