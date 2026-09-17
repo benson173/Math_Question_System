@@ -261,6 +261,7 @@ pytest
 | `scripts/grade_answer.py` | 🔴 Test | 一頁學生手寫 → attempt |
 | `app/analysis_diff.py` | 🔵 Python | 兩個 run 嘅差異(levels / skills / primary) |
 | `scripts/score_rpdice.py` | 🔴 Test | Analyzer 對黃金集計分 |
+| `docs/presentation/Math_Question_System.pptx` | 📄 Doc | 15 頁簡報(書面繁中,老師 + 技術人);講稿喺 `speaker_notes.md`,`build/` 可以重新生成 |
 
 ---
 
